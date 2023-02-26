@@ -13,3 +13,7 @@ class CreateTranscriptView(generics.CreateAPIView):
     serializer_class = TranscriptSerializer
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        """Create a new transcript."""
+        serializer.save(user=self.request.user)

@@ -8,6 +8,8 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
+from transcript.models import Transcript
+
 
 CREATE_TRANSCRIPT_URL = reverse('transcript:create')
 
@@ -15,6 +17,20 @@ CREATE_TRANSCRIPT_URL = reverse('transcript:create')
 def create_user(**params):
     """Create and return a new user."""
     return get_user_model().objects.create_user(**params)
+
+
+def create_transcript(user, **params):
+    """Create and return a sample transcript."""
+    defaults = {
+        'title': 'Test Title',
+        'interviewee_names': ['Interviewee'],
+        'interviewer_names': ['Interviewer 1', 'Interviewer 2'],
+        'transcript': 'Test Transcript',
+    }
+    defaults.update(params)
+
+    transcript = Transcript.objects.create(user=user, **defaults)
+    return transcript
 
 
 class TranscriptCreateTests(TestCase):
@@ -40,6 +56,25 @@ class TranscriptCreateTests(TestCase):
         res = self.client.post(CREATE_TRANSCRIPT_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(res.data['interviewee_names'], payload['interviewee_names'])
-        self.assertEqual(res.data['interviewer_names'], payload['interviewer_names'])
-        self.assertEqual(res.data['transcript'], payload['transcript'])
+        transcript = Transcript.objects.get(id=res.data['id'])
+        for k, v in payload.items():
+            self.assertEqual(getattr(transcript, k), v)
+        self.assertEqual(transcript.user, self.user)
+
+    def test_create_blank_input_failure(self):
+        """Test creating a transcript with blank input fails."""
+        payload = {
+            'title': '',
+            'interviewee_names': [''],
+            'interviewer_names': [''],
+            'transcript': '',
+        }
+        res = self.client.post(CREATE_TRANSCRIPT_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(res.data['title'][0],
+                         'This field may not be blank.')
+        self.assertEqual(res.data['interviewee_names'][0][0],
+                         'This field may not be blank.')
+        self.assertEqual(res.data['interviewer_names'][0][0],
+                         'This field may not be blank.')
