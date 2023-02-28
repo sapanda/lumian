@@ -10,6 +10,8 @@ from rest_framework import status
 
 from transcript.models import Transcript
 
+from unittest.mock import patch
+
 
 CREATE_TRANSCRIPT_URL = reverse('transcript:create')
 
@@ -33,6 +35,7 @@ def create_transcript(user, **params):
     return transcript
 
 
+@patch('transcript.signals.run_generate_synthesis_helper')
 class TranscriptCreateTests(TestCase):
     """Test the transcript creation features"""
 
@@ -45,7 +48,7 @@ class TranscriptCreateTests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
-    def test_create_transcript_success(self):
+    def test_create_transcript_success(self, patched_signal):
         """Test creating a transcript is successful."""
         payload = {
             'title': 'Test Title',
@@ -60,8 +63,9 @@ class TranscriptCreateTests(TestCase):
         for k, v in payload.items():
             self.assertEqual(getattr(transcript, k), v)
         self.assertEqual(transcript.user, self.user)
+        self.assertEqual(patched_signal.call_count, 1)
 
-    def test_create_blank_input_failure(self):
+    def test_create_blank_input_failure(self, patched_signal):
         """Test creating a transcript with blank input fails."""
         payload = {
             'title': '',
@@ -78,3 +82,4 @@ class TranscriptCreateTests(TestCase):
                          'This field may not be blank.')
         self.assertEqual(res.data['interviewer_names'][0][0],
                          'This field may not be blank.')
+        self.assertEqual(patched_signal.call_count, 0)

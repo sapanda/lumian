@@ -29,4 +29,10 @@ class TranscriptAdmin(admin.ModelAdmin):
     form = TranscriptForm
 
 
+class AISynthesisAdmin(admin.ModelAdmin):
+    """Admin page for the AI synthesis model."""
+    readonly_fields = ['output_type', 'output', 'transcript']
+
+
 admin.site.register(models.Transcript, TranscriptAdmin)
+admin.site.register(models.AISynthesis)

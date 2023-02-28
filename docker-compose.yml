@@ -7,7 +7,7 @@ services:
       args:
         - DEV=true
     ports:
-      - "8000:8000"
+      - 8000:8000
     volumes:
       - ./app:/app
       - dev-static-data:/vol/web
@@ -22,6 +22,27 @@ services:
       - DB_PASS=changeme
     depends_on:
       - db
+      - redis
+
+  celery:
+    restart: always
+    build:
+      context: .
+    command: celery -A app worker -l info
+    volumes:
+      - ./app:/app
+    environment:
+      - DB_HOST=db
+      - DB_NAME=devdb
+      - DB_USER=devuser
+      - DB_PASS=changeme
+    depends_on:
+      - db
+      - redis
+      - app
+
+  redis:
+    image: redis:7-alpine
 
   db:
     image: postgres:13-alpine
