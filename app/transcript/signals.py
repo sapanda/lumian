@@ -32,7 +32,8 @@ def run_generate_synthesis_helper(sender, instance, created, **kwargs):
 @receiver(post_delete, sender=Transcript)
 def auto_delete_summary_with_transcript(sender, instance, **kwargs):
     """Necessary to create helper for mocking in tests"""
-    return auto_delete_summary_with_transcript_helper(sender, instance, **kwargs)
+    return auto_delete_summary_with_transcript_helper(
+        sender, instance, **kwargs)
 
 
 def auto_delete_summary_with_transcript_helper(sender, instance, **kwargs):
