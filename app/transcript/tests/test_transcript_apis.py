@@ -2,14 +2,14 @@
 Tests for the creation and upload of transcripts via the API.
 """
 from django.test import TestCase
-from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from transcript.models import Transcript, AISynthesis
+from transcript.models import Transcript
 from transcript.serializers import TranscriptSerializer
+from transcript.tests.utils import create_user, create_transcript
 
 from unittest.mock import patch
 
@@ -20,30 +20,6 @@ TRANSCRIPT_URL = reverse('transcript:transcript-list')
 def detail_url(transcript_id):
     """Create and return a transcript detail URL."""
     return reverse('transcript:transcript-detail', args=[transcript_id])
-
-
-def create_user(**params):
-    """Create and return a new user."""
-    return get_user_model().objects.create_user(**params)
-
-
-def create_transcript(user, **params):
-    """Create and return a sample transcript."""
-    defaults = {
-        'title': 'Test Title',
-        'interviewee_names': ['Interviewee'],
-        'interviewer_names': ['Interviewer 1', 'Interviewer 2'],
-        'transcript': 'Test Transcript',
-    }
-    defaults.update(params)
-
-    tpt = Transcript.objects.create(user=user, **defaults)
-    tpt.summary = AISynthesis.objects.create(
-        output_type=AISynthesis.SynthesisType.SUMMARY,
-        output='Test Summary'
-    )
-    tpt.save()
-    return tpt
 
 
 class PublicTranscriptAPITests(TestCase):
