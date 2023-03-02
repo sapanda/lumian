@@ -36,3 +36,4 @@ class AISynthesisAdmin(admin.ModelAdmin):
 
 admin.site.register(models.Transcript, TranscriptAdmin)
 admin.site.register(models.AISynthesis)
+admin.site.register(models.ProcessedChunks)

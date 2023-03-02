@@ -18,12 +18,30 @@ class Transcript(models.Model):
         models.CharField(max_length=255), default=list)
     transcript = models.TextField(
         max_length=100000, blank=True, null=True)
+
+    chunks = models.OneToOneField(
+        'ProcessedChunks', on_delete=models.SET_NULL,
+        related_name='transcript', blank=True, null=True)
     summary = models.OneToOneField(
         'AISynthesis', on_delete=models.SET_NULL,
         related_name='transcript', blank=True, null=True)
 
     def __str__(self):
         return self.title
+
+
+class ProcessedChunks(models.Model):
+    """Model representing a chunk of transcript."""
+
+    class Meta:
+        verbose_name = 'Processed Chunk'
+        verbose_name_plural = 'Processed Chunks'
+
+    para_groups = ArrayField(models.TextField(max_length=10000))
+    para_group_summaries = ArrayField(models.TextField(max_length=10000))
+
+    def __str__(self):
+        return self.transcript.title
 
 
 class AISynthesis(models.Model):

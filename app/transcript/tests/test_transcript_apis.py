@@ -46,7 +46,7 @@ class PrivateTranscriptAPITests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
-    @patch('transcript.signals.run_generate_synthesis_helper')
+    @patch('transcript.signals._run_generate_synthesis')
     def test_create_transcript_success(self, patched_signal):
         """Test creating a transcript is successful."""
         payload = {
@@ -64,7 +64,7 @@ class PrivateTranscriptAPITests(TestCase):
         self.assertEqual(tpt.user, self.user)
         self.assertEqual(patched_signal.call_count, 1)
 
-    @patch('transcript.signals.run_generate_synthesis_helper')
+    @patch('transcript.signals._run_generate_synthesis')
     def test_create_blank_input_failure(self, patched_signal):
         """Test creating a transcript with blank input fails."""
         payload = {
