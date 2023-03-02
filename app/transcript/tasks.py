@@ -37,11 +37,11 @@ def _get_summarized_chunk(text: str, interviewee: str = None) -> str:
         prompter = "summary"
 
     prompt = (f"The following is a section of an interview transcript. "
-                f"Please provide a {prompter}. Only answer truthfully and "
-                f"don't include anything not in the original transcript: "
-                f"\n\n>>>> START OF INTERVIEW \n\n{text}\n\n"
-                f">>>> END OF INTERVIEW \n\n"
-                f"Detailed Summary: ")
+              f"Please provide a {prompter}. Only answer truthfully and "
+              f"don't include anything not in the original transcript: "
+              f"\n\n>>>> START OF INTERVIEW \n\n{text}\n\n"
+              f">>>> END OF INTERVIEW \n\n"
+              f"Detailed Summary: ")
 
     response = openai.Completion.create(
                 prompt=prompt,
@@ -69,7 +69,8 @@ def _get_summarized_all(text: str) -> str:
 
 def _process_chunks(tct: Transcript) -> Transcript:
     """Chunk up the transcript and generate summaries for each chunk."""
-    interviewee = tct.interviewee_names[0]  # Support only one interviewee for now
+    # Support only one interviewee for now
+    interviewee = tct.interviewee_names[0]
 
     paragraph_groups = chunk_by_paragraph_groups(
         tct.transcript,

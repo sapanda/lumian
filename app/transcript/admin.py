@@ -4,14 +4,18 @@
 from django import forms
 from django.contrib import admin
 
-from transcript import models
+from transcript.models import (
+    Transcript,
+    ProcessedChunks,
+    AISynthesis,
+)
 
 
 class TranscriptForm(forms.ModelForm):
     file = forms.FileField(label='Upload Transcript', required=False)
 
     class Meta:
-        model = models.Transcript
+        model = Transcript
         fields = '__all__'
 
     def save(self, commit=True):
@@ -24,16 +28,21 @@ class TranscriptForm(forms.ModelForm):
         return instance
 
 
+@admin.register(Transcript)
 class TranscriptAdmin(admin.ModelAdmin):
     """Admin page for the transcript model."""
     form = TranscriptForm
 
 
+@admin.register(AISynthesis)
 class AISynthesisAdmin(admin.ModelAdmin):
     """Admin page for the AI synthesis model."""
     readonly_fields = ['output_type', 'output', 'transcript']
+    list_display = ['transcript', 'output_type']
 
 
-admin.site.register(models.Transcript, TranscriptAdmin)
-admin.site.register(models.AISynthesis)
-admin.site.register(models.ProcessedChunks)
+@admin.register(ProcessedChunks)
+class ProcessedChunksAdmin(admin.ModelAdmin):
+    """Admin page for the AI synthesis model."""
+    readonly_fields = ['para_groups', 'para_group_summaries', 'transcript']
+    list_display = ['transcript']
