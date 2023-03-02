@@ -13,7 +13,6 @@ class TranscriptSerializer(serializers.ModelSerializer):
         model = Transcript
         fields = ['id', 'title', 'interviewee_names',
                   'interviewer_names', 'transcript']
-        read_only_fields = ['id']
 
     def create(self, validated_data):
         """Create and return a transcript."""

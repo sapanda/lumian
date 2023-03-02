@@ -24,7 +24,8 @@ def create_transcript(user, **params):
     tpt = Transcript.objects.create(user=user, **defaults)
     tpt.summary = AISynthesis.objects.create(
         output_type=AISynthesis.SynthesisType.SUMMARY,
-        output='Test Summary'
+        output='Test Summary',
+        tokens_used=100,
     )
     tpt.save()
     return tpt

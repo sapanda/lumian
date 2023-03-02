@@ -26,6 +26,9 @@ class Transcript(models.Model):
         'AISynthesis', on_delete=models.SET_NULL,
         related_name='transcript', blank=True, null=True)
 
+    summary_cost = models.DecimalField(
+        max_digits=10, decimal_places=4, default=0.0000)
+
     def __str__(self):
         return self.title
 
@@ -39,6 +42,7 @@ class ProcessedChunks(models.Model):
 
     para_groups = ArrayField(models.TextField(max_length=10000))
     para_group_summaries = ArrayField(models.TextField(max_length=10000))
+    tokens_used = ArrayField(models.IntegerField())
 
     def __str__(self):
         return self.transcript.title
@@ -58,7 +62,9 @@ class AISynthesis(models.Model):
 
     output_type = models.CharField(
         max_length=2, choices=SynthesisType.choices)
-    output = models.TextField(max_length=100000, blank=True, null=True)
+    output = models.TextField(
+        max_length=100000, blank=True, null=True)
+    tokens_used = models.IntegerField()
 
     def get_synthesis_type(self) -> SynthesisType:
         return self.SynthesisType[self.output_type]

@@ -6,9 +6,12 @@ from transcript.models import Transcript, AISynthesis, ProcessedChunks
 from transcript.ai.utils import chunk_by_paragraph_groups
 
 
-# Open AI models
-OPENAI_COMPLETIONS_MODEL = "gpt-3.5-turbo"
+# Open AI models and pricing (USD per 1k tokens)
+OPENAI_COMPLETIONS_MODEL = "text-davinci-003"
+OPENAI_COMPLETIONS_PRICE = 0.002
+
 OPENAI_EMBEDDING_MODEL = "text-embedding-ada-002"
+OPENAI_EMBEDDING_PRICE = 0.0004
 
 # Engineering Params
 CHUNK_MIN_SIZE = 150
@@ -28,7 +31,7 @@ openai.organization = settings.OPENAI_ORG_ID
 openai.api_key = settings.OPENAI_API_KEY
 
 
-def _get_summarized_chunk(text: str, interviewee: str = None) -> str:
+def _get_summarized_chunk(text: str, interviewee: str = None) -> dict:
     """Generate a summary for a chunk of the transcript."""
 
     if interviewee is not None:
@@ -48,10 +51,15 @@ def _get_summarized_chunk(text: str, interviewee: str = None) -> str:
                 **COMPLETIONS_API_PARAMS
             )
 
-    return response["choices"][0]["text"].strip(" \n")
+    ret_val = {
+        'summary': response["choices"][0]["text"].strip(" \n"),
+        'tokens_used': response["usage"]["total_tokens"],
+    }
+
+    return ret_val
 
 
-def _get_summarized_all(text: str) -> str:
+def _get_summarized_all(text: str) -> dict:
     """Generate a summary from a concatenated summary string."""
 
     prompt = (f"Write a detailed synopsis based on the following notes. "
@@ -64,13 +72,18 @@ def _get_summarized_all(text: str) -> str:
                 prompt=prompt,
                 **COMPLETIONS_API_PARAMS
             )
-    return response["choices"][0]["text"].strip(" \n")
+
+    ret_val = {
+        'summary': response["choices"][0]["text"].strip(" \n"),
+        'tokens_used': response["usage"]["total_tokens"],
+    }
+
+    return ret_val
 
 
 def _process_chunks(tct: Transcript) -> Transcript:
     """Chunk up the transcript and generate summaries for each chunk."""
-    # Support only one interviewee for now
-    interviewee = tct.interviewee_names[0]
+    interviewee = tct.interviewee_names[0]  # Support one interviewee for now
 
     paragraph_groups = chunk_by_paragraph_groups(
         tct.transcript,
@@ -78,12 +91,16 @@ def _process_chunks(tct: Transcript) -> Transcript:
     )
 
     summaries = []
+    tokens_used = []
     for group in paragraph_groups:
-        summaries.append(_get_summarized_chunk(group, interviewee))
+        response = _get_summarized_chunk(group, interviewee)
+        summaries.append(response['summary'])
+        tokens_used.append(response['tokens_used'])
 
     tct.chunks = ProcessedChunks.objects.create(
         para_groups=paragraph_groups,
         para_group_summaries=summaries,
+        tokens_used=tokens_used,
     )
     return tct
 
@@ -91,12 +108,20 @@ def _process_chunks(tct: Transcript) -> Transcript:
 def _generate_summary(tct: Transcript) -> Transcript:
     """Generate the AISynthesis summary for the transcript."""
     concat_summary = " ".join(tct.chunks.para_group_summaries)
-    summary = _get_summarized_all(concat_summary)
+    response = _get_summarized_all(concat_summary)
 
     tct.summary = AISynthesis.objects.create(
         output_type=AISynthesis.SynthesisType.SUMMARY,
-        output=summary,
+        output=response['summary'],
+        tokens_used=response['tokens_used'],
     )
+    return tct
+
+
+def _calculate_cost(tct: Transcript) -> Transcript:
+    """Calculate the cost of the transcript."""
+    tokens_used = sum(tct.chunks.tokens_used) + tct.summary.tokens_used
+    tct.summary_cost = tokens_used * OPENAI_COMPLETIONS_PRICE / 1000
     return tct
 
 
@@ -106,4 +131,5 @@ def generate_summary(transcript_id):
     tct = Transcript.objects.get(id=transcript_id)
     tct = _process_chunks(tct)
     tct = _generate_summary(tct)
+    tct = _calculate_cost(tct)
     tct.save()
