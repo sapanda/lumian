@@ -149,5 +149,5 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 
 # Open AI keys
-OPENAI_ORG_ID = config('OPENAI_ORG_ID')
-OPENAI_API_KEY = config('OPENAI_API_KEY')
+OPENAI_ORG_ID = os.environ.get('OPENAI_ORG_ID', config('OPENAI_ORG_ID'))
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', config('OPENAI_API_KEY'))
