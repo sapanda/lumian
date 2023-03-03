@@ -5,10 +5,13 @@ from rest_framework import (
     viewsets,
     authentication,
     permissions,
+    status,
 )
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from transcript.models import Transcript
-from transcript.serializers import TranscriptSerializer
+from transcript.serializers import TranscriptSerializer, SummarySerializer
 
 
 class TranscriptView(viewsets.ModelViewSet):
@@ -28,3 +31,22 @@ class TranscriptView(viewsets.ModelViewSet):
         return queryset.filter(
             user=self.request.user
         ).order_by('-id').distinct()
+
+
+class SummaryView(APIView):
+    """View for getting summary of a transcript."""
+
+    def get(self, request, pk):
+        """GET the transcript summary."""
+        try:
+            tct = Transcript.objects.get(pk=pk)
+            if tct.summary is None:
+                # TODO: Have a way to check if summary in progress
+                response = Response(status=status.HTTP_202_ACCEPTED)
+            else:
+                serializer = SummarySerializer(tct.summary)
+                response = Response(serializer.data)
+        except Transcript.DoesNotExist:
+            response = Response(status=status.HTTP_404_NOT_FOUND)
+
+        return response

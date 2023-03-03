@@ -22,6 +22,11 @@ def detail_url(transcript_id):
     return reverse('transcript:transcript-detail', args=[transcript_id])
 
 
+def summary_url(transcript_id):
+    """Create and return a summary detail URL."""
+    return reverse('transcript:summary-detail', args=[transcript_id])
+
+
 class PublicTranscriptAPITests(TestCase):
     """Test unauthenticated API requests."""
 
@@ -174,3 +179,36 @@ class PrivateTranscriptAPITests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(Transcript.objects.filter(id=tpt.id).exists())
+
+    def test_summary_in_progress(self):
+        """Test getting a summary of a transcript that is in progress."""
+        tpt = Transcript.objects.create(
+            user=self.user,
+            title='Test Title',
+            interviewee_names=['Test Interviewee'],
+            interviewer_names=['Test Interviewer'],
+            transcript='Test Transcript',
+        )
+
+        url = summary_url(tpt.id)
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNone(res.data)
+
+    def test_summary_valid(self):
+        """Test getting a summary of a transcript."""
+        tpt = create_transcript(user=self.user)
+
+        url = summary_url(tpt.id)
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data['output'], tpt.summary.output)
+
+    def test_summary_invalid_transcript(self):
+        """Test getting a summary of a transcript that does not exist."""
+        url = summary_url(10000000)
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
