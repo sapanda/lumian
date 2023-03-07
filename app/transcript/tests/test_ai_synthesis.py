@@ -11,7 +11,8 @@ from transcript.tasks import (
     _process_chunks,
     _generate_summary,
     _calculate_cost,
-    OPENAI_COMPLETIONS_PRICE
+    OPENAI_COMPLETIONS_PRICE,
+    OPENAI_CHAT_PRICE
 )
 from transcript.tests.utils import (
     create_user,
@@ -83,6 +84,9 @@ class GenerateSummaryTests(TestCase):
                           AISynthesis.SynthesisType.SUMMARY)
 
         tct = _calculate_cost(tct)
-        actual_cost = (sum(tct.chunks.tokens_used) + tct.summary.tokens_used) \
+        chunk_cost = sum(tct.chunks.tokens_used) \
+            * OPENAI_CHAT_PRICE / 1000
+        summary_cost = tct.summary.tokens_used \
             * OPENAI_COMPLETIONS_PRICE / 1000
+        actual_cost = chunk_cost + summary_cost
         self.assertEquals(tct.summary_cost, actual_cost)

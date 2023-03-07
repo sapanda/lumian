@@ -6,29 +6,58 @@ from transcript.models import Transcript, AISynthesis, ProcessedChunks
 from transcript.ai.utils import chunk_by_paragraph_groups
 
 
-# Open AI models and pricing (USD per 1k tokens)
+# OpenAI models and pricing (USD per 1k tokens)
 OPENAI_COMPLETIONS_MODEL = "text-davinci-003"
-OPENAI_COMPLETIONS_PRICE = 0.002
+OPENAI_COMPLETIONS_PRICE = 0.02
+
+OPENAI_CHAT_MODEL = "gpt-3.5-turbo"
+OPENAI_CHAT_PRICE = 0.002
 
 OPENAI_EMBEDDING_MODEL = "text-embedding-ada-002"
 OPENAI_EMBEDDING_PRICE = 0.0004
+
+# Determine which OpenAI endpoint to use
+USE_CHAT_ENDPOINT = True
 
 # Engineering Params
 CHUNK_MIN_SIZE = 150
 TOKEN_CUT_OFF = 2000
 
-# Model Params
+# Model Defaults
 DEFAULT_TEMPERATURE = 0
-MAX_TOKENS_IN_RESPONSE = 600
-
-COMPLETIONS_API_PARAMS = {
-    "temperature": DEFAULT_TEMPERATURE,
-    "max_tokens": MAX_TOKENS_IN_RESPONSE,
-    "model": OPENAI_COMPLETIONS_MODEL,
-}
+DEFAULT_MAX_TOKENS = 600
 
 openai.organization = settings.OPENAI_ORG_ID
 openai.api_key = settings.OPENAI_API_KEY
+
+
+def _execute_openai_request(prompt: str, model: str) -> dict:
+    """Execute an OpenAI API request and return the response."""
+
+    COMPLETIONS_API_PARAMS = {
+        "temperature": DEFAULT_TEMPERATURE,
+        "max_tokens": DEFAULT_MAX_TOKENS,
+        "model": model,
+    }
+    if model is OPENAI_CHAT_MODEL:
+        messages = [{"role": "user", "content": prompt}]
+        response = openai.ChatCompletion.create(
+            messages=messages,
+            **COMPLETIONS_API_PARAMS
+        )
+        summary = response["choices"][0]["message"]["content"].strip(" \n")
+    else:
+        response = openai.Completion.create(
+            prompt=prompt,
+            **COMPLETIONS_API_PARAMS
+        )
+        summary = response["choices"][0]["text"].strip(" \n")
+
+    ret_val = {
+        "summary": summary,
+        "tokens_used": response["usage"]["total_tokens"],
+    }
+    return ret_val
 
 
 def _get_summarized_chunk(text: str, interviewee: str = None) -> dict:
@@ -37,7 +66,7 @@ def _get_summarized_chunk(text: str, interviewee: str = None) -> dict:
     if interviewee is not None:
         prompter = "detailed summary of only {interviewee}'s comments"
     else:
-        prompter = "summary"
+        prompter = "detailed summary"
 
     prompt = (f"The following is a section of an interview transcript. "
               f"Please provide a {prompter}. Only answer truthfully and "
@@ -46,17 +75,7 @@ def _get_summarized_chunk(text: str, interviewee: str = None) -> dict:
               f">>>> END OF INTERVIEW \n\n"
               f"Detailed Summary: ")
 
-    response = openai.Completion.create(
-                prompt=prompt,
-                **COMPLETIONS_API_PARAMS
-            )
-
-    ret_val = {
-        'summary': response["choices"][0]["text"].strip(" \n"),
-        'tokens_used': response["usage"]["total_tokens"],
-    }
-
-    return ret_val
+    return _execute_openai_request(prompt, model=OPENAI_CHAT_MODEL)
 
 
 def _get_summarized_all(text: str) -> dict:
@@ -68,17 +87,7 @@ def _get_summarized_all(text: str) -> dict:
               f"\n\n>>>> START OF INTERVIEW NOTES \n\n{text} \n\n>>>>"
               f"END OF INTERVIEW NOTES \n\nSynopsis:")
 
-    response = openai.Completion.create(
-                prompt=prompt,
-                **COMPLETIONS_API_PARAMS
-            )
-
-    ret_val = {
-        'summary': response["choices"][0]["text"].strip(" \n"),
-        'tokens_used': response["usage"]["total_tokens"],
-    }
-
-    return ret_val
+    return _execute_openai_request(prompt, model=OPENAI_COMPLETIONS_MODEL)
 
 
 def _process_chunks(tct: Transcript) -> Transcript:
@@ -120,8 +129,9 @@ def _generate_summary(tct: Transcript) -> Transcript:
 
 def _calculate_cost(tct: Transcript) -> Transcript:
     """Calculate the cost of the transcript."""
-    tokens_used = sum(tct.chunks.tokens_used) + tct.summary.tokens_used
-    tct.summary_cost = tokens_used * OPENAI_COMPLETIONS_PRICE / 1000
+    chunking_cost = sum(tct.chunks.tokens_used) * OPENAI_CHAT_PRICE / 1000
+    summary_cost = tct.summary.tokens_used * OPENAI_COMPLETIONS_PRICE / 1000
+    tct.summary_cost = chunking_cost + summary_cost
     return tct
 
 
