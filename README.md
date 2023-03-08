@@ -24,3 +24,9 @@ docker-compose down
 ## Usage
 * You can access rest APIs from the `/api/docs/` endpoint.
 * You can access the Django admin pages from the `/admin` endpoint.
+
+## Changes
+Before pushing your code, be sure to run tests and linting
+```
+docker-compose run --rm app sh -c "python manage.py test && flake8"
+```
