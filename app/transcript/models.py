@@ -19,33 +19,39 @@ class Transcript(models.Model):
     transcript = models.TextField(
         max_length=100000, blank=True, null=True)
 
-    chunks = models.OneToOneField(
-        'ProcessedChunks', on_delete=models.SET_NULL,
-        related_name='transcript', blank=True, null=True)
-    summary = models.OneToOneField(
-        'AISynthesis', on_delete=models.SET_NULL,
-        related_name='transcript', blank=True, null=True)
-
-    summary_cost = models.DecimalField(
-        max_digits=10, decimal_places=4, default=0.0000)
-
     def __str__(self):
         return self.title
 
 
-class ProcessedChunks(models.Model):
+class SynthesisType(models.TextChoices):
+    SUMMARY = 'SM', _('Summary')
+    CONCISE = 'CS', _('Concise')
+
+
+class AIChunks(models.Model):
     """Model representing a chunk of transcript."""
 
     class Meta:
-        verbose_name = 'Processed Chunk'
-        verbose_name_plural = 'Processed Chunks'
+        verbose_name = 'AI Chunks'
+        verbose_name_plural = 'AI Chunks'
 
-    para_groups = ArrayField(models.TextField(max_length=10000))
-    para_group_summaries = ArrayField(models.TextField(max_length=10000))
+    transcript = models.ForeignKey(
+        Transcript, on_delete=models.CASCADE)
+
+    chunk_type = models.CharField(
+        max_length=2, choices=SynthesisType.choices)
+    chunks = ArrayField(models.TextField(max_length=10000))
+    chunks_processed = ArrayField(models.TextField(max_length=10000))
+    model_name = models.CharField(max_length=255)
     tokens_used = ArrayField(models.IntegerField())
+    cost = models.DecimalField(
+        max_digits=10, decimal_places=4, default=0.0000)
+
+    def get_chunk_type(self) -> SynthesisType:
+        return dict(SynthesisType.choices).get(self.chunk_type)
 
     def __str__(self):
-        return self.transcript.title
+        return f'{self.get_chunk_type()} : {self.transcript.title}'
 
 
 class AISynthesis(models.Model):
@@ -55,24 +61,25 @@ class AISynthesis(models.Model):
         verbose_name = 'AI Synthesis'
         verbose_name_plural = 'AI Syntheses'
 
-    class SynthesisType(models.TextChoices):
-        SUMMARY = 'SM', _('Summary')
-        HIGHLIGHTS = 'HL', _('Highlights')
-        CONCISE = 'CS', _('Concise')
+    transcript = models.ForeignKey(
+        Transcript, on_delete=models.CASCADE)
 
     output_type = models.CharField(
         max_length=2, choices=SynthesisType.choices)
     output = models.TextField(
         max_length=100000, blank=True, null=True)
+    model_name = models.CharField(max_length=255)
     tokens_used = models.IntegerField()
+    total_cost = models.DecimalField(
+        max_digits=10, decimal_places=4, default=0.0000)
 
     def get_synthesis_type(self) -> SynthesisType:
-        return self.SynthesisType[self.output_type]
+        return dict(SynthesisType.choices).get(self.output_type)
 
-    def __get_short_desc(self) -> str:
+    def _get_short_desc(self) -> str:
         if len(self.output) < 50:
             return self.output
         return self.output[:50] + '...'
 
     def __str__(self):
-        return self.__get_short_desc()
+        return f'{self.get_synthesis_type()} : {self._get_short_desc()}'

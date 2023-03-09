@@ -1,9 +1,10 @@
+DEFAULT_CHUNK_MIN_SIZE = 150
 
 
 def chunk_by_paragraph_groups(
         text: str,
         interviewee: str,
-        min_size: int = 150):
+        min_size: int = DEFAULT_CHUNK_MIN_SIZE):
     """
     Chunk the transcript by paragraph groups. A paragraph group is a collection
     of paragraphs that always starts with text spoken by the interviewee.

@@ -7,7 +7,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from transcript.models import Transcript
+from transcript.models import Transcript, AISynthesis, SynthesisType
 from transcript.serializers import TranscriptSerializer
 from transcript.tests.utils import create_user, create_transcript
 
@@ -39,6 +39,7 @@ class PublicTranscriptAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
+@patch('transcript.signals._run_generate_synthesis')
 class PrivateTranscriptAPITests(TestCase):
     """Test the transcript creation features"""
 
@@ -51,7 +52,6 @@ class PrivateTranscriptAPITests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
-    @patch('transcript.signals._run_generate_synthesis')
     def test_create_transcript_success(self, patched_signal):
         """Test creating a transcript is successful."""
         payload = {
@@ -69,7 +69,6 @@ class PrivateTranscriptAPITests(TestCase):
         self.assertEqual(tpt.user, self.user)
         self.assertEqual(patched_signal.call_count, 1)
 
-    @patch('transcript.signals._run_generate_synthesis')
     def test_create_blank_input_failure(self, patched_signal):
         """Test creating a transcript with blank input fails."""
         payload = {
@@ -89,7 +88,7 @@ class PrivateTranscriptAPITests(TestCase):
                          'This field may not be blank.')
         self.assertEqual(patched_signal.call_count, 0)
 
-    def test_retrieve_transcripts(self):
+    def test_retrieve_transcripts(self, patched_signal):
         """Test retrieving a list of transcripts."""
         create_transcript(user=self.user)
         create_transcript(user=self.user)
@@ -101,7 +100,7 @@ class PrivateTranscriptAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
 
-    def test_transcript_list_limited_to_user(self):
+    def test_transcript_list_limited_to_user(self, patched_signal):
         """Test list of transcripts is limited to authenticated user."""
         other_user = create_user(email='other@example.com', password='test123')
         create_transcript(user=other_user)
@@ -114,7 +113,7 @@ class PrivateTranscriptAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
 
-    def test_partial_update(self):
+    def test_partial_update(self, patched_signal):
         """Test partial update of a transcript."""
         tpt = create_transcript(user=self.user)
 
@@ -128,7 +127,7 @@ class PrivateTranscriptAPITests(TestCase):
         self.assertEqual(tpt.interviewee_names, payload['interviewee_names'])
         self.assertEqual(tpt.user, self.user)
 
-    def test_full_update(self):
+    def test_full_update(self, patched_signal):
         """Test full update of transcript."""
         tpt = create_transcript(user=self.user)
 
@@ -147,7 +146,7 @@ class PrivateTranscriptAPITests(TestCase):
             self.assertEqual(getattr(tpt, k), v)
         self.assertEqual(tpt.user, self.user)
 
-    def test_update_user_returns_error(self):
+    def test_update_user_returns_error(self, patched_signal):
         """Test changing the transcript user results in an error."""
         new_user = create_user(email='user2@example.com', password='test123')
         tpt = create_transcript(user=self.user)
@@ -159,7 +158,7 @@ class PrivateTranscriptAPITests(TestCase):
         tpt.refresh_from_db()
         self.assertEqual(tpt.user, self.user)
 
-    def test_delete_transcript(self):
+    def test_delete_transcript(self, patched_signal):
         """Test deleting a transcript successful."""
         tpt = create_transcript(user=self.user)
 
@@ -169,7 +168,7 @@ class PrivateTranscriptAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Transcript.objects.filter(id=tpt.id).exists())
 
-    def test_transcript_other_users_transcript_error(self):
+    def test_transcript_other_users_transcript_error(self, patched_signal):
         """Test trying to delete another users transcript gives error."""
         new_user = create_user(email='user2@example.com', password='test123')
         tpt = create_transcript(user=new_user)
@@ -180,7 +179,7 @@ class PrivateTranscriptAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(Transcript.objects.filter(id=tpt.id).exists())
 
-    def test_summary_in_progress(self):
+    def test_summary_in_progress(self, patched_signal):
         """Test getting a summary of a transcript that is in progress."""
         tpt = Transcript.objects.create(
             user=self.user,
@@ -196,17 +195,21 @@ class PrivateTranscriptAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_202_ACCEPTED)
         self.assertIsNone(res.data)
 
-    def test_summary_valid(self):
+    def test_summary_valid(self, patched_signal):
         """Test getting a summary of a transcript."""
         tpt = create_transcript(user=self.user)
 
         url = summary_url(tpt.id)
         res = self.client.get(url)
 
+        summary = AISynthesis.objects.get(
+            transcript=tpt,
+            output_type=SynthesisType.SUMMARY
+        )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data['output'], tpt.summary.output)
+        self.assertEqual(res.data['output'], summary.output)
 
-    def test_summary_invalid_transcript(self):
+    def test_summary_invalid_transcript(self, patched_signal):
         """Test getting a summary of a transcript that does not exist."""
         url = summary_url(10000000)
         res = self.client.get(url)

@@ -6,7 +6,7 @@ from django.contrib import admin
 
 from transcript.models import (
     Transcript,
-    ProcessedChunks,
+    AIChunks,
     AISynthesis,
 )
 
@@ -28,21 +28,59 @@ class TranscriptForm(forms.ModelForm):
         return instance
 
 
+class ReadOnlyAdmin(admin.ModelAdmin):
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return True
+
+
+@admin.register(AIChunks)
+class AIChunksAdmin(ReadOnlyAdmin):
+    """Admin page for the AI synthesis model."""
+    list_display = ['transcript', 'chunk_type', 'cost']
+
+
+@admin.register(AISynthesis)
+class AISynthesisAdmin(ReadOnlyAdmin):
+    """Admin page for the AI synthesis model."""
+    list_display = ['transcript', 'output_type', 'total_cost']
+
+
+class ReadOnlyInline(admin.StackedInline):
+    show_change_link = True
+    extra = 0
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return True
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+class AIChunksInline(ReadOnlyInline):
+    model = AIChunks
+    exclude = [field.name for field in AIChunks._meta.get_fields()]
+    verbose_name = ""
+    verbose_name_plural = "AI Chunks"
+
+
+class AISynthesisInline(ReadOnlyInline):
+    model = AISynthesis
+    verbose_name = ""
+    verbose_name_plural = "AI Synthesis"
+    exclude = ['model_name', 'tokens_used']
+
+
 @admin.register(Transcript)
 class TranscriptAdmin(admin.ModelAdmin):
     """Admin page for the transcript model."""
     form = TranscriptForm
+    list_display = ['title', 'interviewee_names']
 
-
-@admin.register(AISynthesis)
-class AISynthesisAdmin(admin.ModelAdmin):
-    """Admin page for the AI synthesis model."""
-    readonly_fields = ['output_type', 'output', 'transcript']
-    list_display = ['transcript', 'output_type']
-
-
-@admin.register(ProcessedChunks)
-class ProcessedChunksAdmin(admin.ModelAdmin):
-    """Admin page for the AI synthesis model."""
-    readonly_fields = ['para_groups', 'para_group_summaries', 'transcript']
-    list_display = ['transcript']
+    def get_inlines(self, request, obj=None):
+        return [AISynthesisInline, AIChunksInline] if obj else []

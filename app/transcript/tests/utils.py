@@ -2,8 +2,7 @@
 Utility functions for testing the transcript app.
 """
 from django.contrib.auth import get_user_model
-
-from transcript.models import Transcript, AISynthesis
+from transcript.models import Transcript, AISynthesis, SynthesisType
 
 
 def create_user(**params):
@@ -22,10 +21,12 @@ def create_transcript(user, **params):
     defaults.update(params)
 
     tpt = Transcript.objects.create(user=user, **defaults)
-    tpt.summary = AISynthesis.objects.create(
-        output_type=AISynthesis.SynthesisType.SUMMARY,
+    summary = AISynthesis.objects.create(
+        transcript=tpt,
+        output_type=SynthesisType.SUMMARY,
         output='Test Summary',
         tokens_used=100,
     )
     tpt.save()
+    summary.save()
     return tpt

@@ -4,12 +4,13 @@ Tests for the Django admin modifications.
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-
 from rest_framework import status
+from unittest.mock import patch
 
 from transcript.tests.utils import create_user, create_transcript
 
 
+@patch('transcript.signals._run_generate_synthesis')
 class AdminSiteTests(TestCase):
     """Tests for Django admin."""
 
@@ -28,21 +29,21 @@ class AdminSiteTests(TestCase):
 
         self.tpt = create_transcript(self.user)
 
-    def test_transcript_lists(self):
+    def test_transcript_lists(self, patched_signal):
         """Test that transcripts are listed on page."""
         url = reverse('admin:transcript_transcript_changelist')
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
-    def test_edit_transcript_page(self):
+    def test_edit_transcript_page(self, patched_signal):
         """Test the edit transcript page works."""
         url = reverse('admin:transcript_transcript_change', args=[self.tpt.id])
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, 200)
 
-    def test_create_transcript_page(self):
+    def test_create_transcript_page(self, patched_signal):
         """Test the create transcript page works."""
         url = reverse('admin:transcript_transcript_add')
         res = self.client.get(url)

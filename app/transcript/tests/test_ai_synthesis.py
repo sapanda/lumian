@@ -4,15 +4,14 @@ Tests for the synthesis of LLM inputs.
 from django.test import TestCase
 from unittest import skip
 from unittest.mock import patch
-from transcript.models import AISynthesis
+from transcript.models import SynthesisType
 from transcript.tasks import (
     _get_summarized_chunk,
     _get_summarized_all,
     _process_chunks,
     _generate_summary,
-    _calculate_cost,
-    OPENAI_COMPLETIONS_PRICE,
-    OPENAI_CHAT_PRICE
+    OPENAI_MODEL_COMPLETIONS,
+    OPENAI_MODEL_CHAT,
 )
 from transcript.tests.utils import (
     create_user,
@@ -35,26 +34,30 @@ class GenerateSummaryTests(TestCase):
 
     def test_get_summarized_chunk(self):
         """Test retrieving a summary for a chunk of the transcript."""
+
         transcript = ("Jason: \"Hello, my name is Jason. I am a student.\"\n\n"
                       "Bob: \"What is your favorite color?\"\n\n"
                       "Jason: \"My favorite color is blue.\"\n\n")
 
-        result = _get_summarized_chunk(transcript)
+        result = _get_summarized_chunk(transcript,
+                                       model=OPENAI_MODEL_CHAT,
+                                       interviewee='Jason')
         chunk_summary = result['summary']
-        self.assertTrue("Jason" in chunk_summary)
-        self.assertTrue("Bob" in chunk_summary)
+        self.assertTrue('Jason' in chunk_summary)
+        self.assertTrue('Bob' in chunk_summary)
         self.assertGreater(result['tokens_used'], 0)
 
     def test_get_summarized_all(self):
         """Test retrieving a summary from a concatenated summary string."""
+
         text = ("In this interview, Jason introduces himself as a "
                 "student. Bob then asks him what his favorite color "
                 "is, to which Jason responds that it is blue.")
 
-        result = _get_summarized_all(text)
+        result = _get_summarized_all(text, model=OPENAI_MODEL_COMPLETIONS)
         summary = result['summary']
-        self.assertTrue("Jason" in summary)
-        self.assertTrue("Bob" in summary)
+        self.assertTrue('Jason' in summary)
+        self.assertTrue('Bob' in summary)
         self.assertGreater(result['tokens_used'], 0)
 
     @patch('transcript.signals._run_generate_synthesis')
@@ -65,28 +68,20 @@ class GenerateSummaryTests(TestCase):
             transcript=self.sample_transcript
         )
 
-        tct = _process_chunks(tct)
-        self.assertTrue(len(tct.chunks.para_groups) > 1,
-                        "Not enough chunks generated")
-        self.assertEqual(len(tct.chunks.para_group_summaries),
-                         len(tct.chunks.para_groups),
-                         "Unequal number of groups and summaries")
-        self.assertEqual(len(tct.chunks.para_group_summaries),
-                         len(tct.chunks.tokens_used),
+        chunks = _process_chunks(tct)
+        self.assertEqual(chunks.chunk_type, SynthesisType.SUMMARY)
+        self.assertGreater(len(chunks.chunks), 1,
+                           "Not enough chunks generated")
+        self.assertEqual(len(chunks.chunks_processed), len(chunks.chunks),
+                         "Unequal number of chunks and summaries")
+        self.assertEqual(len(chunks.chunks_processed), len(chunks.tokens_used),
                          "Unequal number of tokens and summaries")
-        for tokens_used in tct.chunks.tokens_used:
+        self.assertGreater(chunks.cost, 0, "No cost calculated")
+        for tokens_used in chunks.tokens_used:
             self.assertGreater(tokens_used, 0, "No tokens used")
 
-        tct = _generate_summary(tct)
-
-        self.assertTrue(len(tct.summary.output) > 0, "Empty summary generated")
-        self.assertEquals(tct.summary.output_type,
-                          AISynthesis.SynthesisType.SUMMARY)
-
-        tct = _calculate_cost(tct)
-        chunk_cost = sum(tct.chunks.tokens_used) \
-            * OPENAI_CHAT_PRICE / 1000
-        summary_cost = tct.summary.tokens_used \
-            * OPENAI_COMPLETIONS_PRICE / 1000
-        actual_cost = chunk_cost + summary_cost
-        self.assertEquals(tct.summary_cost, actual_cost)
+        summary = _generate_summary(tct, chunks)
+        self.assertGreater(len(summary.output), 0, "Empty summary generated")
+        self.assertEqual(summary.output_type, SynthesisType.SUMMARY)
+        self.assertGreater(summary.tokens_used, 0, "No tokens used")
+        self.assertGreater(summary.total_cost, 0, "No cost calculated")

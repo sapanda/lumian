@@ -2,26 +2,23 @@ from celery import shared_task
 from django.conf import settings
 import openai
 
-from transcript.models import Transcript, AISynthesis, ProcessedChunks
 from transcript.ai.utils import chunk_by_paragraph_groups
+from transcript.models import (
+    Transcript, AIChunks, AISynthesis, SynthesisType
+)
 
 
-# OpenAI models and pricing (USD per 1k tokens)
-OPENAI_COMPLETIONS_MODEL = "text-davinci-003"
-OPENAI_COMPLETIONS_PRICE = 0.02
+# OpenAI Models
+OPENAI_MODEL_COMPLETIONS = "text-davinci-003"
+OPENAI_MODEL_CHAT = "gpt-3.5-turbo"
+OPENAI_MODEL_EMBEDDING = "text-embedding-ada-002"
 
-OPENAI_CHAT_MODEL = "gpt-3.5-turbo"
-OPENAI_CHAT_PRICE = 0.002
-
-OPENAI_EMBEDDING_MODEL = "text-embedding-ada-002"
-OPENAI_EMBEDDING_PRICE = 0.0004
-
-# Determine which OpenAI endpoint to use
-USE_CHAT_ENDPOINT = True
-
-# Engineering Params
-CHUNK_MIN_SIZE = 150
-TOKEN_CUT_OFF = 2000
+# OpenAI Pricing (USD per 1k tokens)
+OPEN_AI_PRICING = {
+    OPENAI_MODEL_COMPLETIONS: 0.02,
+    OPENAI_MODEL_CHAT: 0.002,
+    OPENAI_MODEL_EMBEDDING: 0.0004,
+}
 
 # Model Defaults
 DEFAULT_TEMPERATURE = 0
@@ -29,6 +26,12 @@ DEFAULT_MAX_TOKENS = 600
 
 openai.organization = settings.OPENAI_ORG_ID
 openai.api_key = settings.OPENAI_API_KEY
+
+
+def _calculate_cost(tokens_used: int, model: str) -> float:
+    """Calculate the cost of the OpenAI API request."""
+    cost = tokens_used / 1000 * OPEN_AI_PRICING[model]
+    return cost
 
 
 def _execute_openai_request(prompt: str, model: str) -> dict:
@@ -39,7 +42,7 @@ def _execute_openai_request(prompt: str, model: str) -> dict:
         "max_tokens": DEFAULT_MAX_TOKENS,
         "model": model,
     }
-    if model is OPENAI_CHAT_MODEL:
+    if model is OPENAI_MODEL_CHAT:
         messages = [{"role": "user", "content": prompt}]
         response = openai.ChatCompletion.create(
             messages=messages,
@@ -60,7 +63,10 @@ def _execute_openai_request(prompt: str, model: str) -> dict:
     return ret_val
 
 
-def _get_summarized_chunk(text: str, interviewee: str = None) -> dict:
+def _get_summarized_chunk(text: str,
+                          model: str,
+                          interviewee: str = None,
+                          ) -> dict:
     """Generate a summary for a chunk of the transcript."""
 
     if interviewee is not None:
@@ -75,10 +81,12 @@ def _get_summarized_chunk(text: str, interviewee: str = None) -> dict:
               f">>>> END OF INTERVIEW \n\n"
               f"Detailed Summary: ")
 
-    return _execute_openai_request(prompt, model=OPENAI_CHAT_MODEL)
+    return _execute_openai_request(prompt, model)
 
 
-def _get_summarized_all(text: str) -> dict:
+def _get_summarized_all(text: str,
+                        model: str
+                        ) -> dict:
     """Generate a summary from a concatenated summary string."""
 
     prompt = (f"Write a detailed synopsis based on the following notes. "
@@ -87,12 +95,13 @@ def _get_summarized_all(text: str) -> dict:
               f"\n\n>>>> START OF INTERVIEW NOTES \n\n{text} \n\n>>>>"
               f"END OF INTERVIEW NOTES \n\nSynopsis:")
 
-    return _execute_openai_request(prompt, model=OPENAI_COMPLETIONS_MODEL)
+    return _execute_openai_request(prompt, model)
 
 
-def _process_chunks(tct: Transcript) -> Transcript:
+def _process_chunks(tct: Transcript) -> AIChunks:
     """Chunk up the transcript and generate summaries for each chunk."""
     interviewee = tct.interviewee_names[0]  # Support one interviewee for now
+    model = OPENAI_MODEL_CHAT
 
     paragraph_groups = chunk_by_paragraph_groups(
         tct.transcript,
@@ -102,44 +111,48 @@ def _process_chunks(tct: Transcript) -> Transcript:
     summaries = []
     tokens_used = []
     for group in paragraph_groups:
-        response = _get_summarized_chunk(group, interviewee)
+        response = _get_summarized_chunk(group, model, interviewee)
         summaries.append(response['summary'])
         tokens_used.append(response['tokens_used'])
 
-    tct.chunks = ProcessedChunks.objects.create(
-        para_groups=paragraph_groups,
-        para_group_summaries=summaries,
+    chunks = AIChunks.objects.create(
+        transcript=tct,
+        chunk_type=SynthesisType.SUMMARY,
+        chunks=paragraph_groups,
+        chunks_processed=summaries,
         tokens_used=tokens_used,
+        cost=_calculate_cost(sum(tokens_used), model),
+        model_name=model,
     )
-    return tct
+    chunks.save()
+    return chunks
 
 
-def _generate_summary(tct: Transcript) -> Transcript:
+def _generate_summary(tct: Transcript, chunks: AIChunks) -> AISynthesis:
     """Generate the AISynthesis summary for the transcript."""
-    concat_summary = " ".join(tct.chunks.para_group_summaries)
-    response = _get_summarized_all(concat_summary)
+    concat_summary = " ".join(chunks.chunks_processed)
+    model = OPENAI_MODEL_COMPLETIONS
 
-    tct.summary = AISynthesis.objects.create(
-        output_type=AISynthesis.SynthesisType.SUMMARY,
+    response = _get_summarized_all(concat_summary, model)
+
+    summary_cost = _calculate_cost(response['tokens_used'], model)
+    total_cost = chunks.cost + summary_cost
+
+    summary_obj = AISynthesis.objects.create(
+        transcript=tct,
+        output_type=SynthesisType.SUMMARY,
         output=response['summary'],
         tokens_used=response['tokens_used'],
+        total_cost=total_cost,
+        model_name=model,
     )
-    return tct
-
-
-def _calculate_cost(tct: Transcript) -> Transcript:
-    """Calculate the cost of the transcript."""
-    chunking_cost = sum(tct.chunks.tokens_used) * OPENAI_CHAT_PRICE / 1000
-    summary_cost = tct.summary.tokens_used * OPENAI_COMPLETIONS_PRICE / 1000
-    tct.summary_cost = chunking_cost + summary_cost
-    return tct
+    summary_obj.save()
+    return summary_obj
 
 
 @shared_task
 def generate_summary(transcript_id):
     """Generate an AI-synthesized summary for a transcript."""
     tct = Transcript.objects.get(id=transcript_id)
-    tct = _process_chunks(tct)
-    tct = _generate_summary(tct)
-    tct = _calculate_cost(tct)
-    tct.save()
+    chunks = _process_chunks(tct)
+    _generate_summary(tct, chunks)
