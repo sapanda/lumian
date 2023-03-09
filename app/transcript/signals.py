@@ -2,7 +2,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
 from transcript.models import Transcript, AIChunks, AISynthesis
-from transcript.tasks import generate_summary
+from transcript.tasks import generate_synthesis
 
 
 @receiver(post_save, sender=Transcript)
@@ -14,7 +14,7 @@ def run_generate_synthesis(sender, instance, created, **kwargs):
 def _run_generate_synthesis(sender, instance, created, **kwargs):
     """Generate AI Synthesis for the transcript object"""
     if created:
-        generate_summary.delay(instance.id)
+        generate_synthesis.delay(instance.id)
 
 
 @receiver(post_delete, sender=Transcript)

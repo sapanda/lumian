@@ -42,7 +42,7 @@ class AIChunks(models.Model):
         max_length=2, choices=SynthesisType.choices)
     chunks = ArrayField(models.TextField(max_length=10000))
     chunks_processed = ArrayField(models.TextField(max_length=10000))
-    model_name = models.CharField(max_length=255)
+    model_name = models.CharField(max_length=255, null=True)
     tokens_used = ArrayField(models.IntegerField())
     cost = models.DecimalField(
         max_digits=10, decimal_places=4, default=0.0000)
@@ -68,7 +68,7 @@ class AISynthesis(models.Model):
         max_length=2, choices=SynthesisType.choices)
     output = models.TextField(
         max_length=100000, blank=True, null=True)
-    model_name = models.CharField(max_length=255)
+    model_name = models.CharField(max_length=255, null=True)
     tokens_used = models.IntegerField()
     total_cost = models.DecimalField(
         max_digits=10, decimal_places=4, default=0.0000)
