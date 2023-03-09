@@ -14,4 +14,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('transcripts/<int:pk>/summary/',
          views.SummaryView.as_view(), name='summary-detail'),
+    path('transcripts/<int:pk>/concise/',
+         views.ConciseView.as_view(), name='concise-detail'),
 ]

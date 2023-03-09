@@ -19,10 +19,8 @@ class TranscriptSerializer(serializers.ModelSerializer):
         return Transcript.objects.create(**validated_data)
 
 
-class SummarySerializer(serializers.ModelSerializer):
-    """
-    Serializer for the AISynthesis object representing the transcript summary.
-    """
+class AISynthesisSerializer(serializers.ModelSerializer):
+    """Serializer for the AISynthesis object."""
     class Meta:
         model = AISynthesis
         fields = ['output']

@@ -21,12 +21,21 @@ def create_transcript(user, **params):
     defaults.update(params)
 
     tpt = Transcript.objects.create(user=user, **defaults)
+    tpt.save()
+
     summary = AISynthesis.objects.create(
         transcript=tpt,
         output_type=SynthesisType.SUMMARY,
         output='Test Summary',
         tokens_used=100,
     )
-    tpt.save()
     summary.save()
+
+    concise = AISynthesis.objects.create(
+        transcript=tpt,
+        output_type=SynthesisType.CONCISE,
+        output='Test Concise',
+        tokens_used=0,
+    )
+    concise.save()
     return tpt

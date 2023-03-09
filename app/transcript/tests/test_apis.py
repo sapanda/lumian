@@ -27,6 +27,11 @@ def summary_url(transcript_id):
     return reverse('transcript:summary-detail', args=[transcript_id])
 
 
+def concise_url(transcript_id):
+    """Create and return a concise detail URL."""
+    return reverse('transcript:concise-detail', args=[transcript_id])
+
+
 class PublicTranscriptAPITests(TestCase):
     """Test unauthenticated API requests."""
 
@@ -212,6 +217,46 @@ class PrivateTranscriptAPITests(TestCase):
     def test_summary_invalid_transcript(self, patched_signal):
         """Test getting a summary of a transcript that does not exist."""
         url = summary_url(10000000)
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_concise_in_progress(self, patched_signal):
+        """Test getting a concise transcript that is in progress."""
+        tpt = Transcript.objects.create(
+            user=self.user,
+            title='Test Title',
+            interviewee_names=['Test Interviewee'],
+            interviewer_names=['Test Interviewer'],
+            transcript='Test Transcript',
+        )
+
+        url = concise_url(tpt.id)
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNone(res.data)
+
+    def test_concise_valid(self, patched_signal):
+        """Test getting a concise transcript."""
+        tpt = create_transcript(user=self.user)
+
+        url = concise_url(tpt.id)
+        res = self.client.get(url)
+
+        concise = AISynthesis.objects.get(
+            transcript=tpt,
+            output_type=SynthesisType.CONCISE
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data['output'], concise.output)
+
+    def test_concise_invalid_transcript(self, patched_signal):
+        """
+        Test getting a concise transcript of a transcript that does not exist.
+        """
+        url = concise_url(10000000)
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)

@@ -106,13 +106,13 @@ def _get_summarized_all(text: str,
 def _get_concise_chunk(text: str,
                        model: str,
                        max_examples: int = 1
-                       )-> dict:
+                       ) -> dict:
     """Generate a concise transcript for a given chunk."""
 
-    prompt = (f"The following are sections of an interview transcript. "
-              f"Please clean it up but still in dialogue form. The speaker "
-              f"name should always be preserved. Do not add any details "
-              f"not present in the original transcript. ")
+    prompt = ("The following are sections of an interview transcript. "
+              "Please clean it up but still in dialogue form. The speaker "
+              "name should always be preserved. Do not add any details "
+              "not present in the original transcript. ")
 
     with open('transcript/examples/eg-concise.json', 'r') as f:
         examples = json.load(f)
@@ -172,7 +172,9 @@ def _process_chunks_for_summaries(tct: Transcript,
 
 def _process_chunks_for_concise(tct: Transcript,
                                 chunks: 'list[str]') -> AIChunks:
-    """Chunk up the transcript and generate concise transcripts for each chunk."""
+    """
+    Chunk up the transcript and generate concise transcripts for each chunk.
+    """
     model = OPENAI_MODEL_CHAT
 
     concise_chunks = []

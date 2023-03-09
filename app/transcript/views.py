@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from transcript.models import Transcript, AISynthesis, SynthesisType
-from transcript.serializers import TranscriptSerializer, SummarySerializer
+from transcript.serializers import TranscriptSerializer, AISynthesisSerializer
 
 
 class TranscriptView(viewsets.ModelViewSet):
@@ -33,18 +33,18 @@ class TranscriptView(viewsets.ModelViewSet):
         ).order_by('-id').distinct()
 
 
-class SummaryView(APIView):
-    """View for getting summary of a transcript."""
+class AISynthesisView(APIView):
+    """"Base class for all AI synthesis views."""
 
-    def get(self, request, pk):
-        """GET the transcript summary."""
+    def get_of_type(self, request, pk, synthesis_type):
+        """Retrieve the AISynthesis of the given type."""
         try:
             tct = Transcript.objects.get(pk=pk)  # noqa, needed for 404.
-            summary = AISynthesis.objects.get(
+            synthesis = AISynthesis.objects.get(
                 transcript=pk,
-                output_type=SynthesisType.SUMMARY
+                output_type=synthesis_type
             )
-            serializer = SummarySerializer(summary)
+            serializer = AISynthesisSerializer(synthesis)
             response = Response(serializer.data)
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
@@ -53,3 +53,15 @@ class SummaryView(APIView):
             response = Response(status=status.HTTP_202_ACCEPTED)
 
         return response
+
+
+class SummaryView(AISynthesisView):
+    """View for getting summary of a transcript."""
+    def get(self, request, pk):
+        return self.get_of_type(request, pk, SynthesisType.SUMMARY)
+
+
+class ConciseView(AISynthesisView):
+    """View for getting concise transcript."""
+    def get(self, request, pk):
+        return self.get_of_type(request, pk, SynthesisType.CONCISE)
