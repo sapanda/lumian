@@ -5,9 +5,7 @@ from django import forms
 from django.contrib import admin
 
 from transcript.models import (
-    Transcript,
-    AIChunks,
-    AISynthesis,
+    Transcript, AIChunks, AISynthesis, AIEmbeds
 )
 
 
@@ -48,6 +46,12 @@ class AISynthesisAdmin(ReadOnlyAdmin):
     list_display = ['transcript', 'output_type', 'total_cost']
 
 
+@admin.register(AIEmbeds)
+class AIEmbedsAdmin(ReadOnlyAdmin):
+    """Admin page for the AI synthesis model."""
+    list_display = ['transcript', 'index_cost']
+
+
 class ReadOnlyInline(admin.StackedInline):
     show_change_link = True
     extra = 0
@@ -76,6 +80,13 @@ class AISynthesisInline(ReadOnlyInline):
     exclude = ['model_name', 'tokens_used']
 
 
+class AIEmbedsInline(ReadOnlyInline):
+    model = AIEmbeds
+    exclude = ['chunks']
+    verbose_name = ""
+    verbose_name_plural = "AI Embeds"
+
+
 @admin.register(Transcript)
 class TranscriptAdmin(admin.ModelAdmin):
     """Admin page for the transcript model."""
@@ -83,4 +94,5 @@ class TranscriptAdmin(admin.ModelAdmin):
     list_display = ['title', 'interviewee_names']
 
     def get_inlines(self, request, obj=None):
-        return [AISynthesisInline, AIChunksInline] if obj else []
+        return [AISynthesisInline, AIChunksInline, AIEmbedsInline] \
+            if obj else []

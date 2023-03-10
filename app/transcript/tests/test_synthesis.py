@@ -2,10 +2,14 @@
 Tests for the synthesis of LLM inputs.
 """
 from django.test import TestCase
+import pinecone
 from unittest import skip
 from unittest.mock import patch
 from transcript.models import SynthesisType
 from transcript.tasks import (
+    OPENAI_MODEL_COMPLETIONS,
+    OPENAI_MODEL_CHAT,
+    OPEN_AI_EMBEDDING_DIMENSIONS,
     _get_summarized_chunk,
     _get_summarized_all,
     _get_concise_chunk,
@@ -14,8 +18,11 @@ from transcript.tasks import (
     _process_chunks_for_concise,
     _generate_summary,
     _generate_concise,
-    OPENAI_MODEL_COMPLETIONS,
-    OPENAI_MODEL_CHAT,
+    _create_batches_for_embeds,
+    _execute_openai_embeds,
+    _create_index_name,
+    _init_pinecone_index,
+    _generate_embeds,
 )
 from transcript.tests.utils import (
     create_user,
@@ -139,3 +146,113 @@ class GenerateSummaryTests(TestCase):
         self.assertEqual(concise.tokens_used, 0,
                          "Concise final step shouldn't use tokens")
         self.assertGreater(concise.total_cost, 0, "No cost calculated")
+
+
+class GenerateEmbedsTests(TestCase):
+    """Test Embeds Generation."""
+
+    def setUp(self):
+        self.user = create_user(
+            email='test@example.com',
+            password='testpass123',
+            name='Test Name',
+        )
+        with open('transcript/tests/data/transcript_short.txt', 'r') as f:
+            self.sample_transcript = f.read()
+
+    def test_create_embeds_batches_empty(self):
+        """Test batching with empty input."""
+        content_list = []
+        batches = _create_batches_for_embeds(content_list, 10)
+        self.assertEqual(len(batches), 0)
+
+    def test_create_embeds_batches_valid(self):
+        """Test batching with valid input."""
+        content_list = ['1234', '1234', '1234', '1234', '1234']
+        expected_output = [['1234', '1234'], ['1234', '1234'], ['1234']]
+        batches = _create_batches_for_embeds(content_list, 10)
+        self.assertEqual(batches, expected_output)
+
+    def test_create_embeds_batches_exact_length(self):
+        """Test batching with input length matching character limit."""
+        content_list = ['12345', '12345', '12345']
+        expected_output = [['12345', '12345'], ['12345']]
+        batches = _create_batches_for_embeds(content_list, 10)
+        self.assertEqual(batches, expected_output)
+
+    def test_execute_openai_embeds_empty(self):
+        """Test embeds generation failure with empty input."""
+        results = _execute_openai_embeds([], 0)
+        self.assertIsNone(results)
+
+    @skip("Minimal testing due to OpenAI API costs")
+    def test_execute_openai_embeds_valid(self):
+        """Test embeds generation with valid input."""
+        request = ["Jason: \"Hello, my name is Jason. I am a student.\"\n\n",
+                   "Bob: \"What is your favorite color?\"\n\n",
+                   "Jason: \"My favorite color is blue.\"\n\n"]
+        results = _execute_openai_embeds(request, 0)
+        to_upsert = results['to_upsert']
+
+        index = 0
+        for result in to_upsert:
+            self.assertEqual(result[0], str(index),
+                             "Index doesn't match input")
+            self.assertEqual(len(result[1]), OPEN_AI_EMBEDDING_DIMENSIONS,
+                             "Number of dimensions doesn't match")
+            self.assertEqual(result[2]['text'], request[index],
+                             "Request strings don't match input")
+            index += 1
+
+        self.assertGreater(results['token_count'], 0, "No tokens used")
+
+    @patch('transcript.signals._run_generate_synthesis')
+    def test_create_index_name(self, patched_signal):
+        """Test index name generation."""
+        tct = create_transcript(user=self.user)
+
+        test_data_list = [
+            {'title': '', 'name': f'{tct.id}--'},
+            {'title': 'Test Title', 'name': f'{tct.id}--test-title'},
+            {'title': '!@#$%^&*()', 'name': f'{tct.id}--'},
+            {'title': '123 Test', 'name': f'{tct.id}--123-test'},
+            {'title': 'Test 123', 'name': f'{tct.id}--test-123'},
+            {'title': 'Test 123---', 'name': f'{tct.id}--test-123'},
+            {'title': 'Test 123 (Short + Embeds)',
+             'name': f'{tct.id}--test-123-short-embeds'},
+        ]
+
+        for test_data in test_data_list:
+            tct.title = test_data['title']
+            index_name = _create_index_name(tct)
+            self.assertEqual(index_name, test_data['name'])
+
+    @skip("Minimal testing due to time taken to create/delete index")
+    def test_create_pinecone_index(self):
+        """Test pinecone index creation."""
+        index_name = 'synthesis-api-test-temp'
+        _init_pinecone_index(index_name,
+                             dimension=OPEN_AI_EMBEDDING_DIMENSIONS)
+        description = pinecone.describe_index(index_name)
+
+        self.assertEqual(description.name, index_name)
+        self.assertEqual(description.dimension, OPEN_AI_EMBEDDING_DIMENSIONS)
+        pinecone.delete_index(index_name)
+
+    @skip("Minimal testing due to OpenAI API costs & Pinecone time")
+    @patch('transcript.signals._run_generate_synthesis')
+    def test_generate_embeds(self, patched_signal):
+        """Test full embeds generation."""
+        tct = create_transcript(
+            user=self.user,
+            transcript=self.sample_transcript
+        )
+
+        chunks = _generate_chunks(tct)
+        embeds_obj = _generate_embeds(tct, chunks)
+
+        self.assertGreater(embeds_obj.index_cost, 0, "No cost calculated")
+        self.assertEqual(len(embeds_obj.chunks), len(chunks),
+                         "Chunks length doesn't match")
+
+        pinecone.delete_index(embeds_obj.index_name)
