@@ -1,7 +1,8 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+import pinecone
 
-from transcript.models import Transcript, AIChunks, AISynthesis
+from transcript.models import Transcript, AIEmbeds
 from transcript.tasks import generate_synthesis
 
 
@@ -17,14 +18,6 @@ def _run_generate_synthesis(sender, instance, created, **kwargs):
         generate_synthesis.delay(instance.id)
 
 
-@receiver(post_delete, sender=Transcript)
-def auto_delete_synthesis_with_transcript(sender, instance, **kwargs):
-    return _auto_delete_synthesis_with_transcript(
-        sender, instance, **kwargs)
-
-
-# Necessary to create helper for mocking in tests
-def _auto_delete_synthesis_with_transcript(sender, instance, **kwargs):
-    """Delete AI synthesis when transcript is deleted"""
-    AIChunks.objects.filter(transcript=instance).delete()
-    AISynthesis.objects.filter(transcript=instance).delete()
+@receiver(post_delete, sender=AIEmbeds)
+def auto_delete_pinecone_index(sender, instance, **kwargs):
+    pinecone.delete_index(instance.index_name)
