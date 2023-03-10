@@ -2,10 +2,12 @@ from celery import shared_task
 from django.conf import settings
 import json
 import openai
+import pinecone
+import re
 
 from transcript.ai.utils import chunk_by_paragraph_groups
 from transcript.models import (
-    Transcript, AIChunks, AISynthesis, SynthesisType
+    Transcript, SynthesisType, AIChunks, AISynthesis, AIEmbeds
 )
 
 
@@ -21,12 +23,23 @@ OPEN_AI_PRICING = {
     OPENAI_MODEL_EMBEDDING: 0.0004,
 }
 
-# Model Defaults
+# OpenAI Magic Numbers
+OPEN_AI_EMBEDDING_DIMENSIONS = 1536
+
+# OpenAI Model Defaults
 DEFAULT_TEMPERATURE = 0
 DEFAULT_MAX_TOKENS = 600
 
+# Pinecone Index
+PINECONE_REGION = "us-west1-gcp"
+
+
 openai.organization = settings.OPENAI_ORG_ID
 openai.api_key = settings.OPENAI_API_KEY
+pinecone.init(
+    api_key=settings.PINECONE_API_KEY,
+    environment=PINECONE_REGION
+)
 
 
 def _calculate_cost(tokens_used: int, model: str) -> float:
@@ -35,11 +48,11 @@ def _calculate_cost(tokens_used: int, model: str) -> float:
     return cost
 
 
-def _execute_openai_request(prompt: str,
-                            model: str,
-                            temperature: int = DEFAULT_TEMPERATURE,
-                            max_tokens: int = DEFAULT_MAX_TOKENS,
-                            ) -> dict:
+def _execute_openai_completion(prompt: str,
+                               model: str,
+                               temperature: int = DEFAULT_TEMPERATURE,
+                               max_tokens: int = DEFAULT_MAX_TOKENS,
+                               ) -> dict:
     """Execute an OpenAI API request and return the response."""
 
     COMPLETIONS_API_PARAMS = {
@@ -86,7 +99,7 @@ def _get_summarized_chunk(text: str,
               f">>>> END OF INTERVIEW \n\n"
               f"Detailed Summary: ")
 
-    return _execute_openai_request(prompt, model)
+    return _execute_openai_completion(prompt, model)
 
 
 def _get_summarized_all(text: str,
@@ -100,7 +113,7 @@ def _get_summarized_all(text: str,
               f"\n\n>>>> START OF INTERVIEW NOTES \n\n{text} \n\n>>>>"
               f"END OF INTERVIEW NOTES \n\nSynopsis:")
 
-    return _execute_openai_request(prompt, model)
+    return _execute_openai_completion(prompt, model)
 
 
 def _get_concise_chunk(text: str,
@@ -131,7 +144,7 @@ def _get_concise_chunk(text: str,
     prompt = (f"{prompt}\n\nInput {index}: ###\n{text}\n###\n"
               f"Output {index}:###\n\n###")
 
-    return _execute_openai_request(prompt, model)
+    return _execute_openai_completion(prompt, model)
 
 
 def _generate_chunks(tct: Transcript) -> 'list[str]':
@@ -236,6 +249,121 @@ def _generate_concise(tct: Transcript, chunks: AIChunks) -> AISynthesis:
     return concise_obj
 
 
+def _create_index_name(tct: Transcript) -> str:
+    """
+    Create a unique index name for the transcript. Characters can only be
+    alphanumeric or hyphen ('-'), and must start/end with an alphanumeric.
+    """
+    name = tct.title.lower()
+    name = re.sub(r'[^\w\s-]', '', name)
+    name = re.sub(r'[\s]+', '-', name)
+    name = name.rstrip('-')
+    name = f"{tct.id}--{name}"
+
+    return name
+
+
+def _init_pinecone_index(index_name: str, dimension: int) -> 'pinecone.Index':
+    """Initialize the pinecone index for this transcript."""
+    if index_name not in pinecone.list_indexes():
+        pinecone.create_index(index_name, dimension=dimension)
+    return pinecone.Index(index_name)
+
+
+def _create_batches_for_embeds(content_list: 'list[str]',
+                               max_length: int) -> 'list[list[str]]':
+    """
+    Split the content_list into batches of the appropriate
+    size for sending to the OpenAI Embeddings API.
+    """
+    batches = []
+    request_list = []
+    request_length = 0
+    for content in content_list:
+
+        # TODO: This assumes no 'content' string is longer than
+        # max_length. Chunking algorithm needs to factor this limit in
+        if len(content) + request_length > max_length:
+            batches.append(request_list)
+            request_list = []
+            request_length = 0
+
+        request_list.append(content)
+        request_length += len(content)
+
+    if request_list:
+        batches.append(request_list)
+
+    return batches
+
+
+def _execute_openai_embeds(request_list: 'list[str]',
+                           start_index: int) -> dict:
+    """Generate embeds for the input strings using Open AI."""
+    ret_val = None
+
+    if request_list:
+        result = openai.Embedding.create(
+            model=OPENAI_MODEL_EMBEDDING,
+            input=request_list
+        )
+        token_count = result["usage"]["total_tokens"]
+        embeds = [record['embedding'] for record in result['data']]
+
+        meta = [{'text': line} for line in request_list]
+        end_index = start_index + len(request_list)
+        request_ids = [str(n) for n in range(start_index, end_index)]
+        to_upsert = zip(request_ids, embeds, meta)
+
+        ret_val = {
+            'to_upsert': list(to_upsert),
+            'token_count': token_count,
+        }
+
+    return ret_val
+
+
+def _execute_openai_embeds_and_upsert(index: 'pinecone.Index',
+                                      content_list: 'list[str]') -> int:
+    """Generate embeds for the input strings using Open AI."""
+
+    # TODO: OpenAI only allows max 8192 tokens per API call
+    # For now we'll limit to 20000 characters per API call
+    # But in the future use tiktoken to get exact token count
+    MAX_CHAR_LENGTH = 20000
+
+    batches = _create_batches_for_embeds(content_list, MAX_CHAR_LENGTH)
+    start_index = 0
+    token_count = 0
+    for batch in batches:
+        result = _execute_openai_embeds(batch, start_index)
+        to_upsert = result['to_upsert']
+        token_count += result['token_count']
+        start_index += len(batch)
+
+        index.upsert(vectors=list(to_upsert))
+
+    return token_count
+
+
+def _generate_embeds(tct: Transcript, chunks: 'list[str]') -> None:
+    """Generate the embeds for the transcript."""
+    index_name = _create_index_name(tct)
+    index = _init_pinecone_index(index_name=index_name,
+                                 dimension=OPEN_AI_EMBEDDING_DIMENSIONS)
+    token_count = _execute_openai_embeds_and_upsert(index, chunks)
+    cost = _calculate_cost(token_count, OPENAI_MODEL_EMBEDDING)
+
+    embeds_obj = AIEmbeds.objects.create(
+        transcript=tct,
+        chunks=chunks,
+        index_name=index_name,
+        index_cost=cost,
+    )
+    embeds_obj.save()
+    return embeds_obj
+
+
 @shared_task
 def generate_synthesis(transcript_id):
     """Generate an AI-synthesized summary for a transcript."""
@@ -243,7 +371,13 @@ def generate_synthesis(transcript_id):
     chunks = _generate_chunks(tct)
 
     summary_chunks = _process_chunks_for_summaries(tct, chunks)
-    _generate_summary(tct, summary_chunks)
+    summary_obj = _generate_summary(tct, summary_chunks)
 
     concise_chunks = _process_chunks_for_concise(tct, chunks)
-    _generate_concise(tct, concise_chunks)
+    concise_obj = _generate_concise(tct, concise_chunks)
+
+    embeds_obj = _generate_embeds(tct, chunks)
+
+    tct.cost = summary_obj.total_cost + \
+        concise_obj.total_cost + embeds_obj.index_cost
+    tct.save()

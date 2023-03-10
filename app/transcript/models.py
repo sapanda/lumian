@@ -18,6 +18,8 @@ class Transcript(models.Model):
         models.CharField(max_length=255), default=list)
     transcript = models.TextField(
         max_length=100000, blank=True, null=True)
+    cost = models.DecimalField(
+        max_digits=10, decimal_places=4, default=0.0000)
 
     def __str__(self):
         return self.title
@@ -55,7 +57,7 @@ class AIChunks(models.Model):
 
 
 class AISynthesis(models.Model):
-    """Generic class for AI synthesis model."""
+    """Model representing final AI synthesis of a transcript"""
 
     class Meta:
         verbose_name = 'AI Synthesis'
@@ -83,3 +85,22 @@ class AISynthesis(models.Model):
 
     def __str__(self):
         return f'{self.get_synthesis_type()} : {self._get_short_desc()}'
+
+
+class AIEmbeds(models.Model):
+    """Model representing vector embeds of a transcript"""
+
+    class Meta:
+        verbose_name = 'AI Embeds'
+        verbose_name_plural = 'AI Embeds'
+
+    transcript = models.ForeignKey(
+        Transcript, on_delete=models.CASCADE)
+
+    chunks = ArrayField(models.TextField(max_length=10000))
+    index_name = models.CharField(max_length=255)
+    index_cost = models.DecimalField(
+        max_digits=10, decimal_places=4, default=0.0000)
+
+    def __str__(self):
+        return f'{self.index_name}'
