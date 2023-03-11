@@ -1,15 +1,16 @@
 """
 Tests for the synthesis of LLM inputs.
 """
+from django.conf import settings
 from django.test import TestCase
 import pinecone
-from unittest import skip
+from unittest import skipIf
 from unittest.mock import patch
 from transcript.models import SynthesisType
 from transcript.tasks import (
     OPENAI_MODEL_COMPLETIONS,
     OPENAI_MODEL_CHAT,
-    OPEN_AI_EMBEDDING_DIMENSIONS,
+    OPENAI_EMBEDDING_DIMENSIONS,
     _get_summarized_chunk,
     _get_summarized_all,
     _get_concise_chunk,
@@ -20,17 +21,23 @@ from transcript.tasks import (
     _generate_concise,
     _create_batches_for_embeds,
     _execute_openai_embeds,
+    _execute_openai_embeds_and_upsert,
     _create_index_name,
     _init_pinecone_index,
     _generate_embeds,
+    _execute_pinecone_search,
+    _execute_openai_query,
+    run_openai_query,
 )
 from transcript.tests.utils import (
+    TEST_INDEX_NAME,
     create_user,
     create_transcript
 )
 
 
-@skip("Minimal testing due to OpenAI API costs")
+@skipIf(settings.TEST_ENV_IS_LOCAL,
+        "OpenAI Costs: Run only when testing AI Synthesis changes")
 class GenerateSummaryTests(TestCase):
     """Test Summary Generation."""
 
@@ -185,20 +192,21 @@ class GenerateEmbedsTests(TestCase):
         results = _execute_openai_embeds([], 0)
         self.assertIsNone(results)
 
-    @skip("Minimal testing due to OpenAI API costs")
+    @skipIf(settings.TEST_ENV_IS_LOCAL,
+            "OpenAI Costs: Run only when testing AI Synthesis changes")
     def test_execute_openai_embeds_valid(self):
         """Test embeds generation with valid input."""
         request = ["Jason: \"Hello, my name is Jason. I am a student.\"\n\n",
                    "Bob: \"What is your favorite color?\"\n\n",
                    "Jason: \"My favorite color is blue.\"\n\n"]
         results = _execute_openai_embeds(request, 0)
-        to_upsert = results['to_upsert']
+        upsert_list = results['upsert_list']
 
         index = 0
-        for result in to_upsert:
+        for result in upsert_list:
             self.assertEqual(result[0], str(index),
                              "Index doesn't match input")
-            self.assertEqual(len(result[1]), OPEN_AI_EMBEDDING_DIMENSIONS,
+            self.assertEqual(len(result[1]), OPENAI_EMBEDDING_DIMENSIONS,
                              "Number of dimensions doesn't match")
             self.assertEqual(result[2]['text'], request[index],
                              "Request strings don't match input")
@@ -227,19 +235,21 @@ class GenerateEmbedsTests(TestCase):
             index_name = _create_index_name(tct)
             self.assertEqual(index_name, test_data['name'])
 
-    @skip("Minimal testing due to time taken to create/delete index")
+    @skipIf(settings.TEST_ENV_IS_LOCAL,
+            "Pinecone Speed: Very slow due to time to create/delete index")
     def test_create_pinecone_index(self):
         """Test pinecone index creation."""
         index_name = 'synthesis-api-test-temp'
         _init_pinecone_index(index_name,
-                             dimension=OPEN_AI_EMBEDDING_DIMENSIONS)
+                             dimension=OPENAI_EMBEDDING_DIMENSIONS)
         description = pinecone.describe_index(index_name)
 
         self.assertEqual(description.name, index_name)
-        self.assertEqual(description.dimension, OPEN_AI_EMBEDDING_DIMENSIONS)
+        self.assertEqual(description.dimension, OPENAI_EMBEDDING_DIMENSIONS)
         pinecone.delete_index(index_name)
 
-    @skip("Minimal testing due to OpenAI API costs & Pinecone time")
+    @skipIf(settings.TEST_ENV_IS_LOCAL,
+            "OpenAI Costs: Run only when testing AI Synthesis changes")
     @patch('transcript.signals._run_generate_synthesis')
     def test_generate_embeds(self, patched_signal):
         """Test full embeds generation."""
@@ -256,3 +266,67 @@ class GenerateEmbedsTests(TestCase):
                          "Chunks length doesn't match")
 
         pinecone.delete_index(embeds_obj.index_name)
+
+
+@patch('transcript.signals._run_generate_synthesis')
+class QueryEmbedsTests(TestCase):
+    """Test Querying a Transcript using Embeds."""
+
+    def setUp(self):
+        self.user = create_user(
+            email='test@example.com',
+            password='testpass123',
+            name='Test Name',
+        )
+        with open('transcript/tests/data/transcript_short.txt', 'r') as f:
+            sample_transcript = f.read()
+
+        self.tct = create_transcript(
+            user=self.user,
+            transcript=sample_transcript
+        )
+
+        # Create and populate the index if it doesn't exist
+        # In the future just use this index for all tests in this class
+        if TEST_INDEX_NAME not in pinecone.list_indexes():
+            index = _init_pinecone_index(index_name=TEST_INDEX_NAME,
+                                         dimension=OPENAI_EMBEDDING_DIMENSIONS)
+            chunks = _generate_chunks(self.tct)
+            _execute_openai_embeds_and_upsert(index, chunks)
+
+    @skipIf(settings.TEST_ENV_IS_LOCAL,
+            "OpenAI Costs: Run only when testing AI Synthesis changes")
+    def test_execute_pinecone_search(self, patched_signal):
+        """Test pinecone search execution."""
+        query = "Where does Jason live?"
+        search_result = _execute_pinecone_search(self.tct, query)
+
+        self.assertGreater(len(search_result['matches']), 1,
+                           "Not enough matches")
+        for match in search_result['matches']:
+            self.assertTrue('Jason' in match['metadata']['text'],
+                            "Bad match string returned")
+
+    @skipIf(settings.TEST_ENV_IS_LOCAL,
+            "Pinecone Speed: Very slow due to time to query index")
+    def test_execute_openai_query(self, patched_signal):
+        """Test Open AI query execution."""
+        query = "Who likes blue?"
+        chosen_sections = ["Jason: \"Hello, I am a student.\"\n\n",
+                           "Bob: \"What is your favorite color?\"\n\n",
+                           "Jason: \"My favorite color is blue.\"\n\n"]
+        model = OPENAI_MODEL_CHAT
+        result = _execute_openai_query(query, model, chosen_sections)
+
+        self.assertGreater(result['tokens_used'], 0, "No tokens used")
+        self.assertTrue('Jason' in result['output'], "Poor response generated")
+
+    @skipIf(settings.TEST_ENV_IS_LOCAL,
+            "OpenAI Costs: Run only when testing AI Synthesis changes")
+    def test_run_full_query(self, patched_signal):
+        """Test a full query on a short transcript."""
+        query = "Where does Jason live?"
+        result = run_openai_query(self.tct, query)
+
+        self.assertGreater(result['tokens_used'], 0, "No tokens used")
+        self.assertTrue('Boise' in result['output'], "Poor response generated")
