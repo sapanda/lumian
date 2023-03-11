@@ -2,7 +2,10 @@
 Utility functions for testing the transcript app.
 """
 from django.contrib.auth import get_user_model
-from transcript.models import Transcript, AISynthesis, SynthesisType
+from transcript.models import Transcript, AISynthesis, SynthesisType, AIEmbeds
+
+
+TEST_INDEX_NAME = 'synthesis-api-test'
 
 
 def create_user(**params):
@@ -38,4 +41,11 @@ def create_transcript(user, **params):
         tokens_used=0,
     )
     concise.save()
+
+    embeds = AIEmbeds.objects.create(
+        transcript=tpt,
+        chunks=[],
+        index_name=TEST_INDEX_NAME
+    )
+    embeds.save()
     return tpt

@@ -17,14 +17,15 @@ OPENAI_MODEL_CHAT = "gpt-3.5-turbo"
 OPENAI_MODEL_EMBEDDING = "text-embedding-ada-002"
 
 # OpenAI Pricing (USD per 1k tokens)
-OPEN_AI_PRICING = {
+OPENAI_PRICING = {
     OPENAI_MODEL_COMPLETIONS: 0.02,
     OPENAI_MODEL_CHAT: 0.002,
     OPENAI_MODEL_EMBEDDING: 0.0004,
 }
 
-# OpenAI Magic Numbers
-OPEN_AI_EMBEDDING_DIMENSIONS = 1536
+# OpenAI Parameters
+OPENAI_EMBEDDING_DIMENSIONS = 1536
+OPENAI_QUERY_CHARACTER_CUTOFF = 8000
 
 # OpenAI Model Defaults
 DEFAULT_TEMPERATURE = 0
@@ -44,7 +45,7 @@ pinecone.init(
 
 def _calculate_cost(tokens_used: int, model: str) -> float:
     """Calculate the cost of the OpenAI API request."""
-    cost = tokens_used / 1000 * OPEN_AI_PRICING[model]
+    cost = tokens_used / 1000 * OPENAI_PRICING[model]
     return cost
 
 
@@ -316,7 +317,7 @@ def _execute_openai_embeds(request_list: 'list[str]',
         to_upsert = zip(request_ids, embeds, meta)
 
         ret_val = {
-            'to_upsert': list(to_upsert),
+            'upsert_list': list(to_upsert),
             'token_count': token_count,
         }
 
@@ -337,11 +338,11 @@ def _execute_openai_embeds_and_upsert(index: 'pinecone.Index',
     token_count = 0
     for batch in batches:
         result = _execute_openai_embeds(batch, start_index)
-        to_upsert = result['to_upsert']
+        upsert_list = result['upsert_list']
         token_count += result['token_count']
         start_index += len(batch)
 
-        index.upsert(vectors=list(to_upsert))
+        index.upsert(vectors=upsert_list)
 
     return token_count
 
@@ -350,7 +351,7 @@ def _generate_embeds(tct: Transcript, chunks: 'list[str]') -> None:
     """Generate the embeds for the transcript."""
     index_name = _create_index_name(tct)
     index = _init_pinecone_index(index_name=index_name,
-                                 dimension=OPEN_AI_EMBEDDING_DIMENSIONS)
+                                 dimension=OPENAI_EMBEDDING_DIMENSIONS)
     token_count = _execute_openai_embeds_and_upsert(index, chunks)
     cost = _calculate_cost(token_count, OPENAI_MODEL_EMBEDDING)
 
@@ -381,3 +382,66 @@ def generate_synthesis(transcript_id):
     tct.cost = summary_obj.total_cost + \
         concise_obj.total_cost + embeds_obj.index_cost
     tct.save()
+
+
+def _execute_pinecone_search(tct: Transcript, query: str) -> dict:
+    """Retrieve the relevant embeds from Pinecone for the given query."""
+    embed_result = openai.Embedding.create(input=query,
+                                           model=OPENAI_MODEL_EMBEDDING)
+    embedding = embed_result['data'][0]['embedding']
+
+    embeds_obj = AIEmbeds.objects.get(transcript=tct)
+    index = pinecone.Index(embeds_obj.index_name)
+    return index.query([embedding], top_k=5, include_metadata=True)
+
+
+def _context_from_search_results(search_results: dict,
+                                 max_context_length: int
+                                 = OPENAI_QUERY_CHARACTER_CUTOFF
+                                 ) -> 'list[str]':
+    """
+    Parse the search_results and return a context string
+    list with total length under max_context_length
+    """
+    chosen_sections = []
+    total_length = 0
+    for match in search_results['matches']:
+        item = match['metadata']['text']
+        # TODO: Verify chunks are not larger than cutoff
+        if total_length + len(item) > max_context_length:
+            break
+
+        chosen_sections.append(item)
+        total_length += len(item)
+
+    return chosen_sections
+
+
+def _execute_openai_query(query: str,
+                          model: str,
+                          chosen_sections: 'list[str]'
+                          ) -> dict:
+    """Generate a summary from a concatenated summary string."""
+
+    prompt = (f'Answer the question as truthfully as possible using '
+              f'the provided context, which consists of excerpts from '
+              f'interviews. If the answer is not contained within the '
+              f'text below, say "I don\'t know."\n\nContext:\n'
+              f'{"".join(chosen_sections)}Q: {query}\nA:')
+
+    print(f'\n\nprompt = {prompt}\n\n')
+
+    return _execute_openai_completion(prompt, model)
+
+
+# TODO: Should this and other OpenAI logic be in tasks.py?
+def run_openai_query(tct: Transcript, query: str) -> str:
+    """Generate the OpenAI query for the given transcript."""
+    search_results = _execute_pinecone_search(tct, query)
+    chosen_sections = _context_from_search_results(search_results)
+    response = _execute_openai_query(
+        query,
+        model=OPENAI_MODEL_CHAT,
+        chosen_sections=chosen_sections
+    )
+    return response
