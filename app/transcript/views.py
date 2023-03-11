@@ -14,10 +14,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from transcript.models import (
-    Transcript, AISynthesis, AIEmbeds, SynthesisType
+    Transcript, AISynthesis, AIEmbeds, SynthesisType, Query
 )
 from transcript.serializers import (
-    TranscriptSerializer, AISynthesisSerializer
+    TranscriptSerializer, AISynthesisSerializer, QuerySerializer
 )
 from transcript.tasks import run_openai_query
 
@@ -105,8 +105,12 @@ class QueryView(APIView):
 
         return response
 
-    # def get(self, request):
-    #     # list method implementation
-    #     data = MyModel.objects.all()
-    #     serializer = MySerializer(data, many=True)
-    #     return Response(serializer.data)
+    def get(self, request, pk):
+        try:
+            Transcript.objects.get(pk=pk)  # Needed for checking 404
+            queryset = Query.objects.filter(transcript=pk)
+            serializer = QuerySerializer(queryset, many=True)
+            response = Response(serializer.data, status=status.HTTP_200_OK)
+        except Transcript.DoesNotExist:
+            response = Response(status=status.HTTP_404_NOT_FOUND)
+        return response

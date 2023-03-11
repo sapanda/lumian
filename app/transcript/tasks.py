@@ -462,6 +462,7 @@ def run_openai_query(tct: Transcript, query: str) -> Query:
 
     query_obj = Query.objects.create(
         transcript=tct,
+        query=query,
         result=response['output'],
         search_values=search_values,
         search_scores=search_scores,
