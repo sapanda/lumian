@@ -7,13 +7,10 @@ from transcript.models import (
     Transcript, AISynthesis, SynthesisType, AIEmbeds
 )
 from transcript.tasks import (
-    OPENAI_EMBEDDING_DIMENSIONS,
+    pinecone_index,
     _generate_chunks,
     _execute_openai_embeds_and_upsert,
-    _init_pinecone_index,
 )
-
-from pinecone import list_indexes
 
 
 TEST_INDEX_NAME = 'synthesis-api-test'
@@ -56,19 +53,14 @@ def create_transcript(user, **params):
 
 
 def create_embeds(tct: Transcript):
+    """Create and populate the index if it doesn't exist."""
+    chunks = _generate_chunks(tct)
+    result = _execute_openai_embeds_and_upsert(tct, pinecone_index, chunks)
+
     embeds = AIEmbeds.objects.create(
         transcript=tct,
-        chunks=[],
-        index_name=TEST_INDEX_NAME
+        chunks=chunks,
+        pinecone_ids=result['request_ids'],
     )
     embeds.save()
     return embeds
-
-
-def create_pinecone_index(tct: Transcript):
-    """Create and populate the index if it doesn't exist."""
-    if TEST_INDEX_NAME not in list_indexes():
-        index = _init_pinecone_index(index_name=TEST_INDEX_NAME,
-                                     dimension=OPENAI_EMBEDDING_DIMENSIONS)
-        chunks = _generate_chunks(tct)
-        _execute_openai_embeds_and_upsert(index, chunks)

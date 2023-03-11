@@ -2,7 +2,7 @@
 Tests for the creation and upload of transcripts via the API.
 """
 from django.conf import settings
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from rest_framework.test import APIClient
@@ -10,11 +10,11 @@ from rest_framework import status
 
 from transcript.models import Transcript, AISynthesis, SynthesisType
 from transcript.serializers import TranscriptSerializer
+from transcript.tasks import pinecone_index
 from transcript.tests.utils import (
     create_user,
     create_transcript,
     create_embeds,
-    create_pinecone_index,
 )
 
 from unittest import skipIf, skip
@@ -278,6 +278,7 @@ class PrivateTranscriptAPITests(TestCase):
 
 @skipIf(settings.TEST_ENV_IS_LOCAL,
         "OpenAI Costs: Run only when testing AI Synthesis changes")
+@override_settings(PINECONE_NAMESPACE=f'test-{settings.PINECONE_USER}')
 @patch('transcript.signals._run_generate_synthesis')
 class PrivateQueryAPITests(TestCase):
     """Test the transcript querying features"""
@@ -298,7 +299,10 @@ class PrivateQueryAPITests(TestCase):
             user=self.user,
             transcript=sample_transcript
         )
-        create_pinecone_index(self.tct)
+
+    def tearDown(self):
+        pinecone_index.delete(deleteAll='true',
+                              namespace=settings.PINECONE_NAMESPACE)
 
     def test_query_execution_success(self, patched_signal):
         """Test that the query request is successfully executed."""

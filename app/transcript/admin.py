@@ -88,7 +88,7 @@ class AISynthesisInline(ReadOnlyInline):
 
 class AIEmbedsInline(ReadOnlyInline):
     model = AIEmbeds
-    exclude = ['chunks']
+    exclude = ['chunks', 'pinecone_ids']
     verbose_name = ""
     verbose_name_plural = "AI Embeds"
 
