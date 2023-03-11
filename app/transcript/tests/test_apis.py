@@ -327,3 +327,28 @@ class PrivateQueryAPITests(TestCase):
         url = query_url(10000000)
         res = self.client.post(url, {'query': ''})
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_query_list_empty(self, patched_signal):
+        """Test that the query GET request works with empty results."""
+        url = query_url(self.tct.id)
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 0)
+
+    def test_query_list_valid(self, patched_signal):
+        """Test that the query GET request is successfully executed."""
+        create_embeds(self.tct)
+
+        url = query_url(self.tct.id)
+        self.client.post(url, {'query': 'Where does Jason live?'})
+        self.client.post(url, {'query': 'Describe Jason\'s family?'})
+
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 2)
+
+    def test_query_list_invalid_transcript(self, patched_signal):
+        """Test that the query GET request fails with invalid transcript."""
+        url = query_url(10000000)
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
