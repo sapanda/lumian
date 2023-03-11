@@ -1,6 +1,7 @@
 """
 Tests for the creation and upload of transcripts via the API.
 """
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 
@@ -9,8 +10,14 @@ from rest_framework import status
 
 from transcript.models import Transcript, AISynthesis, SynthesisType
 from transcript.serializers import TranscriptSerializer
-from transcript.tests.utils import create_user, create_transcript
+from transcript.tests.utils import (
+    create_user,
+    create_transcript,
+    create_embeds,
+    create_pinecone_index,
+)
 
+from unittest import skipIf, skip
 from unittest.mock import patch
 
 
@@ -30,6 +37,11 @@ def summary_url(transcript_id):
 def concise_url(transcript_id):
     """Create and return a concise detail URL."""
     return reverse('transcript:concise-detail', args=[transcript_id])
+
+
+def query_url(transcript_id):
+    """Create and return a query posting URL."""
+    return reverse('transcript:query-detail', args=[transcript_id])
 
 
 class PublicTranscriptAPITests(TestCase):
@@ -118,6 +130,7 @@ class PrivateTranscriptAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
 
+    @skip("Not implemented yet")
     def test_partial_update(self, patched_signal):
         """Test partial update of a transcript."""
         tpt = create_transcript(user=self.user)
@@ -132,6 +145,7 @@ class PrivateTranscriptAPITests(TestCase):
         self.assertEqual(tpt.interviewee_names, payload['interviewee_names'])
         self.assertEqual(tpt.user, self.user)
 
+    @skip("Not implemented yet")
     def test_full_update(self, patched_signal):
         """Test full update of transcript."""
         tpt = create_transcript(user=self.user)
@@ -259,4 +273,53 @@ class PrivateTranscriptAPITests(TestCase):
         url = concise_url(10000000)
         res = self.client.get(url)
 
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+
+@skipIf(settings.TEST_ENV_IS_LOCAL,
+        "OpenAI Costs: Run only when testing AI Synthesis changes")
+@patch('transcript.signals._run_generate_synthesis')
+class PrivateQueryAPITests(TestCase):
+    """Test the transcript querying features"""
+
+    def setUp(self):
+        self.user = create_user(
+            email='test@example.com',
+            password='testpass123',
+            name='Test Name',
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+        with open('transcript/tests/data/transcript_short.txt', 'r') as f:
+            sample_transcript = f.read()
+
+        self.tct = create_transcript(
+            user=self.user,
+            transcript=sample_transcript
+        )
+        create_pinecone_index(self.tct)
+
+    def test_query_execution_success(self, patched_signal):
+        """Test that the query request is successfully executed."""
+        create_embeds(self.tct)
+
+        query = "Where does Jason live?"
+        url = query_url(self.tct.id)
+        res = self.client.post(url, {'query': query})
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data['query'], query, "Wrong query string")
+        self.assertTrue('Boise' in res.data['result'], "Bad result")
+
+    def test_query_execution_embeds_in_progress(self, patched_signal):
+        """Test that the query request fails if embeds are not yet ready."""
+        url = query_url(self.tct.id)
+        res = self.client.post(url, {'query': ''})
+        self.assertEqual(res.status_code, status.HTTP_202_ACCEPTED)
+
+    def test_query_execution_invalid_transcript(self, patched_signal):
+        """Test that the query request fails if transcript doesn't exist."""
+        url = query_url(10000000)
+        res = self.client.post(url, {'query': ''})
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)

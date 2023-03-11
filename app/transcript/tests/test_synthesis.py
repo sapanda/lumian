@@ -21,7 +21,6 @@ from transcript.tasks import (
     _generate_concise,
     _create_batches_for_embeds,
     _execute_openai_embeds,
-    _execute_openai_embeds_and_upsert,
     _create_index_name,
     _init_pinecone_index,
     _generate_embeds,
@@ -30,9 +29,9 @@ from transcript.tasks import (
     run_openai_query,
 )
 from transcript.tests.utils import (
-    TEST_INDEX_NAME,
     create_user,
-    create_transcript
+    create_transcript,
+    create_pinecone_index,
 )
 
 
@@ -285,14 +284,7 @@ class QueryEmbedsTests(TestCase):
             user=self.user,
             transcript=sample_transcript
         )
-
-        # Create and populate the index if it doesn't exist
-        # In the future just use this index for all tests in this class
-        if TEST_INDEX_NAME not in pinecone.list_indexes():
-            index = _init_pinecone_index(index_name=TEST_INDEX_NAME,
-                                         dimension=OPENAI_EMBEDDING_DIMENSIONS)
-            chunks = _generate_chunks(self.tct)
-            _execute_openai_embeds_and_upsert(index, chunks)
+        create_pinecone_index(self.tct)
 
     @skipIf(settings.TEST_ENV_IS_LOCAL,
             "OpenAI Costs: Run only when testing AI Synthesis changes")
@@ -326,7 +318,7 @@ class QueryEmbedsTests(TestCase):
     def test_run_full_query(self, patched_signal):
         """Test a full query on a short transcript."""
         query = "Where does Jason live?"
-        result = run_openai_query(self.tct, query)
+        query_obj = run_openai_query(self.tct, query)
 
-        self.assertGreater(result['tokens_used'], 0, "No tokens used")
-        self.assertTrue('Boise' in result['output'], "Poor response generated")
+        self.assertGreater(query_obj.query_cost, 0, "No cost calculated")
+        self.assertTrue('Boise' in query_obj.result, "Poor response generated")

@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-import pinecone
+from pinecone import delete_index
 
 from transcript.models import Transcript, AIEmbeds
 from transcript.tasks import generate_synthesis
@@ -20,4 +20,4 @@ def _run_generate_synthesis(sender, instance, created, **kwargs):
 
 @receiver(post_delete, sender=AIEmbeds)
 def auto_delete_pinecone_index(sender, instance, **kwargs):
-    pinecone.delete_index(instance.index_name)
+    delete_index(instance.index_name)

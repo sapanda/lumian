@@ -49,3 +49,5 @@ class AdminSiteTests(TestCase):
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, 200)
+
+    # TODO: Test that AISynthesis, AIChunks, AIEmbed, and Query are listed
