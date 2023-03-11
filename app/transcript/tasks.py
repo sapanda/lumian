@@ -3,7 +3,6 @@ from django.conf import settings
 import json
 import openai
 import pinecone
-import re
 
 from transcript.ai.utils import chunk_by_paragraph_groups
 from transcript.models import (
@@ -25,14 +24,15 @@ OPENAI_PRICING = {
 
 # OpenAI Parameters
 OPENAI_EMBEDDING_DIMENSIONS = 1536
-OPENAI_QUERY_CHARACTER_CUTOFF = 8000
 
-# OpenAI Model Defaults
+# Pinecone Parameters
+PINECONE_REGION = "us-west1-gcp"
+
+# Tweakable Parameters
 DEFAULT_TEMPERATURE = 0
 DEFAULT_MAX_TOKENS = 600
-
-# Pinecone Index
-PINECONE_REGION = "us-west1-gcp"
+OPENAI_QUERY_CHARACTER_CUTOFF = 8000
+PINECONE_INDEX_NAME = "synthesis-api-dev"
 
 
 openai.organization = settings.OPENAI_ORG_ID
@@ -41,6 +41,18 @@ pinecone.init(
     api_key=settings.PINECONE_API_KEY,
     environment=PINECONE_REGION
 )
+
+
+def _init_pinecone_index(index_name: str = PINECONE_INDEX_NAME,
+                         dimension: int = OPENAI_EMBEDDING_DIMENSIONS
+                         ) -> 'pinecone.Index':
+    """Initialize the pinecone index."""
+    if index_name not in pinecone.list_indexes():
+        pinecone.create_index(index_name, dimension=dimension)
+    return pinecone.Index(index_name)
+
+
+pinecone_index = _init_pinecone_index()
 
 
 def _calculate_cost(tokens_used: int, model: str) -> float:
@@ -250,27 +262,6 @@ def _generate_concise(tct: Transcript, chunks: AIChunks) -> AISynthesis:
     return concise_obj
 
 
-def _create_index_name(tct: Transcript) -> str:
-    """
-    Create a unique index name for the transcript. Characters can only be
-    alphanumeric or hyphen ('-'), and must start/end with an alphanumeric.
-    """
-    name = tct.title.lower()
-    name = re.sub(r'[^\w\s-]', '', name)
-    name = re.sub(r'[\s]+', '-', name)
-    name = name.rstrip('-')
-    name = f"{tct.id}--{name}"
-
-    return name
-
-
-def _init_pinecone_index(index_name: str, dimension: int) -> 'pinecone.Index':
-    """Initialize the pinecone index for this transcript."""
-    if index_name not in pinecone.list_indexes():
-        pinecone.create_index(index_name, dimension=dimension)
-    return pinecone.Index(index_name)
-
-
 def _create_batches_for_embeds(content_list: 'list[str]',
                                max_length: int) -> 'list[list[str]]':
     """
@@ -298,7 +289,8 @@ def _create_batches_for_embeds(content_list: 'list[str]',
     return batches
 
 
-def _execute_openai_embeds(request_list: 'list[str]',
+def _execute_openai_embeds(tct: Transcript,
+                           request_list: 'list[str]',
                            start_index: int) -> dict:
     """Generate embeds for the input strings using Open AI."""
     ret_val = None
@@ -311,20 +303,28 @@ def _execute_openai_embeds(request_list: 'list[str]',
         token_count = result["usage"]["total_tokens"]
         embeds = [record['embedding'] for record in result['data']]
 
-        meta = [{'text': line} for line in request_list]
+        meta = [{
+            'text': line,
+            'transcript_id': tct.id,
+            'transcript_title': tct.title,
+            } for line in request_list]
+
         end_index = start_index + len(request_list)
-        request_ids = [str(n) for n in range(start_index, end_index)]
+        request_ids = [f'{str(tct.id)}-{str(n)}'
+                       for n in range(start_index, end_index)]
         to_upsert = zip(request_ids, embeds, meta)
 
         ret_val = {
             'upsert_list': list(to_upsert),
             'token_count': token_count,
+            'request_ids': request_ids,
         }
 
     return ret_val
 
 
-def _execute_openai_embeds_and_upsert(index: 'pinecone.Index',
+def _execute_openai_embeds_and_upsert(tct: Transcript,
+                                      index: 'pinecone.Index',
                                       content_list: 'list[str]') -> int:
     """Generate embeds for the input strings using Open AI."""
 
@@ -336,29 +336,34 @@ def _execute_openai_embeds_and_upsert(index: 'pinecone.Index',
     batches = _create_batches_for_embeds(content_list, MAX_CHAR_LENGTH)
     start_index = 0
     token_count = 0
+    request_ids = []
     for batch in batches:
-        result = _execute_openai_embeds(batch, start_index)
+        result = _execute_openai_embeds(tct, batch, start_index)
         upsert_list = result['upsert_list']
         token_count += result['token_count']
+        request_ids += result['request_ids']
         start_index += len(batch)
 
-        index.upsert(vectors=upsert_list)
+        index.upsert(vectors=upsert_list,
+                     namespace=settings.PINECONE_NAMESPACE)
 
-    return token_count
+    ret_val = {
+        'token_count': token_count,
+        'request_ids': request_ids,
+    }
+
+    return ret_val
 
 
 def _generate_embeds(tct: Transcript, chunks: 'list[str]') -> None:
     """Generate the embeds for the transcript."""
-    index_name = _create_index_name(tct)
-    index = _init_pinecone_index(index_name=index_name,
-                                 dimension=OPENAI_EMBEDDING_DIMENSIONS)
-    token_count = _execute_openai_embeds_and_upsert(index, chunks)
-    cost = _calculate_cost(token_count, OPENAI_MODEL_EMBEDDING)
+    result = _execute_openai_embeds_and_upsert(tct, pinecone_index, chunks)
+    cost = _calculate_cost(result['token_count'], OPENAI_MODEL_EMBEDDING)
 
     embeds_obj = AIEmbeds.objects.create(
         transcript=tct,
         chunks=chunks,
-        index_name=index_name,
+        pinecone_ids=result['request_ids'],
         index_cost=cost,
     )
     embeds_obj.save()
@@ -390,10 +395,17 @@ def _execute_pinecone_search(tct: Transcript, query: str) -> dict:
     embed_result = openai.Embedding.create(input=query,
                                            model=OPENAI_MODEL_EMBEDDING)
     embedding = embed_result['data'][0]['embedding']
+    query_result = pinecone_index.query(
+        [embedding],
+        filter={
+            "transcript_id": {"$eq": tct.id}
+        },
+        top_k=5,
+        include_metadata=True,
+        namespace=settings.PINECONE_NAMESPACE,
+    )
 
-    embeds_obj = AIEmbeds.objects.get(transcript=tct)
-    index = pinecone.Index(embeds_obj.index_name)
-    return index.query([embedding], top_k=5, include_metadata=True)
+    return query_result
 
 
 def _context_from_search_results(search_results: dict,

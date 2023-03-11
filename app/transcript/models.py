@@ -98,12 +98,12 @@ class AIEmbeds(models.Model):
         Transcript, on_delete=models.CASCADE)
 
     chunks = ArrayField(models.TextField(max_length=10000))
-    index_name = models.CharField(max_length=255)
+    pinecone_ids = ArrayField(models.CharField(max_length=255))
     index_cost = models.DecimalField(
         max_digits=10, decimal_places=4, default=0.0000)
 
     def __str__(self):
-        return f'{self.index_name}'
+        return f'{self.transcript}'
 
 
 class Query(models.Model):

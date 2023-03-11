@@ -48,7 +48,7 @@ class AISynthesisView(APIView):
     def get_of_type(self, request, pk, synthesis_type):
         """Retrieve the AISynthesis of the given type."""
         try:
-            tct = Transcript.objects.get(pk=pk)  # noqa, needed for 404.
+            Transcript.objects.get(pk=pk)  # Needed for checking 404
             synthesis = AISynthesis.objects.get(
                 transcript=pk,
                 output_type=synthesis_type
@@ -90,6 +90,7 @@ class QueryView(APIView):
         query = request.data.get('query')
         try:
             tct = Transcript.objects.get(pk=pk)
+            AIEmbeds.objects.get(pk=pk)  # Needed for checking 202
             query_obj = run_openai_query(tct, query)
             data = {
                 'query': query,
