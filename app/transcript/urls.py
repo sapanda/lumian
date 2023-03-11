@@ -16,4 +16,6 @@ urlpatterns = [
          views.SummaryView.as_view(), name='summary-detail'),
     path('transcripts/<int:pk>/concise/',
          views.ConciseView.as_view(), name='concise-detail'),
+    path('transcripts/<int:pk>/query/',
+         views.QueryView.as_view(), name='query-detail'),
 ]

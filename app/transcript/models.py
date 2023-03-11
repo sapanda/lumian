@@ -104,3 +104,25 @@ class AIEmbeds(models.Model):
 
     def __str__(self):
         return f'{self.index_name}'
+
+
+class Query(models.Model):
+    """Model representing a query for a transcript"""
+
+    class Meta:
+        verbose_name = 'Query'
+        verbose_name_plural = 'Queries'
+
+    transcript = models.ForeignKey(
+        Transcript, on_delete=models.CASCADE)
+
+    query = models.TextField(max_length=10000)
+    result = models.TextField(max_length=10000)
+    search_values = ArrayField(models.TextField(max_length=10000))
+    search_scores = ArrayField(models.DecimalField(
+        max_digits=10, decimal_places=4, default=0.0000))
+    query_cost = models.DecimalField(
+        max_digits=10, decimal_places=4, default=0.0000)
+
+    def __str__(self):
+        return f'{self.query}'

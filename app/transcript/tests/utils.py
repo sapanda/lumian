@@ -2,7 +2,18 @@
 Utility functions for testing the transcript app.
 """
 from django.contrib.auth import get_user_model
-from transcript.models import Transcript, AISynthesis, SynthesisType, AIEmbeds
+
+from transcript.models import (
+    Transcript, AISynthesis, SynthesisType, AIEmbeds
+)
+from transcript.tasks import (
+    OPENAI_EMBEDDING_DIMENSIONS,
+    _generate_chunks,
+    _execute_openai_embeds_and_upsert,
+    _init_pinecone_index,
+)
+
+from pinecone import list_indexes
 
 
 TEST_INDEX_NAME = 'synthesis-api-test'
@@ -41,11 +52,23 @@ def create_transcript(user, **params):
         tokens_used=0,
     )
     concise.save()
+    return tpt
 
+
+def create_embeds(tct: Transcript):
     embeds = AIEmbeds.objects.create(
-        transcript=tpt,
+        transcript=tct,
         chunks=[],
         index_name=TEST_INDEX_NAME
     )
     embeds.save()
-    return tpt
+    return embeds
+
+
+def create_pinecone_index(tct: Transcript):
+    """Create and populate the index if it doesn't exist."""
+    if TEST_INDEX_NAME not in list_indexes():
+        index = _init_pinecone_index(index_name=TEST_INDEX_NAME,
+                                     dimension=OPENAI_EMBEDDING_DIMENSIONS)
+        chunks = _generate_chunks(tct)
+        _execute_openai_embeds_and_upsert(index, chunks)

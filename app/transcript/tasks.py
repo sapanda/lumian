@@ -7,7 +7,7 @@ import re
 
 from transcript.ai.utils import chunk_by_paragraph_groups
 from transcript.models import (
-    Transcript, SynthesisType, AIChunks, AISynthesis, AIEmbeds
+    Transcript, SynthesisType, AIChunks, AISynthesis, AIEmbeds, Query
 )
 
 
@@ -368,6 +368,7 @@ def _generate_embeds(tct: Transcript, chunks: 'list[str]') -> None:
 @shared_task
 def generate_synthesis(transcript_id):
     """Generate an AI-synthesized summary for a transcript."""
+    print(f'\n\n\nTranscript ID: {transcript_id}\n\n\n')
     tct = Transcript.objects.get(id=transcript_id)
     chunks = _generate_chunks(tct)
 
@@ -429,19 +430,34 @@ def _execute_openai_query(query: str,
               f'text below, say "I don\'t know."\n\nContext:\n'
               f'{"".join(chosen_sections)}Q: {query}\nA:')
 
-    print(f'\n\nprompt = {prompt}\n\n')
-
     return _execute_openai_completion(prompt, model)
 
 
 # TODO: Should this and other OpenAI logic be in tasks.py?
-def run_openai_query(tct: Transcript, query: str) -> str:
+def run_openai_query(tct: Transcript, query: str) -> Query:
     """Generate the OpenAI query for the given transcript."""
     search_results = _execute_pinecone_search(tct, query)
     chosen_sections = _context_from_search_results(search_results)
+    model = OPENAI_MODEL_CHAT
     response = _execute_openai_query(
-        query,
-        model=OPENAI_MODEL_CHAT,
-        chosen_sections=chosen_sections
+        query, model=model, chosen_sections=chosen_sections
     )
-    return response
+    query_cost = _calculate_cost(response['tokens_used'], model)
+
+    matches = search_results['matches']
+    search_values = [match['metadata']['text'] for match in matches]
+    search_scores = [match['score'] for match in matches]
+
+    query_obj = Query.objects.create(
+        transcript=tct,
+        result=response['output'],
+        search_values=search_values,
+        search_scores=search_scores,
+        query_cost=query_cost,
+    )
+    query_obj.save()
+
+    tct.cost = float(tct.cost) + query_obj.query_cost
+    tct.save()
+
+    return query_obj
