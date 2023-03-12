@@ -29,6 +29,7 @@ from transcript.tasks import (
 from transcript.tests.utils import (
     create_user,
     create_transcript,
+    create_embeds,
 )
 
 
@@ -266,6 +267,7 @@ class QueryEmbedsTests(TestCase):
 
     def test_execute_pinecone_search(self, patched_signal):
         """Test pinecone search execution."""
+        create_embeds(self.tct)
         query = "Where does Jason live?"
         search_result = _execute_pinecone_search(self.tct, query)
 
@@ -289,6 +291,7 @@ class QueryEmbedsTests(TestCase):
 
     def test_run_full_query(self, patched_signal):
         """Test a full query on a short transcript."""
+        create_embeds(self.tct)
         query = "Where does Jason live?"
         query_obj = run_openai_query(self.tct, query)
 

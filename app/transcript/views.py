@@ -90,7 +90,7 @@ class QueryView(APIView):
         query = request.data.get('query')
         try:
             tct = Transcript.objects.get(pk=pk)
-            AIEmbeds.objects.get(pk=pk)  # Needed for checking 202
+            AIEmbeds.objects.get(transcript=pk)  # Needed for checking 202
             query_obj = run_openai_query(tct, query)
             data = {
                 'query': query,
