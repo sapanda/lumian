@@ -8,6 +8,7 @@ services:
         - DEV=true
     ports:
       - 8000:8000
+      - 3000:3000
     volumes:
       - ./app:/app
       - dev-static-data:/vol/web
