@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 import os
-from decouple import config
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -22,13 +21,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-srdn_14x0me&!uh8gc8ghnqgo8m0drvg05!hy)w@xj&$cza1_e'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'changeme')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = bool(int(os.environ.get('DEBUG', 0)))
 
 ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS.extend(
+    filter(
+        None,
+        os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(','),
+    )
+)
 
 # Application definition
 
@@ -36,8 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.sessions',
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
@@ -126,7 +130,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/static/'
+MEDIA_URL = '/static/media/'
+
+STATIC_ROOT = '/vol/web/static'
+MEDIA_ROOT = '/vol/web/media'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
@@ -149,13 +158,13 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 
 # API keys
-OPENAI_ORG_ID = os.environ.get('OPENAI_ORG_ID', config('OPENAI_ORG_ID'))
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', config('OPENAI_API_KEY'))
-PINECONE_API_KEY = os.environ.get('PINECONE_API_KEY', config('PINECONE_API_KEY'))
+OPENAI_ORG_ID = os.environ.get('OPENAI_ORG_ID')
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+PINECONE_API_KEY = os.environ.get('PINECONE_API_KEY')
 
 # Testing parameters
 TEST_ENV_IS_LOCAL = os.environ.get('TEST_ENV', 'local') == 'local'
 
 # Pinecone indexing
-PINECONE_USER = config('PINECONE_USER', default='')
+PINECONE_USER = os.environ.get('PINECONE_USER', '')
 PINECONE_NAMESPACE = f'dev-{PINECONE_USER}' if PINECONE_USER else 'dev'
