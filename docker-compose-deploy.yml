@@ -52,7 +52,7 @@ services:
       context: ./proxy
     restart: always
     ports:
-      - 8500:8000
+      - 80:8000
     volumes:
       - static-data:/vol/static
     depends_on:
