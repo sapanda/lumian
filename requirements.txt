@@ -5,6 +5,5 @@ drf-spectacular>=0.25.1,<0.26
 openai>=0.27.0,<0.28
 pinecone-client>=2.2.1,<2.3
 psycopg2>=2.9.5,<2.10
-python-decouple>=3.8,<3.9
 redis>=4.5.1,<4.6
 uwsgi>=2.0.21,<2.1

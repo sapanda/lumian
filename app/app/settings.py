@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 import os
-from decouple import config
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -159,13 +158,13 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 
 # API keys
-OPENAI_ORG_ID = os.environ.get('OPENAI_ORG_ID', config('OPENAI_ORG_ID'))
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', config('OPENAI_API_KEY'))
-PINECONE_API_KEY = os.environ.get('PINECONE_API_KEY', config('PINECONE_API_KEY'))
+OPENAI_ORG_ID = os.environ.get('OPENAI_ORG_ID')
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+PINECONE_API_KEY = os.environ.get('PINECONE_API_KEY')
 
 # Testing parameters
 TEST_ENV_IS_LOCAL = os.environ.get('TEST_ENV', 'local') == 'local'
 
 # Pinecone indexing
-PINECONE_USER = config('PINECONE_USER', default='')
+PINECONE_USER = os.environ.get('PINECONE_USER', '')
 PINECONE_NAMESPACE = f'dev-{PINECONE_USER}' if PINECONE_USER else 'dev'
