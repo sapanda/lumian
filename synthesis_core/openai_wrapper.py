@@ -3,6 +3,14 @@ import openai, os, time
 # Models
 OPENAI_MODEL_COMPLETIONS = "text-davinci-003"
 OPENAI_MODEL_CHAT = "gpt-3.5-turbo"
+OPENAI_MODEL_EMBEDDING = "text-embedding-ada-002"
+
+# 
+OPENAI_PRICING = {
+    OPENAI_MODEL_COMPLETIONS: 0.02,
+    OPENAI_MODEL_CHAT: 0.002,
+    OPENAI_MODEL_EMBEDDING: 0.0004,
+}
 
 # Model Params
 DEFAULT_TEMPERATURE = 0
@@ -60,5 +68,6 @@ def execute_openai_completion(prompt: str,
     ret_val = {
         "output": summary,
         "tokens_used": response["usage"]["total_tokens"],
+        "cost": response["usage"]["total_tokens"]*OPENAI_PRICING[model]/1000
     }
     return ret_val

@@ -2,12 +2,14 @@ from openai_wrapper import execute_openai_completion
 from utils import split_indexed_lines_into_chunks, split_indexed_transcript_lines_into_chunks, split_and_extract_indices
 import json
 
-def summarize_transcript(text: str, interviewee: str) -> list[tuple[str, list[int]]]:
+def summarize_transcript(text: str, interviewee: str) -> tuple[list[tuple[str, list[int]]], float]:
     chunks = split_indexed_transcript_lines_into_chunks(text, interviewee)
     results = []
+    cost = 0
     for chunk in chunks:
         result = openai_summarize_chunk(chunk, interviewee)
         summary = result['output']
+        cost += result["cost"]
         summary_sentences_and_indices = split_and_extract_indices(summary)
         results.extend(summary_sentences_and_indices)
     n = len(results)
@@ -16,7 +18,8 @@ def summarize_transcript(text: str, interviewee: str) -> list[tuple[str, list[in
         mapping[i] = results[i][1]
     
     text = '\n'.join([f"[{i}] {results[i][0]}" for i in range(n)])
-    summary_results = summarize_text(text)
+    summary_results, summary_cost = summarize_text(text)
+    cost += summary_cost
     final_results = []
     for i in range(len(summary_results)):
         item = summary_results[i]
@@ -24,14 +27,16 @@ def summarize_transcript(text: str, interviewee: str) -> list[tuple[str, list[in
         for num in item[1]:
             temp.update(mapping[num])
         final_results.append((item[0],list(temp)))
-    return final_results
+    return (final_results, cost)
 
-def summarize_text(text: str, max_words: int = 400) -> list[tuple[str, list[int]]]:
+def summarize_text(text: str, max_words: int = 400) -> tuple[list[tuple[str, list[int]]], float]:
     chunks = split_indexed_lines_into_chunks(text)
     results = []
+    cost = 0
     for chunk in chunks:
         result = openai_summarize_full(chunk)
         summary = result['output']
+        cost += result['cost']
         summary_sentences_and_indices = split_and_extract_indices(summary)
         results.extend(summary_sentences_and_indices)
     
@@ -41,7 +46,7 @@ def summarize_text(text: str, max_words: int = 400) -> list[tuple[str, list[int]
     
     # Todo: figure out cutoff logic for recursion
     if words_size < max_words: 
-        return results
+        return results, cost
     
     n = len(results)
     mapping = {}
@@ -49,14 +54,15 @@ def summarize_text(text: str, max_words: int = 400) -> list[tuple[str, list[int]
         mapping[i] = results[i][1]
     
     text = '\n'.join([f"[{i}] {results[i][0]}" for i in range(n)])
-    summary_results = summarize_text(text)
+    summary_results, summary_cost = summarize_text(text)
+    cost += summary_cost
     for i in len(summary_results):
         item = summary_results[i]
         temp = set()
         for num in item[1]:
             temp.update(mapping[num])
         item[1] = list(temp)
-    return summary_results
+    return (summary_results, cost)
 
 def create_openai_prompt_summarize(text: str,
                                    prompt_header: str = None,
@@ -134,9 +140,10 @@ if __name__ == "__main__":
         mapping[i] = (results[i][1],results[i][2])
         sentence_list.append(f"[{i}] {results[i][0]}")
     new_text = '\n'.join(sentence_list)
-    print(new_text)
-    print(mapping)
-    final_results = summarize_transcript(new_text,"Jason")
+    # print(new_text)
+    # print(mapping)
+    final_results, cost = summarize_transcript(new_text,"Jason")
+    print(cost)
     for item in final_results:
         print("\n----------")
         print(item[0])
