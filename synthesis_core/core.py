@@ -131,7 +131,7 @@ def openai_summarize_full(text: str) -> dict:
 
 
 if __name__ == "__main__":
-    with open('./synthesis_core/transcript.txt', 'r') as f:
+    with open('transcript.txt', 'r') as f:
         text = f.read()
     from utils import split_text_into_multiple_lines_for_speaker
     results = split_text_into_multiple_lines_for_speaker(text=text)

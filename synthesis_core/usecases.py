@@ -50,7 +50,7 @@ if __name__ == "__main__":
                                     port=os.environ['SYNTHESIS_DB_PORT'],
                                     database=os.environ['SYNTHESIS_DB_NAME'])
     
-    with open('./synthesis_core/transcript.txt', 'r') as f:
+    with open('transcript.txt', 'r') as f:
         text = f.read()
     # print(repr(text))
     print("-------------x------------")
