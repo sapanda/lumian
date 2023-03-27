@@ -7,5 +7,3 @@ class TranscriptLine():
     line_text: str
     start_char_loc: int
     end_char_loc: int
-    
-    

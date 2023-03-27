@@ -48,8 +48,7 @@ def execute_openai_completion(prompt: str,
     COMPLETIONS_API_PARAMS = {
                 "temperature": temperature,
                 "max_tokens": max_tokens,
-                "model": model,
-                "timeout": 10
+                "model": model
             }
     if model is OPENAI_MODEL_CHAT:
         messages = [{"role": "user", "content": prompt}]

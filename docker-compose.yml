@@ -65,17 +65,14 @@ services:
     ports:
       - 8001:8001
       - 3001:3001
-    volumes:
-      - ./synthesis_core:/app/data
     command: >
-      sh -c "python -m app"
+      sh -c "uvicorn app.server:app --port 3001"
     environment:
       - SYNTHESIS_DB_HOST=db
     env_file:
       - ./.env
     depends_on:
       - db
-  
 
 volumes:
   dev-db-data:

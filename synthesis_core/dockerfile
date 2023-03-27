@@ -3,7 +3,6 @@ LABEL maintainer="getmetanext.com"
 
 ENV PYTHONNUNBUFFERED 1
 WORKDIR /code
-EXPOSE 8001
 
 RUN apk add --update --no-cache postgresql-client jpeg-dev
 RUN apk add --update --no-cache --virtual .tmp-build-deps build-base postgresql-dev musl-dev zlib zlib-dev linux-headers
@@ -11,5 +10,3 @@ RUN apk add --update --no-cache --virtual .tmp-build-deps build-base postgresql-
 COPY ./requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 COPY ./app /code/app
-
-# CMD [ "uvicorn", "app.server:app", "--host", "0.0.0.0", "--port", "8000" ]

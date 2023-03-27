@@ -73,22 +73,3 @@ def parse_indices(input_string: str) -> list[int]:
             results.add(int(index))
     results = sorted(list(results))
     return results
-
-
-if __name__ == '__main__':
-    with open('./tests/transcript.txt', 'r') as f:
-        text = f.read()
-
-    results = split_text_into_multiple_lines_for_speaker(text=text)
-    for item in results:
-        print(item[0])
-        print(f"--> {text[item[1]:item[2]+1]}")
-    # print(results)
-    # n = len(results)
-    # new_text = '\n'.join([f"[{i}] {results[i][0]}" for i in range(n)])
-    # # print(new_text)
-    # print(split_indexed_transcript_lines_into_chunks(new_text, "Jason"))
-
-    # x = "2,3,   5-10, 7-15,     8"
-    # print(parse_indices(x))
-    

@@ -117,3 +117,4 @@ class SynthesisAdmin(admin.ModelAdmin):
     list_display = ['transcript', 'output_type', 'summary', 'cost']
     fields = ('transcript', 'output_type', 'output', 'cost', 'summary', 'reverse_lookups')
     readonly_fields = ('cost', 'summary', 'reverse_lookups')
+    

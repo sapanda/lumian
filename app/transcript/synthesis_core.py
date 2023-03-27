@@ -17,3 +17,4 @@ def delete_transcript_for_id(transcript_id: int):
         requests.delete(f"{SYNTHESIS_CORE_BASE_URL}/transcript/{transcript_id}")
     except Exception as e:
         print(e)
+        

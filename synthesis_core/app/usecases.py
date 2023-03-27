@@ -38,32 +38,3 @@ def get_transcript_summary(transcript_id: int, interviewee:str, repo: Transcript
             i, j = mapping[num]
             final_results[-1]["references"].append([i,j])
     return {"output": final_results, "cost": cost}
-    
-
-
-if __name__ == "__main__":
-    import psycopg2, os
-    postgres_connection = psycopg2.connect(user=os.environ['SYNTHESIS_DB_USER'],
-                                    password=os.environ['SYNTHESIS_DB_PASSWORD'],
-                                    host=os.environ['SYNTHESIS_DB_HOST'],
-                                    port=os.environ['SYNTHESIS_DB_PORT'],
-                                    database=os.environ['SYNTHESIS_DB_NAME'])
-    
-    with open('transcript.txt', 'r') as f:
-        text = f.read()
-    # print(repr(text))
-    print("-------------x------------")
-    repo = TranscriptRepository(conn=postgres_connection)
-    # delete_transcript(transcipt_id=1, repo=repo)
-    # save_transcript(transcript_id=0, transcript=text, repo=repo)
-    results = get_transcript_summary(transcript_id=0, interviewee="Jason", repo=repo)
-    summary = ''.join([item[0] for item in results])
-    print(summary)
-    for item in results:
-        print("---> ", item[0])
-        k = 0 
-        for i,j in item[1]:
-            print( k, ": ",text[i:j])
-            k += 1
-
-    

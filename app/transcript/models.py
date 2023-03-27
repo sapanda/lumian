@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-import json
 
 class Transcript(models.Model):
     """Model representing a transcript and corresponding AI synthesis."""
@@ -164,3 +163,4 @@ class Synthesis(models.Model):
 
     def __str__(self):
         return f'{self.transcript.title} {self.get_synthesis_type()}'
+    

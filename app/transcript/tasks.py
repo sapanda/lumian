@@ -485,3 +485,4 @@ def _synthesis_core_from_api(transcript: Transcript):
         output=result["output"],
         cost=result["cost"]
     )
+    

@@ -128,32 +128,3 @@ def openai_summarize_full(text: str) -> dict:
     """Generate a summary from a combined transcript summary."""
     prompt = create_openai_prompt_summarize_full(text)
     return execute_openai_completion(prompt)
-
-
-if __name__ == "__main__":
-    with open('transcript.txt', 'r') as f:
-        text = f.read()
-    from utils import split_text_into_multiple_lines_for_speaker
-    results = split_text_into_multiple_lines_for_speaker(text=text)
-    mapping, sentence_list = {}, []
-    for i in range(len(results)):
-        mapping[i] = (results[i][1],results[i][2])
-        sentence_list.append(f"[{i}] {results[i][0]}")
-    new_text = '\n'.join(sentence_list)
-    # print(new_text)
-    # print(mapping)
-    final_results, cost = summarize_transcript(new_text,"Jason")
-    print(cost)
-    for item in final_results:
-        print("\n----------")
-        print(item[0])
-        for num in item[1]:
-            i, j = mapping[num]
-            print(text[i:j])
-
-# if __name__ ==  "__main__":
-#     with open('./synthesis_core/notes.txt', 'r') as f:
-#         text = f.read()
-    
-#     final_results = summarize_text(text)
-#     print(final_results)
