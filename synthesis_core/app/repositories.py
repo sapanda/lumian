@@ -1,5 +1,5 @@
 from psycopg2._psycopg import connection
-from domians import TranscriptLine
+from app.domians import TranscriptLine
 
 class TranscriptRepository:
     def __init__(self, conn:connection):

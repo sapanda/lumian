@@ -72,30 +72,23 @@ def parse_indices(input_string: str) -> list[int]:
         else:
             results.add(int(index))
     results = sorted(list(results))
-    # pattern1 = re.compile(r'(\d+)-(\d+)')
-    # pattern2 = re.compile(r'(\d+)(,\s*\d+)*')
-    # if pattern1.match(input_string):
-    #     start, end = tuple(map(int,pattern1.findall(input_string)[0]))
-    #     return list(int(i) for i in range(start, end+1))
-    # elif pattern2.match(input_string):
-    #     return list(map(int,input_string.split(',')))
     return results
 
 
 if __name__ == '__main__':
-    # with open('./synthesis_core/transcript.txt', 'r') as f:
-    #     text = f.read()
+    with open('./tests/transcript.txt', 'r') as f:
+        text = f.read()
 
-    # results = split_text_into_multiple_lines_for_speaker(text=text)
-    # for item in results:
-    #     print(item[0])
-    #     print(f"--> {text[item[1]:item[2]+1]}")
+    results = split_text_into_multiple_lines_for_speaker(text=text)
+    for item in results:
+        print(item[0])
+        print(f"--> {text[item[1]:item[2]+1]}")
     # print(results)
     # n = len(results)
     # new_text = '\n'.join([f"[{i}] {results[i][0]}" for i in range(n)])
     # # print(new_text)
     # print(split_indexed_transcript_lines_into_chunks(new_text, "Jason"))
 
-    x = "2,3,   5-10, 7-15,     8"
-    print(parse_indices(x))
+    # x = "2,3,   5-10, 7-15,     8"
+    # print(parse_indices(x))
     

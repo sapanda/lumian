@@ -1,8 +1,7 @@
-import pandas as pd, re
-from domians import TranscriptLine
-from repositories import TranscriptRepository
-from utils import split_text_into_multiple_lines_for_speaker
-from core import summarize_transcript
+from app.domians import TranscriptLine
+from app.repositories import TranscriptRepository
+from app.utils import split_text_into_multiple_lines_for_speaker
+from app.core import summarize_transcript
 
 
 def save_transcript(transcript_id:int, transcript: str, repo: TranscriptRepository):

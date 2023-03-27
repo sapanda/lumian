@@ -2,6 +2,7 @@ import requests, os
 from app.settings import SYNTHESIS_CORE_BASE_URL
 
 def save_transcript_for_id(transcript_id: int, transcript : str):
+    print("synthesis_core_url: ",SYNTHESIS_CORE_BASE_URL)
     try:
         requests.post(f"{SYNTHESIS_CORE_BASE_URL}/transcript/{transcript_id}", data=transcript, headers={'Content-Type': 'text/plain'})
     except Exception as e:

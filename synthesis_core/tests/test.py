@@ -1,11 +1,11 @@
 import requests, json
 
-with open('./synthesis_core/transcript.txt', 'r') as f:
+with open('./transcript.txt', 'r') as f:
     text = f.read()
-num = 4
-# response = requests.post(f"http://localhost:3000/transcript/{num}", data=text, headers={'Content-Type': 'text/plain'})
+num = 7
+response = requests.post(f"http://localhost:3001/transcript/{num}", data=text, headers={'Content-Type': 'text/plain'})
 input("--->")
-response = requests.get(f"http://localhost:3000/transcript/{num}/summary?interviewee=Jason")
+response = requests.get(f"http://localhost:3001/transcript/{num}/summary?interviewee=Jason")
 print(response.text)
 input("\n\n---------x---------\n\n")
 body = response.json()

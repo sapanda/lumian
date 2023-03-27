@@ -156,16 +156,11 @@ class Synthesis(models.Model):
         for i in range(n):
             item = self.output[i]
             sentence, references = item["text"], item["references"]
-            result.extend(f"{i}: ", sentence, "\nReferences: ")
-            for j in len(references):
+            result.extend((f"\n\n{i}: ", sentence, "\nReferences: "))
+            for j in range(len(references)):
                 reference = references[j]
-                result.extend(f"\t{j}: ", text[reference[0]:reference[1]])
+                result.extend((f"\n --->", text[reference[0]:reference[1]]))
         return ''.join(result)
 
-    def _get_short_desc(self) -> str:
-        if len(self.output) < 50:
-            return self.output
-        return self.output[:50] + '...'
-
     def __str__(self):
-        return f'{self.get_synthesis_type()} : {self._get_short_desc()}'
+        return f'{self.transcript.title} {self.get_synthesis_type()}'

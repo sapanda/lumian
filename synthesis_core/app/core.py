@@ -1,5 +1,5 @@
-from openai_wrapper import execute_openai_completion
-from utils import split_indexed_lines_into_chunks, split_indexed_transcript_lines_into_chunks, split_and_extract_indices
+from app.openai_wrapper import execute_openai_completion
+from app.utils import split_indexed_lines_into_chunks, split_indexed_transcript_lines_into_chunks, split_and_extract_indices
 import json
 
 def summarize_transcript(text: str, interviewee: str) -> tuple[list[tuple[str, list[int]]], float]:
@@ -76,7 +76,7 @@ def create_openai_prompt_summarize(text: str,
               f"mentioned, even if repeated. Only answer truthfully "
               f"and don't include anything not in the original transcript: ")
 
-    with open('synthesis_core/examples.json', 'r') as f:
+    with open('app/examples.json', 'r') as f:
         examples = json.load(f)
 
     # Add examples to the prompt
