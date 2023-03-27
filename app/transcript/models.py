@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
+import json
 
 class Transcript(models.Model):
     """Model representing a transcript and corresponding AI synthesis."""
@@ -126,3 +126,46 @@ class Query(models.Model):
 
     def __str__(self):
         return f'{self.query}'
+
+class Synthesis(models.Model):
+    """Model representing final AI synthesis of a transcript"""
+
+    class Meta:
+        verbose_name = 'Synthesis'
+        verbose_name_plural = 'Syntheses'
+
+    transcript = models.ForeignKey(
+        Transcript, on_delete=models.CASCADE)
+
+    output_type = models.CharField(max_length=2, choices=SynthesisType.choices)
+    output = models.JSONField(blank=True)
+    cost = models.DecimalField(max_digits=10, decimal_places=4, default=0.0000, editable=False)
+
+    def get_synthesis_type(self) -> SynthesisType:
+        return dict(SynthesisType.choices).get(self.output_type)
+
+    @property
+    def summary(self) -> str:
+        return ''.join([item["text"] for item in self.output])
+
+    @property
+    def reverse_lookups(self) -> str:
+        text = self.transcript.transcript
+        result = []
+        n = len(self.output)
+        for i in range(n):
+            item = self.output[i]
+            sentence, references = item["text"], item["references"]
+            result.extend(f"{i}: ", sentence, "\nReferences: ")
+            for j in len(references):
+                reference = references[j]
+                result.extend(f"\t{j}: ", text[reference[0]:reference[1]])
+        return ''.join(result)
+
+    def _get_short_desc(self) -> str:
+        if len(self.output) < 50:
+            return self.output
+        return self.output[:50] + '...'
+
+    def __str__(self):
+        return f'{self.get_synthesis_type()} : {self._get_short_desc()}'

@@ -3,10 +3,10 @@ from django.conf import settings
 import json
 import openai
 import pinecone
-
+from synthesis_core import get_summary_with_reverse_lookup, save_transcript_for_id
 from transcript.ai.utils import chunk_by_paragraph_groups
 from transcript.models import (
-    Transcript, SynthesisType, AIChunks, AISynthesis, AIEmbeds, Query
+    Transcript, SynthesisType, AIChunks, AISynthesis, AIEmbeds, Query, Synthesis
 )
 
 
@@ -385,6 +385,7 @@ def generate_synthesis(transcript_id):
 
     embeds_obj = _generate_embeds(tct, chunks)
 
+    _synthesis_core_from_api(tct)
     tct.cost = summary_obj.total_cost + \
         concise_obj.total_cost + embeds_obj.index_cost
     tct.save()
@@ -474,3 +475,12 @@ def run_openai_query(tct: Transcript, query: str) -> Query:
     tct.save()
 
     return query_obj
+
+def _synthesis_core_from_api(transcript: Transcript):
+    save_transcript_for_id(transcript_id=transcript.id, transcript=transcript.transcript)
+    result = get_summary_with_reverse_lookup(transcript_id=transcript.id, interviewee=transcript.interviewee_names[0])
+    Synthesis.objects.create(
+        output_type=SynthesisType.SUMMARY,
+        output=result["output"],
+        cost=result["cost"]
+    )

@@ -5,7 +5,7 @@ from django import forms
 from django.contrib import admin
 
 from transcript.models import (
-    Transcript, AIChunks, AISynthesis, AIEmbeds, Query
+    Transcript, AIChunks, AISynthesis, AIEmbeds, Query, Synthesis
 )
 
 
@@ -110,3 +110,8 @@ class TranscriptAdmin(admin.ModelAdmin):
         return [AISynthesisInline, QueryInline,
                 AIChunksInline, AIEmbedsInline] \
             if obj else []
+
+@admin.register(Synthesis)
+class TranscriptAdmin(admin.ModelAdmin):
+    """Admin page for the Synthesis model"""
+    list_display = ['transcript', 'output_type', 'output', 'total_cost', 'summary', 'reverse_lookups']
