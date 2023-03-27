@@ -2,13 +2,7 @@
 REST APIs and Admin interfaces to synthesize interview transcripts
 
 ## Setup
-1. Create a `.env` file in your project root with the following:
-```
-OPENAI_ORG_ID=<openai-org-id>
-OPENAI_API_KEY=<openai-api-key>
-PINECONE_API_KEY=<pinecone-api-key>
-PINECONE_USER="your-name"
-```
+1. Create a `.env` file in your project root, copy the variables from `.env.sample`, and change their values.
 2. Install [docker](https://docs.docker.com/get-docker/)
 3. Build the containers
 ```
