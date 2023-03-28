@@ -129,7 +129,7 @@ class Query(models.Model):
 
 
 class Synthesis(models.Model):
-    """Model representing final AI synthesis of a transcript"""
+    """Model representing final synthesis of a transcript"""
 
     class Meta:
         verbose_name = 'Synthesis'

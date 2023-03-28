@@ -10,6 +10,8 @@ import json
 def summarize_transcript(
         text: str, interviewee: str
 ) -> tuple[list[tuple[str, list[int]]], float]:
+    """Summarize an indexed transcript and return reference indices
+    for phrases and sentences in the final summary"""
     chunks = split_indexed_transcript_lines_into_chunks(text, interviewee)
     results = []
     cost = 0
@@ -40,6 +42,8 @@ def summarize_transcript(
 def summarize_text(
     text: str, max_words: int = 400
 ) -> tuple[list[tuple[str, list[int]]], float]:
+    """Summarize indexed notes and return reference indices
+    for phrases and sentences in the final summary"""
     chunks = split_indexed_lines_into_chunks(text)
     results = []
     cost = 0
@@ -102,7 +106,8 @@ def create_openai_prompt_summarize(
         index += 1
 
     prompt = (
-        f"{prompt}\nSOURCE {index}: ###\n{text}\n###\n" f"SUMMARY {index}:###\n\n###"
+        f"{prompt}\nSOURCE {index}: ###\n{text}\n###\n"
+        f"SUMMARY {index}:###\n\n###"
     )
 
     return prompt
@@ -125,7 +130,8 @@ def create_openai_prompt_summarize_chunk(
 
 
 def create_openai_prompt_summarize_full(text: str) -> dict:
-    """Create prompt to generate a summary from a combined transcript summary."""
+    """Create prompt to generate a summary from a combined
+    transcript summary."""
     header = (
         "Write a detailed synopsis based on the following notes. "
         "Each sentence should be short and contain only one piece of data. "

@@ -8,6 +8,10 @@ CHUNK_MIN_WORDS = 500
 def split_text_into_multiple_lines_for_speaker(
         text: str
 ) -> list[tuple[str, int, int]]:
+    """Takes in a string `text` and splits it into multiple lines where each
+    line is at least `LINE_MIN_SIZE` characters long and ends with a period
+    (.),question mark (?) or exclamation mark (!). Each line starts with the
+    name of the speaker."""
     paras = text.strip().split("\n\n")
     start_loc, results = 0, []
     for para in paras:
@@ -41,6 +45,7 @@ def split_text_into_multiple_lines_for_speaker(
 
 
 def split_indexed_lines_into_chunks(text: str) -> list[list[str]]:
+    """Split indexed lines into chunks"""
     results, cur_results, lines, chunk_size = [], [], text.split("\n"), 0
     n = len(lines)
     for i in range(n):
@@ -56,6 +61,8 @@ def split_indexed_lines_into_chunks(text: str) -> list[list[str]]:
 def split_indexed_transcript_lines_into_chunks(
     text: str, interviewee: str
 ) -> list[list[str]]:
+    """Split indexed lines into chunks. No chunk (except the first) should
+    start with 'interviewee' name"""
     results, cur_results, lines, chunk_size = [], [], text.split("\n"), 0
     n = len(lines)
     for i in range(n):
@@ -72,13 +79,28 @@ def split_indexed_transcript_lines_into_chunks(
     return results
 
 
-def split_and_extract_indices(input_string: str):
+def split_and_extract_indices(
+        input_string: str
+) -> list[tuple[str, list[int]]]:
+    """Split the lines into sentences and extract indices
+    from parenthesis mentioned at the end of indices
+    input_string: "Some text (2-3), some more text (10,13).
+                Some more new text (1,4-5,15)"
+    output: [("Some text",[2,3]),
+            (", some more text", [10, 11, 12, 13)]),
+            (".Some more new text", [1, 4, 5, 15])]
+    """
     pattern = re.compile(r"(.+?)\s*\(([\d\s,-]+)\)")
     matches = pattern.findall(input_string)
     return [(match[0], parse_indices(match[1])) for match in matches]
 
 
 def parse_indices(input_string: str) -> list[int]:
+    """Parse the indices string and generate an equivalent
+    integer list representation
+    input_string: 1,3-5,9
+    output: [1,3,4,5,9]
+    """
     pattern = re.compile(
         r"(\s*(\d+)-(\d+)|\s*(\d+))(,(\s*(\d+)-(\d+)|\s*(\d+)))*")
     if not pattern.match(input_string):

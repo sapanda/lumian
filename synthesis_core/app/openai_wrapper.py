@@ -50,6 +50,7 @@ def execute_openai_completion(prompt: str,
                               temperature: int = DEFAULT_TEMPERATURE,
                               max_tokens: int = DEFAULT_MAX_TOKENS,
                               ) -> dict:
+    """Execute an OpenAI API request and return the response."""
     COMPLETIONS_API_PARAMS = {
         "temperature": temperature,
         "max_tokens": max_tokens,

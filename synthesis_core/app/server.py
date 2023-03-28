@@ -51,6 +51,7 @@ repo = TranscriptRepository(conn=postgres_connection)
 
 @app.post('/transcript/{transcript_id}')
 def save_transcript_for_id(transcript_id: int, transcript: str = Body()):
+    """API for saving a transcript"""
     save_transcript(transcript_id=transcript_id,
                     transcript=transcript, repo=repo)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -58,6 +59,7 @@ def save_transcript_for_id(transcript_id: int, transcript: str = Body()):
 
 @app.put('/transcript/{transcript_id}')
 def replace_transcript_for_id(transcript_id: int, transcript: str = Body()):
+    """API for replacing a transcript"""
     delete_transcript(transcipt_id=transcript_id)
     save_transcript(transcript_id=transcript_id,
                     transcript=transcript, repo=repo)
@@ -66,12 +68,14 @@ def replace_transcript_for_id(transcript_id: int, transcript: str = Body()):
 
 @app.delete('/transcript/{transcript_id}')
 def delete_transcript_for_id(transcript_id: int):
+    """API for deleting a transcript"""
     delete_transcript(transcipt_id=transcript_id, repo=repo)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get('/transcript/{transcript_id}/summary')
 def get_transcript_summary_for_id(transcript_id: int, interviewee: str):
+    """API for getting a summary of a transcript"""
     results = get_transcript_summary(
         transcript_id=transcript_id, interviewee=interviewee, repo=repo)
     return results

@@ -1,4 +1,4 @@
-from app.domians import TranscriptLine
+from app.domains import TranscriptLine
 from app.repositories import TranscriptRepository
 from app.utils import split_text_into_multiple_lines_for_speaker
 from app.core import summarize_transcript
@@ -8,6 +8,8 @@ def save_transcript(
         transcript_id: int,
         transcript: str,
         repo: TranscriptRepository):
+    """Generate a multiline transcript with index references in the original 
+    transcript text and save it in storage"""
     results = []
     lines = split_text_into_multiple_lines_for_speaker(transcript)
     for i in range(len(lines)):
@@ -24,6 +26,7 @@ def save_transcript(
 
 
 def delete_transcript(transcipt_id: int, repo: TranscriptRepository):
+    """Delete a saved transcript from storage"""
     repo.delete_transcript(transcript_id=transcipt_id)
 
 
@@ -32,6 +35,7 @@ def get_transcript_summary(
         interviewee: str,
         repo: TranscriptRepository
 ) -> dict:
+    """Generate a summary of a transcript which is saved in the storage"""
     lines = repo.get_transcript(transcript_id=transcript_id)
     mapping, sentence_list = {}, []
     for i in range(len(lines)):
