@@ -111,10 +111,11 @@ class TranscriptAdmin(admin.ModelAdmin):
                 AIChunksInline, AIEmbedsInline] \
             if obj else []
 
+
 @admin.register(Synthesis)
 class SynthesisAdmin(admin.ModelAdmin):
     """Admin page for the Synthesis model"""
     list_display = ['transcript', 'output_type', 'summary', 'cost']
-    fields = ('transcript', 'output_type', 'output', 'cost', 'summary', 'reverse_lookups')
+    fields = ('transcript', 'output_type', 'output',
+              'cost', 'summary', 'reverse_lookups')
     readonly_fields = ('cost', 'summary', 'reverse_lookups')
-    

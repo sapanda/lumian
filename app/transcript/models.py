@@ -3,6 +3,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+
 class Transcript(models.Model):
     """Model representing a transcript and corresponding AI synthesis."""
 
@@ -126,6 +127,7 @@ class Query(models.Model):
     def __str__(self):
         return f'{self.query}'
 
+
 class Synthesis(models.Model):
     """Model representing final AI synthesis of a transcript"""
 
@@ -138,7 +140,8 @@ class Synthesis(models.Model):
 
     output_type = models.CharField(max_length=2, choices=SynthesisType.choices)
     output = models.JSONField(blank=True)
-    cost = models.DecimalField(max_digits=10, decimal_places=4, default=0.0000, editable=False)
+    cost = models.DecimalField(
+        max_digits=10, decimal_places=4, default=0.0000, editable=False)
 
     def get_synthesis_type(self) -> SynthesisType:
         return dict(SynthesisType.choices).get(self.output_type)
@@ -158,9 +161,8 @@ class Synthesis(models.Model):
             result.extend((f"\n\n{i}: ", sentence, "\nReferences: "))
             for j in range(len(references)):
                 reference = references[j]
-                result.extend((f"\n --->", text[reference[0]:reference[1]]))
+                result.extend(("\n --->", text[reference[0]:reference[1]]))
         return ''.join(result)
 
     def __str__(self):
         return f'{self.transcript.title} {self.get_synthesis_type()}'
-    
