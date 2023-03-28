@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class TranscriptLine():
     transcript_id: int
