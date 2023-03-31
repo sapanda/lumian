@@ -1,0 +1,6 @@
+[
+  {
+    "input": "[0] Ben: Can you tell us your living situation?\n[1] Wil: Yeah I'm married with two kids. 8 years old girl.\n[2] Wil: Five-year- old boy. We own our house. Recently paid off the mortgage in full.\n[3] Wil: I had an inheritance lately. So we took all that money and paid off the mortgage.\n[4] Wil: Yeah. So we own our single family home. Here in the Denver area, we have quite a few assets.\n[5] Wil: But yeah two kids.",
+    "output": "Wil is married with two kids - an 8-year-old girl and a 5-year-old boy (1,2,5). They own a single-family home in the Denver area (4), and recently paid off the mortgage in full using an inheritance (2,3). They have several other assets as well (4)."
+  }
+]
