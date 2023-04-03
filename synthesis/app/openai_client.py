@@ -1,8 +1,9 @@
-from .interfaces import OpenAIClientInterface
 import openai
 from openai.error import Timeout
-from .errors import OpenAITimeoutException
 from retry import retry
+from .interfaces import OpenAIClientInterface
+from .errors import OpenAITimeoutException
+
 # Models
 OPENAI_MODEL_COMPLETIONS = "text-davinci-003"
 OPENAI_MODEL_CHAT = "gpt-3.5-turbo"
@@ -38,7 +39,7 @@ class OpenAIClient(OpenAIClientInterface):
                 "max_tokens": max_tokens,
                 "model": model
             }
-            if model is OPENAI_MODEL_CHAT:
+            if model == OPENAI_MODEL_CHAT:
                 messages = [{"role": "user", "content": prompt}]
                 response = openai.ChatCompletion.create(
                     messages=messages,

@@ -8,3 +8,8 @@ class SynthesisAPIException(Exception):
 class OpenAITimeoutException(SynthesisAPIException):
     """Timeout exception for openai timeout error"""
     pass
+
+
+class ObjectNotFoundException(SynthesisAPIException):
+    """Exception for object not found in storage"""
+    pass

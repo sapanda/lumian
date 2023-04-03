@@ -377,7 +377,7 @@ def generate_synthesis(transcript_id):
     """Generate an AI-synthesized summary for a transcript."""
     print(f'\n\n\nTranscript ID: {transcript_id}\n\n\n')
     tct = Transcript.objects.get(id=transcript_id)
-    _synthesis_core_from_api(tct)
+    _generate_synthesis_from_synthesis_core(tct)
     # chunks = _generate_chunks(tct)
 
     # summary_chunks = _process_chunks_for_summaries(tct, chunks)
@@ -479,7 +479,7 @@ def run_openai_query(tct: Transcript, query: str) -> Query:
     return query_obj
 
 
-def _synthesis_core_from_api(transcript: Transcript):
+def _generate_synthesis_from_synthesis_core(transcript: Transcript):
     """Save transcript in the synthesis service
     and get a summary with reverse lookups from it"""
     save_transcript_for_id(transcript_id=transcript.id,

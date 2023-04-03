@@ -1,6 +1,7 @@
 from .interfaces import TranscriptRepositoryInterface, SynthesisInterface
 from .utils import split_text_into_multiple_lines_for_speaker
 from .domains import Transcript
+from .errors import ObjectNotFoundException
 
 
 def save_transcript(
@@ -21,13 +22,20 @@ def get_transcript(
     """Generate a multiline transcript with index references in the original
     transcript text and save it in storage"""
     transcript = repo.get(id=id)
-    return transcript.data if transcript else None
+    if not transcript:
+        raise (ObjectNotFoundException(
+            detail=f"Transcript for id = {id} not found"))
+    return transcript.data
 
 
 def delete_transcript(
         id: int,
         repo: TranscriptRepositoryInterface):
     """Delete a saved transcript from storage"""
+    transcript = repo.get(id=id)
+    if not transcript:
+        raise (ObjectNotFoundException(
+            detail=f"Transcript for id = {id} not found"))
     repo.delete(id=id)
 
 
@@ -37,6 +45,9 @@ def get_transcript_summary(
         repo: TranscriptRepositoryInterface,
         synthesis: SynthesisInterface) -> dict:
     transcript = repo.get(id=id)
+    if not transcript:
+        raise (ObjectNotFoundException(
+            detail=f"Transcript for id = {id} not found"))
     data = transcript.data
     results = synthesis.summarize_transcript(
         str(transcript), interviewee)

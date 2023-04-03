@@ -1,10 +1,10 @@
+import json
 from .interfaces import OpenAIClientInterface, SynthesisInterface
 from .utils import (
     split_indexed_lines_into_chunks,
     split_indexed_transcript_lines_into_chunks,
     split_and_extract_indices,
 )
-import json
 
 
 class Synthesis(SynthesisInterface):
@@ -22,7 +22,10 @@ class Synthesis(SynthesisInterface):
             self, text: str, interviewee: str
     ) -> tuple[list[tuple[str, list[int]]], float]:
         """Summarize an indexed transcript and return reference indices
-        for phrases and sentences in the final summary"""
+        for phrases and sentences in the final summary
+        Ouptut Eg. : ()
+        """
+        # TODO: comment on output structure
         chunks = split_indexed_transcript_lines_into_chunks(
             text, interviewee, self.chunk_min_words)
         results = []
@@ -65,11 +68,11 @@ class Synthesis(SynthesisInterface):
             summary_sentences_and_indices = split_and_extract_indices(summary)
             results.extend(summary_sentences_and_indices)
         n = len(results)
-        words_size = 0
+        word_count = 0
         for item in results:
-            words_size += len(item['text'].split())
+            word_count += len(item['text'].split())
         # Todo: figure out cutoff logic for recursion
-        if words_size <= self.max_summary_size:
+        if word_count <= self.max_summary_size:
             return {"output": results, "cost": cost}
 
         text = "\n".join([f"[{i}] {results[i]['text']}" for i in range(n)])

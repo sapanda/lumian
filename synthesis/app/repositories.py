@@ -1,7 +1,7 @@
+import json
 from psycopg2._psycopg import connection
 from .interfaces import TranscriptRepositoryInterface
 from .domains import Transcript
-import json
 
 
 class TranscriptRepository(TranscriptRepositoryInterface):
@@ -13,6 +13,7 @@ class TranscriptRepository(TranscriptRepositoryInterface):
 
     def get(self, id: int) -> Transcript:
         """Get a transcript from storage"""
+        # TODO: handle database related errors
         with self.conn:
             with self.conn.cursor() as cur:
                 cur.execute(
@@ -28,6 +29,7 @@ class TranscriptRepository(TranscriptRepositoryInterface):
 
     def save(self, transcript: Transcript):
         """Save transcript to storage"""
+        # TODO: handle database related errors
         with self.conn:
             with self.conn.cursor() as cur:
                 cur.execute(
@@ -36,11 +38,13 @@ class TranscriptRepository(TranscriptRepositoryInterface):
 
     def replace(self, transcript: Transcript):
         """Replace transcript in storage"""
+        # TODO: handle database related errors
         self.delete(id=transcript.id)
         self.save(transcript=transcript)
 
     def delete(self, id: int):
         """Delete transcript of transcript"""
+        # TODO: handle database related errors
         with self.conn:
             with self.conn.cursor() as cur:
                 cur.execute(

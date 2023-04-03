@@ -1,47 +1,54 @@
 from fastapi import FastAPI, Depends, status, Body, Response
+import json
+import psycopg2
+import time
 from .config import Settings
 from functools import lru_cache
-import psycopg2
+
 from psycopg2._psycopg import connection
 from .repositories import TranscriptRepository
 from .interfaces import (
     TranscriptRepositoryInterface, OpenAIClientInterface, SynthesisInterface)
 from .openai_client import OpenAIClient
 from .synthesis import Synthesis
-from .errors import OpenAITimeoutException
+from .errors import (OpenAITimeoutException,
+                     ObjectNotFoundException, SynthesisAPIException)
 from .usecases import (
     save_transcript as _save_transcript,
     delete_transcript as _delete_transcript,
     get_transcript_summary as _get_transcript_summary,
     get_transcript as _get_transcript)
-import time
+
+settings = Settings()
+retry_db_con = 0
+while retry_db_con < 5:
+    try:
+        # TODO: do something on connection failure
+        postgres_connection = psycopg2.connect(
+            user=settings.db_user,
+            password=settings.db_password,
+            host=settings.db_host,
+            port=settings.db_port,
+            database=settings.db_name)
+        break
+    except Exception:
+        retry_db_con += 1
+        time.sleep(2)
 
 
-@lru_cache
 def get_settings():
     """Settings provider"""
-    return Settings()
+    return settings
 
 
 def get_db_connection(
     settings: Settings = Depends(get_settings)
 ) -> connection:
     """DB connection provider"""
-    retry_db_con = 0
-    while retry_db_con < 5:
-        try:
-            postgres_connection = psycopg2.connect(
-                user=settings.db_user,
-                password=settings.db_password,
-                host=settings.db_host,
-                port=settings.db_port,
-                database=settings.db_name)
-            return postgres_connection
-        except Exception:
-            retry_db_con += 1
-            time.sleep(2)
+    return postgres_connection
 
 
+@lru_cache
 def get_transcript_repo(
     conn: connection = Depends(get_db_connection)
 ) -> TranscriptRepositoryInterface:
@@ -49,6 +56,7 @@ def get_transcript_repo(
     return TranscriptRepository(conn=conn)
 
 
+@lru_cache
 def get_openai_client(
     settings: Settings = Depends(get_settings)
 ) -> OpenAIClientInterface:
@@ -59,6 +67,7 @@ def get_openai_client(
     )
 
 
+@lru_cache
 def get_synthesis(
     settings: Settings = Depends(get_settings),
     openai_client: OpenAIClientInterface = Depends(get_openai_client)
@@ -77,11 +86,15 @@ app = FastAPI(
 )
 
 
-@app.exception_handler(OpenAITimeoutException)
-def timeout_handler(request, exc):
+@app.exception_handler(SynthesisAPIException)
+def exception_handler(request, exc):
     """Exception handler for OpenAITimeoutException"""
-    return Response({"error": exc.detail},
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    if type(exc) == OpenAITimeoutException:
+        return Response(json.dumps({"error": exc.detail}),
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    elif type(exc) == ObjectNotFoundException:
+        return Response(json.dumps({"error": exc.detail}),
+                        status_code=status.HTTP_404_NOT_FOUND)
 
 
 @app.get('/transcript/{id}')
