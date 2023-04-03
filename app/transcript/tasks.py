@@ -480,6 +480,8 @@ def run_openai_query(tct: Transcript, query: str) -> Query:
 
 
 def _synthesis_core_from_api(transcript: Transcript):
+    """Save transcript in the synthesis service
+    and get a summary with reverse lookups from it"""
     save_transcript_for_id(transcript_id=transcript.id,
                            transcript=transcript.transcript)
     # TODO: add support multiple interviewee

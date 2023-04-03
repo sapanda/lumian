@@ -1,6 +1,4 @@
-from app.server import app, get_transcript_repo
-from app.domains import Transcript
-from app.interfaces import TranscriptRepositoryInterface
+from app.server import app
 from fastapi.testclient import TestClient
 from fastapi import status
 import json
