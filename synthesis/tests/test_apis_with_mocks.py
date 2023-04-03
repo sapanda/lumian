@@ -11,9 +11,12 @@ import pytest
 client = TestClient(app)
 
 transcripts = {}
+TRANSCRIPT_ID = 1000000
 
 
 class MockOpenAIClient(OpenAIClientInterface):
+    """Mock class for OpenAI client"""
+
     def execute_completion(self, prompt: str,
                            model: str = '',
                            temperature: int = 0,
@@ -29,6 +32,7 @@ class MockOpenAIClient(OpenAIClientInterface):
 
 
 class MockTranscriptRepo(TranscriptRepositoryInterface):
+    """Mock class for Transcript Repository"""
 
     def get(self, id: int) -> Transcript:
         return transcripts.get(id)
@@ -47,14 +51,17 @@ class MockTranscriptRepo(TranscriptRepositoryInterface):
 
 
 def get_mock_openai_client():
+    """Mock OpenAI client provider"""
     return MockOpenAIClient()
 
 
 def get_mock_transcript_repo():
+    """Mock Transcript Repository provider"""
     return MockTranscriptRepo()
 
 
 def get_mock_settings():
+    """Mock Settings provider"""
     settings = Settings(
         db_name='',
         db_host='',
@@ -71,7 +78,8 @@ def get_mock_settings():
 
 
 def setup():
-    transcript_file = 'tests/test_transcript-dummy.txt'
+    """Setup before tests"""
+    transcript_file = 'tests/test_transcript_dummy.txt'
     app.dependency_overrides[get_openai_client] = get_mock_openai_client
     app.dependency_overrides[get_settings] = get_mock_settings
     app.dependency_overrides[get_transcript_repo] = get_mock_transcript_repo
@@ -81,18 +89,21 @@ def setup():
 
 
 def teardown():
+    """Restore the state before setup was run"""
     transcripts.clear()
     app.dependency_overrides.clear()
 
 
 @pytest.fixture()
 def setup_teardown():
+    """Fixture to run tests between setup and teardown"""
     setup()
     yield "Do Testing"
     teardown()
 
 
 def test_get_transcript(setup_teardown):
+    """Test get transcript method"""
     response = client.get("/transcript/0")
     assert response.status_code == status.HTTP_404_NOT_FOUND
     response = client.post(
@@ -109,6 +120,7 @@ def test_get_transcript(setup_teardown):
 
 
 def test_save_transcript(setup_teardown):
+    """Test save transcript method"""
     response = client.post(
         "/transcript/0",
         content=transcript_text,
@@ -119,6 +131,7 @@ def test_save_transcript(setup_teardown):
 
 
 def test_delete_transcript(setup_teardown):
+    """Test delete transcript method"""
     response = client.post(
         "/transcript/0",
         content=transcript_text,
@@ -133,6 +146,7 @@ def test_delete_transcript(setup_teardown):
 
 
 def test_get_summary(setup_teardown):
+    """Test get transcript summary method"""
     response = client.post(
         "/transcript/0",
         content=transcript_text,

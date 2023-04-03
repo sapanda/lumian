@@ -10,12 +10,11 @@ text = """Jason: "Some Text Some text"
 Shawn: "Some Text. Some Text. Some Text and Some Text."
 
 """
-
 multiple_line_split_text_for_speaker_results = [
     {'text': 'Jason: Some Text Some text', 'start': 8, 'end': 27},
     {'text': 'Shawn: Some Text.', 'start': 38, 'end': 48},
-    {'text': 'Shawn: Some Text.', 'start': 48, 'end': 59},
-    {'text': 'Shawn: Some Text and Some Text.', 'start': 59, 'end': 84}]
+    {'text': 'Shawn: Some Text.', 'start': 49, 'end': 59},
+    {'text': 'Shawn: Some Text and Some Text.', 'start': 60, 'end': 84}]
 
 indexed_notes = """[0] Some text Some text Some text Some text Some text.
 [1] Some text Some text Some text

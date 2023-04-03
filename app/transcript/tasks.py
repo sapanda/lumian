@@ -377,20 +377,20 @@ def generate_synthesis(transcript_id):
     """Generate an AI-synthesized summary for a transcript."""
     print(f'\n\n\nTranscript ID: {transcript_id}\n\n\n')
     tct = Transcript.objects.get(id=transcript_id)
-    chunks = _generate_chunks(tct)
-
-    summary_chunks = _process_chunks_for_summaries(tct, chunks)
-    summary_obj = _generate_summary(tct, summary_chunks)
-
-    concise_chunks = _process_chunks_for_concise(tct, chunks)
-    concise_obj = _generate_concise(tct, concise_chunks)
-
-    embeds_obj = _generate_embeds(tct, chunks)
-
     _synthesis_core_from_api(tct)
-    tct.cost = summary_obj.total_cost + \
-        concise_obj.total_cost + embeds_obj.index_cost
-    tct.save()
+    # chunks = _generate_chunks(tct)
+
+    # summary_chunks = _process_chunks_for_summaries(tct, chunks)
+    # summary_obj = _generate_summary(tct, summary_chunks)
+
+    # concise_chunks = _process_chunks_for_concise(tct, chunks)
+    # concise_obj = _generate_concise(tct, concise_chunks)
+
+    # embeds_obj = _generate_embeds(tct, chunks)
+
+    # tct.cost = summary_obj.total_cost + \
+    #     concise_obj.total_cost + embeds_obj.index_cost
+    # tct.save()
 
 
 def _execute_pinecone_search(tct: Transcript, query: str) -> dict:
@@ -482,6 +482,7 @@ def run_openai_query(tct: Transcript, query: str) -> Query:
 def _synthesis_core_from_api(transcript: Transcript):
     save_transcript_for_id(transcript_id=transcript.id,
                            transcript=transcript.transcript)
+    # TODO: add support multiple interviewee
     result = get_summary_with_reverse_lookup(
         transcript_id=transcript.id,
         interviewee=transcript.interviewee_names[0])

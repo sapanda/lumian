@@ -9,13 +9,14 @@ def split_text_into_multiple_lines_for_speaker(
     line is at least `LINE_MIN_SIZE` characters long and ends with a period
     (.),question mark (?) or exclamation mark (!). Each line starts with the
     name of the speaker."""
-    paras = text.strip().split("\n\n")
+    paras = re.split(r"\n+", text.strip())
+    # paras = text.strip().split("\n\n")
     start_loc, results = 0, []
     for para in paras:
         speech_parts = para.split(": ", 1)
         speaker = speech_parts[0]
-        speech_text_words = re.split("(\W)", speech_parts[1].strip('"'))
-        start_loc += len(speaker) + 3
+        speech_text_words = re.split(r"(\W)", speech_parts[1].strip('"'))
+        start_loc += len(speaker)
         temp_words, line_length = [], 0
         n = len(speech_text_words)
         for i in range(n):
@@ -28,16 +29,16 @@ def split_text_into_multiple_lines_for_speaker(
             ) or i == n - 1:
                 sentence = ("".join(temp_words)).strip()
                 if len(sentence):
+                    start_loc = text.find(sentence, start_loc)
                     results.append(
                         {
                             "text": f"{speaker}: {sentence}",
                             "start": start_loc,
-                            "end": start_loc + line_length,
+                            "end": start_loc + len(sentence),
                         }
                     )
                 start_loc += line_length
                 temp_words, line_length = [], 0
-        start_loc += 3
     return results
 
 
@@ -62,6 +63,7 @@ def split_indexed_transcript_lines_into_chunks(
 ) -> list[list[str]]:
     """Split indexed lines into chunks. No chunk (except the first) should
     start with 'interviewee' name"""
+    interviewee = interviewee.lower()
     results, cur_results, lines, chunk_size = [], [], text.split("\n"), 0
     n = len(lines)
     for i in range(n):
@@ -71,7 +73,8 @@ def split_indexed_transcript_lines_into_chunks(
         chunk_size += len(words)
         if i == n - 1 or (
             chunk_size > chunk_min_words
-            and not (lines[i + 1].split(" ", 1))[1].startswith(interviewee)
+            and not (lines[i + 1].split(" ", 1))[1].
+                lower().startswith(interviewee)
         ):
             results.append(cur_results)
             cur_results, chunk_size = [], 0
@@ -116,12 +119,3 @@ def _parse_indices(input_string: str) -> list[int]:
             results.add(int(index))
     results = sorted(list(results))
     return results
-
-
-if __name__ == "__main__":
-    with open('transcript.txt', 'r') as f:
-        text = f.read()
-    result = split_text_into_multiple_lines_for_speaker(text, line_min_size=45)
-    print(len(result))
-    for item in result:
-        print(item)

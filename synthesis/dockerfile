@@ -4,9 +4,13 @@ LABEL maintainer="getmetanext.com"
 ENV PYTHONNUNBUFFERED 1
 WORKDIR /code
 
-RUN apk add --update --no-cache postgresql-client jpeg-dev
-RUN apk add --update --no-cache --virtual .tmp-build-deps build-base postgresql-dev musl-dev zlib zlib-dev linux-headers
+RUN apk add --update --no-cache postgresql-client jpeg-dev && \
+    apk add --update --no-cache --virtual .tmp-build-deps build-base \
+    postgresql-dev musl-dev zlib zlib-dev linux-headers
 
 COPY ./requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 COPY ./app /code/app
+COPY ./migrations /code/migrations
+COPY ./examples.json /code/examples.json
+COPY ./tests /code/tests

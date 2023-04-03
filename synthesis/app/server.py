@@ -8,6 +8,7 @@ from .interfaces import (
     TranscriptRepositoryInterface, OpenAIClientInterface, SynthesisInterface)
 from .openai_client import OpenAIClient
 from .synthesis import Synthesis
+from .errors import OpenAITimeoutException
 from .usecases import (
     save_transcript as _save_transcript,
     delete_transcript as _delete_transcript,
@@ -18,16 +19,17 @@ import time
 
 @lru_cache
 def get_settings():
+    """Settings provider"""
     return Settings()
 
 
 def get_db_connection(
     settings: Settings = Depends(get_settings)
 ) -> connection:
+    """DB connection provider"""
     retry_db_con = 0
     while retry_db_con < 5:
         try:
-            print("trying db connection")
             postgres_connection = psycopg2.connect(
                 user=settings.db_user,
                 password=settings.db_password,
@@ -43,12 +45,14 @@ def get_db_connection(
 def get_transcript_repo(
     conn: connection = Depends(get_db_connection)
 ) -> TranscriptRepositoryInterface:
+    """Transcript Repository provider"""
     return TranscriptRepository(conn=conn)
 
 
 def get_openai_client(
     settings: Settings = Depends(get_settings)
 ) -> OpenAIClientInterface:
+    """OpenAI client provider"""
     return OpenAIClient(
         org_id=settings.openai_org_id,
         api_key=settings.openai_api_key
@@ -59,6 +63,7 @@ def get_synthesis(
     settings: Settings = Depends(get_settings),
     openai_client: OpenAIClientInterface = Depends(get_openai_client)
 ) -> SynthesisInterface:
+    """Synthesis instance provider"""
     return Synthesis(
         openai_client=openai_client,
         max_summary_size=settings.max_summary_size,
@@ -72,11 +77,19 @@ app = FastAPI(
 )
 
 
+@app.exception_handler(OpenAITimeoutException)
+def timeout_handler(request, exc):
+    """Exception handler for OpenAITimeoutException"""
+    return Response({"error": exc.detail},
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @app.get('/transcript/{id}')
 def get_transcript(
     id: int,
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
 ):
+    """API for getting a transcript the way it is stored"""
     data = _get_transcript(id=id, repo=repo)
     if not data:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
@@ -90,6 +103,7 @@ def save_transcript(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
     transcript: str = Body(),
 ):
+    """API for saving a transcript"""
     _save_transcript(id=id, transcript=transcript,
                      line_min_size=settings.line_min_size, repo=repo)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -100,6 +114,7 @@ def delete_transcript(
     id: int,
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo)
 ):
+    """API for deleting a transcript"""
     _delete_transcript(id=id, repo=repo)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -111,6 +126,7 @@ def get_transcript_summary(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
     synthesis: Synthesis = Depends(get_synthesis)
 ):
+    """API for getting a summary of a transcript"""
     results = _get_transcript_summary(
         id=id,
         interviewee=interviewee,

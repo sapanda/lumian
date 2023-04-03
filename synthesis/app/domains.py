@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Transcript:
+    """Data model for transcript"""
     id: int
     data: list[dict]
 

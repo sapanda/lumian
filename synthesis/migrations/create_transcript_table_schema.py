@@ -5,7 +5,6 @@ import psycopg2
 def get_db_connection(
     settings: Settings = Settings()
 ):
-    print("trying db connection")
     postgres_connection = psycopg2.connect(
         user=settings.db_user,
         password=settings.db_password,

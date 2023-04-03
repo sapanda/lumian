@@ -2,6 +2,7 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
+    """Global settings model"""
     db_name: str
     db_user: str
     db_password: str

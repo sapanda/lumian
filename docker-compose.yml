@@ -60,15 +60,15 @@ services:
 
   app_synthesis:
     build:
-      context: ./synthesis_core
+      context: ./synthesis
       dockerfile: dockerfile
     ports:
       - 8001:8001
       - 3001:3001
     command: >
-      sh -c "uvicorn app.server:app --port 3001"
+      sh -c "uvicorn app.server:app --host 0.0.0.0 --port 3001"
     environment:
-      - SYNTHESIS_DB_HOST=db
+      - DB_HOST=db
     env_file:
       - ./.env
     depends_on:

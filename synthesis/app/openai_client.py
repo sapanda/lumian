@@ -1,6 +1,8 @@
 from .interfaces import OpenAIClientInterface
 import openai
-import time
+from openai.error import Timeout
+from .errors import OpenAITimeoutException
+from retry import retry
 # Models
 OPENAI_MODEL_COMPLETIONS = "text-davinci-003"
 OPENAI_MODEL_CHAT = "gpt-3.5-turbo"
@@ -18,62 +20,48 @@ DEFAULT_TEMPERATURE = 0
 DEFAULT_MAX_TOKENS = 600
 
 
-def retry(max_count: int, backoff_start: int, exponential: bool):
-    def inner1(func):
-        def inner2(*params):
-            backoff = backoff_start
-            i = 0
-            while i < max_count:
-                print(f"Retrying : {func}")
-                try:
-                    result = func(*params)
-                    return result
-                except Exception as e:
-                    print(e)
-                    input()
-                    i += 1
-                    time.sleep(backoff)
-                    if exponential:
-                        backoff *= 2
-
-        return inner2
-    return inner1
-
-
 class OpenAIClient(OpenAIClientInterface):
     def __init__(self, org_id: str, api_key: str) -> None:
         openai.organization = org_id
         openai.api_key = api_key
 
-    # @retry(max_count=3, backoff_start=5, exponential=False)
+    @retry(OpenAITimeoutException, tries=3, delay=5, backoff=2)
     def execute_completion(self, prompt: str,
                            model: str = OPENAI_MODEL_CHAT,
                            temperature: int = DEFAULT_TEMPERATURE,
                            max_tokens: int = DEFAULT_MAX_TOKENS,
                            ) -> dict:
         """Execute an OpenAI API request and return the response."""
-        COMPLETIONS_API_PARAMS = {
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "model": model
-        }
-        if model is OPENAI_MODEL_CHAT:
-            messages = [{"role": "user", "content": prompt}]
-            response = openai.ChatCompletion.create(
-                messages=messages,
-                **COMPLETIONS_API_PARAMS
-            )
-            summary = response["choices"][0]["message"]["content"].strip(" \n")
-        else:
-            response = openai.Completion.create(
-                prompt=prompt,
-                **COMPLETIONS_API_PARAMS
-            )
-            summary = response["choices"][0]["text"].strip(" \n")
-        cost = response["usage"]["total_tokens"] * OPENAI_PRICING[model]/1000
-        ret_val = {
-            "output": summary,
-            "tokens_used": response["usage"]["total_tokens"],
-            "cost": cost
-        }
+        try:
+            COMPLETIONS_API_PARAMS = {
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "model": model
+            }
+            if model is OPENAI_MODEL_CHAT:
+                messages = [{"role": "user", "content": prompt}]
+                response = openai.ChatCompletion.create(
+                    messages=messages,
+                    **COMPLETIONS_API_PARAMS
+                )
+                summary = response["choices"][0]["message"]["content"].strip(
+                    " \n")
+            else:
+                response = openai.Completion.create(
+                    prompt=prompt,
+                    **COMPLETIONS_API_PARAMS
+                )
+                summary = response["choices"][0]["text"].strip(" \n")
+            cost = response["usage"]["total_tokens"] * \
+                OPENAI_PRICING[model]/1000
+            ret_val = {
+                "output": summary,
+                "tokens_used": response["usage"]["total_tokens"],
+                "cost": cost
+            }
+        except Timeout:
+            raise OpenAITimeoutException(
+                detail="OpenAI could not complete the completions"
+                "request in time")
+
         return ret_val
