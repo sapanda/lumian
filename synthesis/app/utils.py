@@ -10,7 +10,6 @@ def split_text_into_multiple_lines_for_speaker(
     (.),question mark (?) or exclamation mark (!). Each line starts with the
     name of the speaker."""
     paras = re.split(r"\n+", text.strip())
-    # paras = text.strip().split("\n\n")
     start_loc, results = 0, []
     for para in paras:
         speech_parts = para.split(": ", 1)
