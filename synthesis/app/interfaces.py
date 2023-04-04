@@ -1,5 +1,5 @@
 import abc
-from .domains import Transcript
+from .domains import Transcript, SynthesisResult
 
 
 class OpenAIClientInterface(abc.ABC):
@@ -43,7 +43,7 @@ class SynthesisInterface(abc.ABC):
     @abc.abstractmethod
     def summarize_transcript(
             self, indexed_transcript: str, interviewee: str
-    ) -> dict:
+    ) -> SynthesisResult:
         """Summarize an indexed transcript and return reference indices
         for phrases and sentences in the final summary"""
         pass

@@ -12,20 +12,22 @@ client = TestClient(app)
 
 transcripts = {}
 TRANSCRIPT_ID = 1000000
+transcript_file = 'tests/test_transcript.txt'
+with open(transcript_file, 'r') as f:
+    global transcript_text
+    transcript_text = f.read()
 
 
 def setup():
     """Setup before tests"""
-    transcript_file = 'tests/test_transcript.txt'
-    with open(transcript_file, 'r') as f:
-        global transcript_text
-        transcript_text = f.read()
+    # nothing to be done
+    pass
 
 
 def teardown():
     """Restore the state before setup was run"""
-    transcripts.clear()
-    app.dependency_overrides.clear()
+    # nothing to be done
+    pass
 
 
 @pytest.fixture()
@@ -66,6 +68,13 @@ def test_save_transcript(setup_teardown):
             'Content-Type': 'text/plain'
         })
     assert response.status_code == status.HTTP_204_NO_CONTENT
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}",
+        content=transcript_text,
+        headers={
+            'Content-Type': 'text/plain'
+        })
+    assert response.status_code == status.HTTP_409_CONFLICT
     response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
@@ -73,6 +82,8 @@ def test_save_transcript(setup_teardown):
 @pytest.mark.skipif(TEST_ENV_IS_LOCAL, reason=OPENAI_COSTS_REASON)
 def test_delete_transcript(setup_teardown):
     """Test delete transcript method"""
+    response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
     response = client.post(
         f"/transcript/{TRANSCRIPT_ID}",
         content=transcript_text,
@@ -82,13 +93,14 @@ def test_delete_transcript(setup_teardown):
     assert response.status_code == status.HTTP_204_NO_CONTENT
     response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
     assert response.status_code == status.HTTP_204_NO_CONTENT
-    response = client.delete("/transcript/0")
-    assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
 @pytest.mark.skipif(TEST_ENV_IS_LOCAL, reason=OPENAI_COSTS_REASON)
 def test_get_summary(setup_teardown):
     """Test get transcript summary method"""
+    response = client.get(
+        f'/transcript/{TRANSCRIPT_ID}/summary?interviewee=Jason')
+    assert response.status_code == status.HTTP_404_NOT_FOUND
     response = client.post(
         f"/transcript/{TRANSCRIPT_ID}",
         content=transcript_text,

@@ -1,9 +1,10 @@
-from fastapi import FastAPI, Depends, status, Body, Response
+from fastapi import (FastAPI, Depends, status, Body,
+                     Response)
 import json
 import psycopg2
 import time
+
 from .config import Settings
-from functools import lru_cache
 
 from psycopg2._psycopg import connection
 from .repositories import TranscriptRepository
@@ -12,7 +13,8 @@ from .interfaces import (
 from .openai_client import OpenAIClient
 from .synthesis import Synthesis
 from .errors import (OpenAITimeoutException,
-                     ObjectNotFoundException, SynthesisAPIException)
+                     ObjectNotFoundException, SynthesisAPIException,
+                     ObjectAlreadyPresentException)
 from .usecases import (
     save_transcript as _save_transcript,
     delete_transcript as _delete_transcript,
@@ -35,6 +37,12 @@ while retry_db_con < 5:
         retry_db_con += 1
         time.sleep(2)
 
+EXCEPTION_TO_STATUS_CODE_MAPPING = {
+    ObjectAlreadyPresentException: status.HTTP_409_CONFLICT,
+    ObjectNotFoundException: status.HTTP_404_NOT_FOUND,
+    OpenAITimeoutException: status.HTTP_500_INTERNAL_SERVER_ERROR
+}
+
 
 def get_settings():
     """Settings provider"""
@@ -48,7 +56,6 @@ def get_db_connection(
     return postgres_connection
 
 
-@lru_cache
 def get_transcript_repo(
     conn: connection = Depends(get_db_connection)
 ) -> TranscriptRepositoryInterface:
@@ -56,7 +63,6 @@ def get_transcript_repo(
     return TranscriptRepository(conn=conn)
 
 
-@lru_cache
 def get_openai_client(
     settings: Settings = Depends(get_settings)
 ) -> OpenAIClientInterface:
@@ -67,7 +73,6 @@ def get_openai_client(
     )
 
 
-@lru_cache
 def get_synthesis(
     settings: Settings = Depends(get_settings),
     openai_client: OpenAIClientInterface = Depends(get_openai_client)
@@ -87,14 +92,11 @@ app = FastAPI(
 
 
 @app.exception_handler(SynthesisAPIException)
-def exception_handler(request, exc):
+def exception_handler(request, exc: SynthesisAPIException):
     """Exception handler for OpenAITimeoutException"""
-    if type(exc) == OpenAITimeoutException:
-        return Response(json.dumps({"error": exc.detail}),
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    elif type(exc) == ObjectNotFoundException:
-        return Response(json.dumps({"error": exc.detail}),
-                        status_code=status.HTTP_404_NOT_FOUND)
+    status_code = EXCEPTION_TO_STATUS_CODE_MAPPING[type(exc)]
+    return Response(content=json.dumps({"error": exc.detail}),
+                    status_code=status_code)
 
 
 @app.get('/transcript/{id}')
@@ -104,8 +106,6 @@ def get_transcript(
 ):
     """API for getting a transcript the way it is stored"""
     data = _get_transcript(id=id, repo=repo)
-    if not data:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
     return data
 
 

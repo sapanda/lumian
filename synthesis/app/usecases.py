@@ -1,7 +1,7 @@
 from .interfaces import TranscriptRepositoryInterface, SynthesisInterface
 from .utils import split_text_into_multiple_lines_for_speaker
-from .domains import Transcript
-from .errors import ObjectNotFoundException
+from .domains import Transcript, SummaryResult
+from .errors import ObjectNotFoundException, ObjectAlreadyPresentException
 
 
 def save_transcript(
@@ -11,6 +11,11 @@ def save_transcript(
         repo: TranscriptRepositoryInterface):
     """Generate a multiline transcript with index references in the original
     transcript text and save it in storage"""
+    data = repo.get(id=id)
+    if data:
+        raise ObjectAlreadyPresentException(
+            detail=f"Transcript for id = {id} is already"
+            "present in storage")
     data = split_text_into_multiple_lines_for_speaker(
         transcript, line_min_size)
     repo.save(transcript=Transcript(id=id, data=data))
@@ -23,8 +28,8 @@ def get_transcript(
     transcript text and save it in storage"""
     transcript = repo.get(id=id)
     if not transcript:
-        raise (ObjectNotFoundException(
-            detail=f"Transcript for id = {id} not found"))
+        raise ObjectNotFoundException(
+            detail=f"Transcript for id = {id} not found")
     return transcript.data
 
 
@@ -34,8 +39,8 @@ def delete_transcript(
     """Delete a saved transcript from storage"""
     transcript = repo.get(id=id)
     if not transcript:
-        raise (ObjectNotFoundException(
-            detail=f"Transcript for id = {id} not found"))
+        raise ObjectNotFoundException(
+            detail=f"Transcript for id = {id} not found")
     repo.delete(id=id)
 
 
@@ -43,11 +48,11 @@ def get_transcript_summary(
         id: int,
         interviewee: str,
         repo: TranscriptRepositoryInterface,
-        synthesis: SynthesisInterface) -> dict:
+        synthesis: SynthesisInterface) -> SummaryResult:
     transcript = repo.get(id=id)
     if not transcript:
-        raise (ObjectNotFoundException(
-            detail=f"Transcript for id = {id} not found"))
+        raise ObjectNotFoundException(
+            detail=f"Transcript for id = {id} not found")
     data = transcript.data
     results = synthesis.summarize_transcript(
         str(transcript), interviewee)

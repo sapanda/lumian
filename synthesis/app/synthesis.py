@@ -1,4 +1,5 @@
 import json
+from .domains import SynthesisResult, SynthesisResultOutput
 from .interfaces import OpenAIClientInterface, SynthesisInterface
 from .utils import (
     split_indexed_lines_into_chunks,
@@ -20,7 +21,7 @@ class Synthesis(SynthesisInterface):
 
     def summarize_transcript(
             self, text: str, interviewee: str
-    ) -> tuple[list[tuple[str, list[int]]], float]:
+    ) -> SynthesisResult:
         """Summarize an indexed transcript and return reference indices
         for phrases and sentences in the final summary
         Ouptut Eg. : ()
@@ -42,7 +43,7 @@ class Synthesis(SynthesisInterface):
         summary_results, summary_cost = temp_result['output'],\
             temp_result['cost']
         cost += summary_cost
-        final_results = []
+        final_results: list[SynthesisResultOutput] = []
         for i in range(len(summary_results)):
             item = summary_results[i]
             temp = set()
@@ -51,11 +52,12 @@ class Synthesis(SynthesisInterface):
             final_results.append({
                 'text': item['text'],
                 'references': list(temp)})
-        return {"output": final_results, "cost": cost}
+        data: SynthesisResult = {"output": final_results, "cost": cost}
+        return data
 
     def summarize_text(
         self, text: str
-    ) -> tuple[list[tuple[str, list[int]]], float]:
+    ) -> SynthesisResult:
         """Summarize indexed notes and return reference indices
         for phrases and sentences in the final summary"""
         chunks = split_indexed_lines_into_chunks(text, self.chunk_min_words)
@@ -80,7 +82,7 @@ class Synthesis(SynthesisInterface):
         summary_results, summary_cost = temp_result['output'],\
             temp_result['cost']
         cost += summary_cost
-        final_results = []
+        final_results: list[SynthesisResultOutput] = []
         for i in range(len(summary_results)):
             item = summary_results[i]
             temp = set()
@@ -90,7 +92,8 @@ class Synthesis(SynthesisInterface):
                 'text': item['text'],
                 'references': list(temp)
             })
-        return {"output": final_results, "cost": cost}
+        data: SynthesisResult = {"output": final_results, "cost": cost}
+        return data
 
     def create_openai_prompt_summarize_chunk(
         self,

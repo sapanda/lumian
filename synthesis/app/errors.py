@@ -13,3 +13,8 @@ class OpenAITimeoutException(SynthesisAPIException):
 class ObjectNotFoundException(SynthesisAPIException):
     """Exception for object not found in storage"""
     pass
+
+
+class ObjectAlreadyPresentException(SynthesisAPIException):
+    """Exception for creating an object which is already present"""
+    pass

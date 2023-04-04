@@ -484,7 +484,7 @@ def _generate_synthesis_from_synthesis_core(transcript: Transcript):
     and get a summary with reverse lookups from it"""
     save_transcript_for_id(transcript_id=transcript.id,
                            transcript=transcript.transcript)
-    # TODO: add support multiple interviewee
+    # TODO: add support for multiple interviewee
     result = get_summary_with_reverse_lookup(
         transcript_id=transcript.id,
         interviewee=transcript.interviewee_names[0])
