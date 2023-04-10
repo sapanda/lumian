@@ -126,3 +126,43 @@ class Query(models.Model):
 
     def __str__(self):
         return f'{self.query}'
+
+
+class Synthesis(models.Model):
+    """Model representing final synthesis of a transcript"""
+
+    class Meta:
+        verbose_name = 'Synthesis'
+        verbose_name_plural = 'Syntheses'
+
+    transcript = models.ForeignKey(
+        Transcript, on_delete=models.CASCADE)
+
+    output_type = models.CharField(max_length=2, choices=SynthesisType.choices)
+    output = models.JSONField(blank=True)
+    cost = models.DecimalField(
+        max_digits=10, decimal_places=4, default=0.0000, editable=False)
+
+    def get_synthesis_type(self) -> SynthesisType:
+        return dict(SynthesisType.choices).get(self.output_type)
+
+    @property
+    def summary(self) -> str:
+        return ''.join([item["text"] for item in self.output])
+
+    @property
+    def reverse_lookups(self) -> str:
+        text = self.transcript.transcript
+        result = []
+        n = len(self.output)
+        for i in range(n):
+            item = self.output[i]
+            sentence, references = item["text"], item["references"]
+            result.extend((f"\n\n{i}: ", sentence, "\nReferences: "))
+            for j in range(len(references)):
+                reference = references[j]
+                result.extend(("\n --->", text[reference[0]:reference[1]]))
+        return ''.join(result)
+
+    def __str__(self):
+        return f'{self.transcript.title} {self.get_synthesis_type()}'

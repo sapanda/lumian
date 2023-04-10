@@ -168,3 +168,6 @@ TEST_ENV_IS_LOCAL = os.environ.get('TEST_ENV', 'local') == 'local'
 # Pinecone indexing
 PINECONE_USER = os.environ.get('PINECONE_USER', '')
 PINECONE_NAMESPACE = f'dev-{PINECONE_USER}' if PINECONE_USER else 'dev'
+
+# Synthesis core
+SYNTHESIS_CORE_BASE_URL = os.environ.get('SYNTHESIS_CORE_BASE_URL')

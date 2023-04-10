@@ -18,10 +18,19 @@ jobs:
       - name: Create .env file
         run: |
           echo "${{ secrets.ENV_FILE }}" > .env
-      - name: Test
+      - name: Test App
         run: >
           docker-compose run --rm app sh -c "
           export TEST_ENV=\"$TEST_ENV\" &&
           python manage.py wait_for_db && python manage.py test"
-      - name: Lint
+      - name: Test Synthesis
+        run: >
+          docker-compose run --rm app_synthesis sh -c "
+          export TEST_ENV=\"$TEST_ENV\" &&
+          PYTHONPATH=. python commands/wait_for_db.py &&
+          PYTHONPATH=. python migrations/create_transcript_table_schema.py &&
+          PYTHONPATH=. pytest tests"
+      - name: Lint App
         run: docker-compose run --rm app sh -c "flake8"
+      - name: Lint Synthesis
+        run: docker-compose run --rm app_synthesis sh -c "flake8"

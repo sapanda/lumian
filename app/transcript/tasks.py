@@ -3,10 +3,14 @@ from django.conf import settings
 import json
 import openai
 import pinecone
-
+from transcript.synthesis_core import (
+    get_summary_with_reverse_lookup,
+    save_transcript_for_id
+)
 from transcript.ai.utils import chunk_by_paragraph_groups
 from transcript.models import (
-    Transcript, SynthesisType, AIChunks, AISynthesis, AIEmbeds, Query
+    Transcript, SynthesisType, AIChunks, AISynthesis, AIEmbeds, Query,
+    Synthesis
 )
 
 
@@ -307,7 +311,7 @@ def _execute_openai_embeds(tct: Transcript,
             'text': line,
             'transcript_id': tct.id,
             'transcript_title': tct.title,
-            } for line in request_list]
+        } for line in request_list]
 
         end_index = start_index + len(request_list)
         request_ids = [f'{str(tct.id)}-{str(n)}'
@@ -375,19 +379,20 @@ def generate_synthesis(transcript_id):
     """Generate an AI-synthesized summary for a transcript."""
     print(f'\n\n\nTranscript ID: {transcript_id}\n\n\n')
     tct = Transcript.objects.get(id=transcript_id)
-    chunks = _generate_chunks(tct)
+    _generate_synthesis_from_synthesis_core(tct)
+    # chunks = _generate_chunks(tct)
 
-    summary_chunks = _process_chunks_for_summaries(tct, chunks)
-    summary_obj = _generate_summary(tct, summary_chunks)
+    # summary_chunks = _process_chunks_for_summaries(tct, chunks)
+    # summary_obj = _generate_summary(tct, summary_chunks)
 
-    concise_chunks = _process_chunks_for_concise(tct, chunks)
-    concise_obj = _generate_concise(tct, concise_chunks)
+    # concise_chunks = _process_chunks_for_concise(tct, chunks)
+    # concise_obj = _generate_concise(tct, concise_chunks)
 
-    embeds_obj = _generate_embeds(tct, chunks)
+    # embeds_obj = _generate_embeds(tct, chunks)
 
-    tct.cost = summary_obj.total_cost + \
-        concise_obj.total_cost + embeds_obj.index_cost
-    tct.save()
+    # tct.cost = summary_obj.total_cost + \
+    #     concise_obj.total_cost + embeds_obj.index_cost
+    # tct.save()
 
 
 def _execute_pinecone_search(tct: Transcript, query: str) -> dict:
@@ -474,3 +479,20 @@ def run_openai_query(tct: Transcript, query: str) -> Query:
     tct.save()
 
     return query_obj
+
+
+def _generate_synthesis_from_synthesis_core(transcript: Transcript):
+    """Save transcript in the synthesis service
+    and get a summary with reverse lookups from it"""
+    save_transcript_for_id(transcript_id=transcript.id,
+                           transcript=transcript.transcript)
+    # TODO: add support for multiple interviewee
+    result = get_summary_with_reverse_lookup(
+        transcript_id=transcript.id,
+        interviewee=transcript.interviewee_names[0])
+    Synthesis.objects.create(
+        transcript=transcript,
+        output_type=SynthesisType.SUMMARY,
+        output=result["output"],
+        cost=result["cost"]
+    )
