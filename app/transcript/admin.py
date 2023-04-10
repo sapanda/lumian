@@ -100,6 +100,14 @@ class QueryInline(ReadOnlyInline):
     verbose_name_plural = "Queries"
 
 
+class SynthesisInline(ReadOnlyInline):
+    model = Synthesis
+    exclude = ['output', 'output_type']
+    readonly_fields = ['synthesis', 'cost']
+    verbose_name = ""
+    verbose_name_plural = "Syntheses"
+
+
 @admin.register(Transcript)
 class TranscriptAdmin(admin.ModelAdmin):
     """Admin page for the transcript model."""
@@ -108,14 +116,14 @@ class TranscriptAdmin(admin.ModelAdmin):
 
     def get_inlines(self, request, obj=None):
         return [AISynthesisInline, QueryInline,
-                AIChunksInline, AIEmbedsInline] \
+                AIChunksInline, AIEmbedsInline, SynthesisInline] \
             if obj else []
 
 
 @admin.register(Synthesis)
 class SynthesisAdmin(admin.ModelAdmin):
     """Admin page for the Synthesis model"""
-    list_display = ['transcript', 'output_type', 'summary', 'cost']
+    list_display = ['transcript', 'output_type', 'synthesis', 'cost']
     fields = ('transcript', 'output_type', 'output',
-              'cost', 'summary', 'reverse_lookups')
-    readonly_fields = ('cost', 'summary', 'reverse_lookups')
+              'cost', 'synthesis', 'reverse_lookups')
+    readonly_fields = ('cost', 'synthesis', 'reverse_lookups')

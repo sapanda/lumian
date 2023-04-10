@@ -147,8 +147,12 @@ class Synthesis(models.Model):
         return dict(SynthesisType.choices).get(self.output_type)
 
     @property
-    def summary(self) -> str:
-        return ''.join([item["text"] for item in self.output])
+    def synthesis(self) -> str:
+        if self.output_type == SynthesisType.SUMMARY:
+            return ''.join([item["text"] for item in self.output])
+        elif self.output_type == SynthesisType.CONCISE:
+            return '\n'.join([item["text"] for item in self.output])
+        return 'Invalid synthesis type'
 
     @property
     def reverse_lookups(self) -> str:
