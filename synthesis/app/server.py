@@ -21,9 +21,10 @@ from .errors import (
 )
 from .usecases import (
     save_transcript as _save_transcript,
+    get_transcript as _get_transcript,
     delete_transcript as _delete_transcript,
     get_transcript_summary as _get_transcript_summary,
-    get_transcript as _get_transcript
+    get_transcript_concise as _get_transcript_concise,
 )
 
 
@@ -94,7 +95,7 @@ def get_synthesis(
         openai_client=openai_client,
         max_summary_size=settings.max_summary_size,
         chunk_min_words=settings.chunk_min_words,
-        examples_file=settings.examples_file)
+        examples_dir=settings.examples_dir)
 
 
 app = FastAPI(
@@ -153,6 +154,23 @@ def get_transcript_summary(
 ):
     """API for getting a summary of a transcript"""
     results = _get_transcript_summary(
+        id=id,
+        interviewee=interviewee,
+        repo=repo,
+        synthesis=synthesis
+    )
+    return results
+
+
+@app.get('/transcript/{id}/concise')
+def get_transcript_concise(
+    id: int,
+    interviewee: str,
+    repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
+    synthesis: Synthesis = Depends(get_synthesis)
+):
+    """API for getting a concise transcript"""
+    results = _get_transcript_concise(
         id=id,
         interviewee=interviewee,
         repo=repo,

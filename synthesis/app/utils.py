@@ -86,10 +86,10 @@ def split_and_extract_indices(
     """Split the lines into sentences and extract indices
     from parenthesis mentioned at the end of indices
     input_string: "Some text (2-3), some more text (10,13).
-                Some more new text (1,4-5,15)"
-    output: [{'text':'Some text',references: [2,3]},
-            {'text': ", some more text",references: [10, 11, 12, 13]},
-            {'text': ".Some more new text",references: [1, 4, 5, 15]}]
+                   Some more new text (1,4-5,15)"
+    output: [{'text': "Some text", 'references': [2,3]},
+             {'text': ", some more text", 'references': [10, 11, 12, 13]},
+             {'text': ".Some more new text", 'references': [1, 4, 5, 15]}]
     """
     pattern = re.compile(r"(.+?)\s*\(([\d\s,-]+)\)")
     matches = pattern.findall(input_string)
