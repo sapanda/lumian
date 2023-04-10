@@ -5,6 +5,7 @@ import json
 import pytest
 import os
 
+
 TEST_ENV_IS_LOCAL = os.getenv('TEST_ENV_IS_LOCAL') == '1'
 OPENAI_COSTS_REASON = "OpenAI Costs: Run only when\
  testing AI Synthesis changes"
@@ -12,7 +13,7 @@ client = TestClient(app)
 
 transcripts = {}
 TRANSCRIPT_ID = 1000000
-transcript_file = 'tests/test_transcript.txt'
+transcript_file = 'tests/samples/transcript_short.txt'
 with open(transcript_file, 'r') as f:
     global transcript_text
     transcript_text = f.read()
@@ -116,5 +117,30 @@ def test_get_summary(setup_teardown):
     summary = ''.join([item['text'] for item in body['output']])
     assert 'Jason' in summary
     assert len(summary.split()) > 0
+    response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+
+@pytest.mark.skipif(TEST_ENV_IS_LOCAL, reason=OPENAI_COSTS_REASON)
+def test_get_concise(setup_teardown):
+    """Test get concise transcript"""
+    response = client.get(
+        f'/transcript/{TRANSCRIPT_ID}/concise?interviewee=Jason')
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}",
+        content=transcript_text,
+        headers={
+            'Content-Type': 'text/plain'
+        })
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    response = client.get(
+        f'/transcript/{TRANSCRIPT_ID}/concise?interviewee=Jason')
+    body = json.loads(response.content)
+    assert body['cost'] > 0
+    assert len(body['output']) > 0
+    concise = ''.join([item['text'] for item in body['output']])
+    assert 'Jason' in concise
+    assert len(concise.split()) > 0
     response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
     assert response.status_code == status.HTTP_204_NO_CONTENT

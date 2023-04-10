@@ -1,15 +1,15 @@
 from celery import shared_task
 from django.conf import settings
-import json
 import openai
 import pinecone
 from transcript.synthesis_core import (
+    save_transcript_for_id,
     get_summary_with_reverse_lookup,
-    save_transcript_for_id
+    get_concise_with_reverse_lookup,
 )
 from transcript.ai.utils import chunk_by_paragraph_groups
 from transcript.models import (
-    Transcript, SynthesisType, AIChunks, AISynthesis, AIEmbeds, Query,
+    Transcript, SynthesisType, AIEmbeds, Query,
     Synthesis
 )
 
@@ -98,72 +98,6 @@ def _execute_openai_completion(prompt: str,
     return ret_val
 
 
-def _get_summarized_chunk(text: str,
-                          model: str,
-                          interviewee: str = None,
-                          ) -> dict:
-    """Generate a summary for a chunk of the transcript."""
-
-    if interviewee is not None:
-        prompter = "detailed summary of only {interviewee}'s comments"
-    else:
-        prompter = "detailed summary"
-
-    prompt = (f"The following is a section of an interview transcript. "
-              f"Please provide a {prompter}. Only answer truthfully and "
-              f"don't include anything not in the original transcript: "
-              f"\n\n>>>> START OF INTERVIEW \n\n{text}\n\n"
-              f">>>> END OF INTERVIEW \n\n"
-              f"Detailed Summary: ")
-
-    return _execute_openai_completion(prompt, model)
-
-
-def _get_summarized_all(text: str,
-                        model: str
-                        ) -> dict:
-    """Generate a summary from a concatenated summary string."""
-
-    prompt = (f"Write a detailed synopsis based on the following notes. "
-              f"Only answer truthfully and don't include anything "
-              f"not in the original summary: "
-              f"\n\n>>>> START OF INTERVIEW NOTES \n\n{text} \n\n>>>>"
-              f"END OF INTERVIEW NOTES \n\nSynopsis:")
-
-    return _execute_openai_completion(prompt, model)
-
-
-def _get_concise_chunk(text: str,
-                       model: str,
-                       max_examples: int = 1
-                       ) -> dict:
-    """Generate a concise transcript for a given chunk."""
-
-    prompt = ("The following are sections of an interview transcript. "
-              "Please clean it up but still in dialogue form. The speaker "
-              "name should always be preserved. Do not add any details "
-              "not present in the original transcript. ")
-
-    with open('transcript/examples/eg-concise.json', 'r') as f:
-        examples = json.load(f)
-
-    # Add examples to the transcript
-    index = 1
-    for example in examples:
-        input_text = f"Input {index}: ###\n{example['input']}\n###\n"
-        output_text = f"Output {index}: ###\n{example['output']}\n###\n"
-        prompt = f"{prompt}\n\n{input_text}{output_text}"
-        index += 1
-
-        if index > max_examples:
-            break
-
-    prompt = (f"{prompt}\n\nInput {index}: ###\n{text}\n###\n"
-              f"Output {index}:###\n\n###")
-
-    return _execute_openai_completion(prompt, model)
-
-
 def _generate_chunks(tct: Transcript) -> 'list[str]':
     interviewee = tct.interviewee_names[0]  # Support one interviewee for now
     paragraph_groups = chunk_by_paragraph_groups(
@@ -171,99 +105,6 @@ def _generate_chunks(tct: Transcript) -> 'list[str]':
         interviewee,
     )
     return paragraph_groups
-
-
-def _process_chunks_for_summaries(tct: Transcript,
-                                  chunks: 'list[str]') -> AIChunks:
-    """Chunk up the transcript and generate summaries for each chunk."""
-    model = OPENAI_MODEL_CHAT
-    interviewee = tct.interviewee_names[0]  # Support one interviewee for now
-
-    summaries = []
-    tokens_used = []
-    for chunk in chunks:
-        response = _get_summarized_chunk(chunk, model, interviewee)
-        summaries.append(response['output'])
-        tokens_used.append(response['tokens_used'])
-
-    summary_chunks = AIChunks.objects.create(
-        transcript=tct,
-        chunk_type=SynthesisType.SUMMARY,
-        chunks=chunks,
-        chunks_processed=summaries,
-        tokens_used=tokens_used,
-        cost=_calculate_cost(sum(tokens_used), model),
-        model_name=model,
-    )
-
-    summary_chunks.save()
-    return summary_chunks
-
-
-def _process_chunks_for_concise(tct: Transcript,
-                                chunks: 'list[str]') -> AIChunks:
-    """
-    Chunk up the transcript and generate concise transcripts for each chunk.
-    """
-    model = OPENAI_MODEL_CHAT
-
-    concise_chunks = []
-    tokens_used = []
-    for chunk in chunks:
-        response = _get_concise_chunk(chunk, model)
-        concise_chunks.append(response['output'])
-        tokens_used.append(response['tokens_used'])
-
-    concise_chunks = AIChunks.objects.create(
-        transcript=tct,
-        chunk_type=SynthesisType.CONCISE,
-        chunks=chunks,
-        chunks_processed=concise_chunks,
-        tokens_used=tokens_used,
-        cost=_calculate_cost(sum(tokens_used), model),
-        model_name=model,
-    )
-
-    concise_chunks.save()
-    return concise_chunks
-
-
-def _generate_summary(tct: Transcript, chunks: AIChunks) -> AISynthesis:
-    """Generate the AISynthesis summary for the transcript."""
-    concat_summary = " ".join(chunks.chunks_processed)
-    model = OPENAI_MODEL_COMPLETIONS
-
-    response = _get_summarized_all(concat_summary, model)
-
-    summary_cost = _calculate_cost(response['tokens_used'], model)
-    total_cost = chunks.cost + summary_cost
-
-    summary_obj = AISynthesis.objects.create(
-        transcript=tct,
-        output_type=SynthesisType.SUMMARY,
-        output=response['output'],
-        tokens_used=response['tokens_used'],
-        total_cost=total_cost,
-        model_name=model,
-    )
-    summary_obj.save()
-    return summary_obj
-
-
-def _generate_concise(tct: Transcript, chunks: AIChunks) -> AISynthesis:
-    """Generate the AISynthesis concise transcript."""
-    concise_transcript = "\n\n".join(chunks.chunks_processed)
-
-    concise_obj = AISynthesis.objects.create(
-        transcript=tct,
-        output_type=SynthesisType.CONCISE,
-        output=concise_transcript,
-        tokens_used=0,
-        total_cost=chunks.cost,
-        model_name=None,
-    )
-    concise_obj.save()
-    return concise_obj
 
 
 def _create_batches_for_embeds(content_list: 'list[str]',
@@ -374,25 +215,51 @@ def _generate_embeds(tct: Transcript, chunks: 'list[str]') -> None:
     return embeds_obj
 
 
+def _generate_summary(tct: Transcript) -> Synthesis:
+    """Generate synthesized summary using the synthesis service"""
+    # TODO: add support for multiple interviewees
+    result = get_summary_with_reverse_lookup(
+        transcript_id=tct.id,
+        interviewee=tct.interviewee_names[0]
+    )
+    return Synthesis.objects.create(
+        transcript=tct,
+        output_type=SynthesisType.SUMMARY,
+        output=result["output"],
+        cost=result["cost"]
+    )
+
+
+def _generate_concise(tct: Transcript) -> Synthesis:
+    """Generate concise transcript using the synthesis service"""
+    # TODO: add support for multiple interviewees
+    result = get_concise_with_reverse_lookup(
+        transcript_id=tct.id,
+        interviewee=tct.interviewee_names[0]
+    )
+    return Synthesis.objects.create(
+        transcript=tct,
+        output_type=SynthesisType.CONCISE,
+        output=result["output"],
+        cost=result["cost"]
+    )
+
+
 @shared_task
 def generate_synthesis(transcript_id):
-    """Generate an AI-synthesized summary for a transcript."""
-    print(f'\n\n\nTranscript ID: {transcript_id}\n\n\n')
+    """Generate synthesized outputs using the synthesis service"""
     tct = Transcript.objects.get(id=transcript_id)
-    _generate_synthesis_from_synthesis_core(tct)
-    # chunks = _generate_chunks(tct)
-
-    # summary_chunks = _process_chunks_for_summaries(tct, chunks)
-    # summary_obj = _generate_summary(tct, summary_chunks)
+    save_transcript_for_id(transcript_id=tct.id, transcript=tct.transcript)
+    obj_summary = _generate_summary(tct)
+    obj_concise = _generate_concise(tct)
 
     # concise_chunks = _process_chunks_for_concise(tct, chunks)
     # concise_obj = _generate_concise(tct, concise_chunks)
 
     # embeds_obj = _generate_embeds(tct, chunks)
 
-    # tct.cost = summary_obj.total_cost + \
-    #     concise_obj.total_cost + embeds_obj.index_cost
-    # tct.save()
+    tct.cost = obj_summary.cost + obj_concise.cost  # + embeds_obj.index_cost
+    tct.save()
 
 
 def _execute_pinecone_search(tct: Transcript, query: str) -> dict:
@@ -479,20 +346,3 @@ def run_openai_query(tct: Transcript, query: str) -> Query:
     tct.save()
 
     return query_obj
-
-
-def _generate_synthesis_from_synthesis_core(transcript: Transcript):
-    """Save transcript in the synthesis service
-    and get a summary with reverse lookups from it"""
-    save_transcript_for_id(transcript_id=transcript.id,
-                           transcript=transcript.transcript)
-    # TODO: add support for multiple interviewee
-    result = get_summary_with_reverse_lookup(
-        transcript_id=transcript.id,
-        interviewee=transcript.interviewee_names[0])
-    Synthesis.objects.create(
-        transcript=transcript,
-        output_type=SynthesisType.SUMMARY,
-        output=result["output"],
-        cost=result["cost"]
-    )

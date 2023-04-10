@@ -61,7 +61,7 @@ services:
       - ./.env
     environment:
       - DB_HOST=db
-      - SYNTHESIS_CORE_BASE_URL=http://app_synthesis:3001
+      - SYNTHESIS_CORE_BASE_URL=http://app_synthesis:8001
       - DEBUG=1
     depends_on:
       - db

@@ -47,3 +47,11 @@ class SynthesisInterface(abc.ABC):
         """Summarize an indexed transcript and return reference indices
         for phrases and sentences in the final summary"""
         pass
+
+    @abc.abstractmethod
+    def concise_transcript(
+            self, indexed_transcript: str, interviewee: str
+    ) -> SynthesisResult:
+        """Convert transcript to concise version and return reference indices
+        for phrases and sentences in the concise version"""
+        pass

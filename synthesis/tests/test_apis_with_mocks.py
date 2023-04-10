@@ -8,11 +8,12 @@ from fastapi import status
 import json
 import pytest
 
+
 client = TestClient(app)
 
 transcripts = {}
 TRANSCRIPT_ID = 1000000
-transcript_file = 'tests/test_transcript_dummy.txt'
+transcript_file = 'tests/samples/transcript_dummy.txt'
 with open(transcript_file, 'r') as f:
     transcript_text = f.read()
 
@@ -169,6 +170,27 @@ def test_get_summary(setup_teardown):
     assert response.status_code == status.HTTP_204_NO_CONTENT
     response = client.get(
         f'/transcript/{TRANSCRIPT_ID}/summary?interviewee=Jason')
+    body = json.loads(response.content)
+    assert body['cost'] > 0
+    assert len(body['output']) > 0
+    response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+
+def test_get_concise(setup_teardown):
+    """Test get concise transcript method"""
+    response = client.get(
+        f'/transcript/{TRANSCRIPT_ID}/concise?interviewee=Jason')
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}",
+        content=transcript_text,
+        headers={
+            'Content-Type': 'text/plain'
+        })
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    response = client.get(
+        f'/transcript/{TRANSCRIPT_ID}/concise?interviewee=Jason')
     body = json.loads(response.content)
     assert body['cost'] > 0
     assert len(body['output']) > 0
