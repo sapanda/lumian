@@ -8,7 +8,7 @@ services:
         - DEV=true
     ports:
       - 8000:8000
-      - 3000:3000
+      - 3000:3000 # for debugging
     volumes:
       - ./app:/app
       - dev-static-data:/vol/web
@@ -20,7 +20,7 @@ services:
       - ./.env
     environment:
       - DB_HOST=db
-      - SYNTHESIS_CORE_BASE_URL=http://app_synthesis:3001
+      - SYNTHESIS_CORE_BASE_URL=http://app_synthesis:8001
       - DEBUG=1
     depends_on:
       - db
@@ -35,15 +35,16 @@ services:
       dockerfile: dockerfile
     ports:
       - 8001:8001
-      - 3001:3001
+      - 3001:3001 # for debugging
     volumes:
       - ./synthesis:/synthesis
     command: >
       sh -c "PYTHONPATH=. python commands/wait_for_db.py &&
              PYTHONPATH=. python migrations/create_transcript_table_schema.py &&
-             uvicorn app.server:app --host 0.0.0.0 --port 3001 --reload"
+             uvicorn app.server:app --host 0.0.0.0 --port 8001 --reload"
     environment:
       - DB_HOST=db
+      - DEBUG=1
     env_file:
       - ./.env
     depends_on:

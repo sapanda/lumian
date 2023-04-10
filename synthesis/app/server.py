@@ -50,6 +50,12 @@ EXCEPTION_TO_STATUS_CODE_MAPPING = {
 }
 
 
+# Use for attaching VSCode debugger
+if settings.debug:
+    import debugpy
+    debugpy.listen(("0.0.0.0", 3001))
+
+
 def get_settings():
     """Settings provider"""
     return settings

@@ -14,3 +14,4 @@ class Settings(BaseSettings):
     line_min_size: int = 90
     chunk_min_words: int = 500
     examples_file: str = 'examples.json'
+    debug: bool = False
