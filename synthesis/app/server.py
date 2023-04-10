@@ -1,25 +1,31 @@
-from fastapi import (FastAPI, Depends, status, Body,
-                     Response)
 import json
-import psycopg2
 import time
 
-from .config import Settings
-
+import psycopg2
 from psycopg2._psycopg import connection
-from .repositories import TranscriptRepository
+
+from fastapi import (
+    FastAPI, Depends, status, Body, Response
+)
+
+from .config import Settings
 from .interfaces import (
-    TranscriptRepositoryInterface, OpenAIClientInterface, SynthesisInterface)
+    TranscriptRepositoryInterface, OpenAIClientInterface, SynthesisInterface
+)
 from .openai_client import OpenAIClient
+from .repositories import TranscriptRepository
 from .synthesis import Synthesis
-from .errors import (OpenAITimeoutException,
-                     ObjectNotFoundException, SynthesisAPIException,
-                     ObjectAlreadyPresentException)
+from .errors import (
+    OpenAITimeoutException, ObjectNotFoundException, SynthesisAPIException,
+    ObjectAlreadyPresentException
+)
 from .usecases import (
     save_transcript as _save_transcript,
     delete_transcript as _delete_transcript,
     get_transcript_summary as _get_transcript_summary,
-    get_transcript as _get_transcript)
+    get_transcript as _get_transcript
+)
+
 
 settings = Settings()
 retry_db_con = 0

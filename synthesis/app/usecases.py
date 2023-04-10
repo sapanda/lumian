@@ -1,7 +1,7 @@
-from .interfaces import TranscriptRepositoryInterface, SynthesisInterface
-from .utils import split_text_into_multiple_lines_for_speaker
 from .domains import Transcript, SummaryResult
 from .errors import ObjectNotFoundException, ObjectAlreadyPresentException
+from .interfaces import TranscriptRepositoryInterface, SynthesisInterface
+from .utils import split_text_into_multiple_lines_for_speaker
 
 
 def save_transcript(

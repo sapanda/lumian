@@ -4,7 +4,9 @@ import json
 import openai
 import pinecone
 from transcript.synthesis_core import (
-    get_summary_with_reverse_lookup, save_transcript_for_id)
+    get_summary_with_reverse_lookup,
+    save_transcript_for_id
+)
 from transcript.ai.utils import chunk_by_paragraph_groups
 from transcript.models import (
     Transcript, SynthesisType, AIChunks, AISynthesis, AIEmbeds, Query,

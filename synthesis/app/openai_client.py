@@ -1,8 +1,10 @@
 import openai
 from openai.error import Timeout
 from retry import retry
-from .interfaces import OpenAIClientInterface
+
 from .errors import OpenAITimeoutException
+from .interfaces import OpenAIClientInterface
+
 
 # Models
 OPENAI_MODEL_COMPLETIONS = "text-davinci-003"

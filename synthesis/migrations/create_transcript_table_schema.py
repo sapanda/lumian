@@ -19,9 +19,10 @@ postgres_connection = get_db_connection()
 with postgres_connection:
     with postgres_connection.cursor() as cursor:
         cursor.execute("CREATE SCHEMA IF NOT EXISTS synthesis;")
-        cursor.execute("""CREATE TABLE synthesis.transcript(
-                id int NOT NULL,
-                data json NOT NULL,
-                PRIMARY KEY(id)
-                )""")
+        cursor.execute("""
+                       CREATE TABLE IF NOT EXISTS synthesis.transcript(
+                       id int NOT NULL,
+                       data json NOT NULL,
+                       PRIMARY KEY(id))
+                       """)
         postgres_connection.commit()
