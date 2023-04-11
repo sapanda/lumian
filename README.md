@@ -24,5 +24,6 @@ docker-compose down
 ## Changes
 Before pushing your code, be sure to run tests and linting
 ```
-docker-compose run --rm app sh -c "python manage.py test && flake8"
+./scripts/run-tests.sh
+./scripts/flake8.sh
 ```
