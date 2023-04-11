@@ -27,22 +27,10 @@ from .usecases import (
     get_transcript_concise as _get_transcript_concise,
 )
 
+from . import models
+from .database import SessionLocal, engine
+from sqlalchemy.orm import Session
 
-settings = Settings()
-retry_db_con = 0
-while retry_db_con < 5:
-    try:
-        # TODO: do something on connection failure
-        postgres_connection = psycopg2.connect(
-            user=settings.db_user,
-            password=settings.db_password,
-            host=settings.db_host,
-            port=settings.db_port,
-            database=settings.db_name)
-        break
-    except Exception:
-        retry_db_con += 1
-        time.sleep(2)
 
 EXCEPTION_TO_STATUS_CODE_MAPPING = {
     ObjectAlreadyPresentException: status.HTTP_409_CONFLICT,
@@ -50,6 +38,7 @@ EXCEPTION_TO_STATUS_CODE_MAPPING = {
     OpenAITimeoutException: status.HTTP_500_INTERNAL_SERVER_ERROR
 }
 
+settings = Settings()
 
 # Use for attaching VSCode debugger
 if settings.debug:
@@ -62,18 +51,22 @@ def get_settings():
     return settings
 
 
-def get_db_connection(
+def get_db(
     settings: Settings = Depends(get_settings)
 ) -> connection:
     """DB connection provider"""
-    return postgres_connection
+    try:
+        db = SessionLocal()
+        yield db
+    finally:
+        db.close()
 
 
 def get_transcript_repo(
-    conn: connection = Depends(get_db_connection)
+    db: Session = Depends(get_db)
 ) -> TranscriptRepositoryInterface:
     """Transcript Repository provider"""
-    return TranscriptRepository(conn=conn)
+    return TranscriptRepository(session=db)
 
 
 def get_openai_client(
@@ -97,6 +90,9 @@ def get_synthesis(
         chunk_min_words=settings.chunk_min_words,
         examples_dir=settings.examples_dir)
 
+
+models.Base.metadata.schema = 'synthesis'
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Synthesis API",

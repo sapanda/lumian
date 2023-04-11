@@ -1,42 +1,33 @@
-import json
-from psycopg2._psycopg import connection
+from sqlalchemy.orm import Session
+
+from . import domains, models
 from .interfaces import TranscriptRepositoryInterface
-from .domains import Transcript
 
 
 class TranscriptRepository(TranscriptRepositoryInterface):
     """Repository instance providing methods for storing, retrieving
     and deleting transcript"""
 
-    def __init__(self, conn: connection):
-        self.conn = conn
+    def __init__(self, session: Session):
+        self.session = session
 
-    def get(self, id: int) -> Transcript:
+    def get(self, id: int) -> domains.Transcript:
         """Get a transcript from storage"""
         # TODO: handle database related errors
-        with self.conn:
-            with self.conn.cursor() as cur:
-                cur.execute(
-                    "SELECT data FROM synthesis.transcript WHERE id = %s",
-                    (id,))
-                data = cur.fetchone()
-                if not data:
-                    return None
-        return Transcript(
-            id=id,
-            data=data[0]
-        )
+        tct = self.session.query(models.Transcript) \
+            .filter(models.Transcript.id == id).first()
+        if not tct:
+            return None
+        return domains.Transcript(id=tct.id, data=tct.data)
 
-    def save(self, transcript: Transcript):
+    def save(self, transcript: domains.Transcript):
         """Save transcript to storage"""
         # TODO: handle database related errors
-        with self.conn:
-            with self.conn.cursor() as cur:
-                cur.execute(
-                    "INSERT INTO synthesis.transcript(id,data) VALUES (%s,%s)",
-                    (transcript.id, json.dumps(transcript.data)))
+        tct = models.Transcript(id=transcript.id, data=transcript.data)
+        self.session.add(tct)
+        self.session.commit()
 
-    def replace(self, transcript: Transcript):
+    def replace(self, transcript: domains.Transcript):
         """Replace transcript in storage"""
         # TODO: handle database related errors
         self.delete(id=transcript.id)
@@ -45,7 +36,7 @@ class TranscriptRepository(TranscriptRepositoryInterface):
     def delete(self, id: int):
         """Delete transcript of transcript"""
         # TODO: handle database related errors
-        with self.conn:
-            with self.conn.cursor() as cur:
-                cur.execute(
-                    "DELETE FROM synthesis.transcript WHERE id = %s", (id,))
+        tct = self.session.query(models.Transcript) \
+            .filter(models.Transcript.id == id).first()
+        self.session.delete(tct)
+        self.session.commit()
