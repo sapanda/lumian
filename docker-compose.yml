@@ -8,7 +8,7 @@ services:
         - DEV=true
     ports:
       - 8000:8000
-      - 3000:3000 # for debugging
+      - 3000:3000 # for debugger
     volumes:
       - ./app:/app
       - dev-static-data:/vol/web
@@ -35,12 +35,11 @@ services:
       dockerfile: dockerfile
     ports:
       - 8001:8001
-      - 3001:3001 # for debugging
+      - 3001:3001 # for debugger
     volumes:
       - ./synthesis:/synthesis
     command: >
       sh -c "PYTHONPATH=. python commands/wait_for_db.py &&
-             PYTHONPATH=. python migrations/create_transcript_table_schema.py &&
              uvicorn app.server:app --host 0.0.0.0 --port 8001 --reload"
     environment:
       - DB_HOST=db
