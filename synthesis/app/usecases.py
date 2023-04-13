@@ -1,4 +1,6 @@
-from .domains import Transcript, CitationResult, EmbedsResult
+from .domains import (
+    Transcript, CitationResult, SynthesisResult, EmbedsResult
+)
 from .errors import ObjectNotFoundException, ObjectAlreadyPresentException
 from .interfaces import (
     TranscriptRepositoryInterface, SynthesisInterface
@@ -50,6 +52,28 @@ def delete_transcript(
     repo.delete(id=id)
 
 
+def _synthesis_to_citation_result(sresults: SynthesisResult,
+                                  transcript_data: 'list[dict]'
+                                  ) -> CitationResult:
+    citations = []
+    for text_reference in sresults["output"]:
+        text = text_reference["text"]
+        references = []
+        for num in text_reference['references']:
+            references.append([transcript_data[num]["start"],
+                               transcript_data[num]["end"]])
+        citations.append({
+            'text': text,
+            'references': references
+        })
+    retval: CitationResult = {
+        'output': citations,
+        'prompt': sresults['prompt'],
+        'cost': sresults['cost']
+    }
+    return retval
+
+
 def get_transcript_summary(
         id: int,
         interviewee: str,
@@ -59,17 +83,7 @@ def get_transcript_summary(
     transcript = _get_transcript(id, repo)
     data = transcript.data
     results = synthesis.summarize_transcript(str(transcript), interviewee)
-    final_results = []
-    for text_reference in results["output"]:
-        text = text_reference["text"]
-        references = []
-        for num in text_reference['references']:
-            references.append([data[num]["start"], data[num]["end"]])
-        final_results.append({
-            'text': text,
-            'references': references
-        })
-    return {'output': final_results, 'cost': results['cost']}
+    return _synthesis_to_citation_result(results, data)
 
 
 def get_transcript_concise(
@@ -81,17 +95,7 @@ def get_transcript_concise(
     transcript = _get_transcript(id, repo)
     data = transcript.data
     results = synthesis.concise_transcript(str(transcript), interviewee)
-    final_results = []
-    for text_reference in results["output"]:
-        text = text_reference["text"]
-        references = []
-        for num in text_reference['references']:
-            references.append([data[num]["start"], data[num]["end"]])
-        final_results.append({
-            'text': text,
-            'references': references
-        })
-    return {'output': final_results, 'cost': results['cost']}
+    return _synthesis_to_citation_result(results, data)
 
 
 def create_transcript_embeds(
@@ -116,5 +120,7 @@ def run_transcript_query(
         repo: TranscriptRepositoryInterface,
         synthesis: SynthesisInterface) -> CitationResult:
     """Run query against the transcript"""
-    _get_transcript(id, repo)  # verify transcript exists
-    return synthesis.query_transcript(id, query)
+    transcript = _get_transcript(id, repo)
+    data = transcript.data
+    results = synthesis.query_transcript(id, query)
+    return _synthesis_to_citation_result(results, data)

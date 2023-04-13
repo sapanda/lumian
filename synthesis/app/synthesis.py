@@ -20,13 +20,11 @@ class Synthesis(SynthesisInterface):
     def __init__(self,
                  openai_client: OpenAIClientInterface,
                  embeds_client: EmbedsClientInterface,
-                 max_summary_size: int,
                  chunk_min_words: int,
                  context_max_chars: int,
                  examples_dir: str):
         self.openai_client = openai_client
         self.embeds_client = embeds_client
-        self.max_summary_size = max_summary_size
         self.chunk_min_words = chunk_min_words
         self.context_max_chars = context_max_chars
         self.examples_dir = examples_dir
@@ -68,7 +66,11 @@ class Synthesis(SynthesisInterface):
             final_results.append({
                 'text': item['text'],
                 'references': list(temp)})
-        data: SynthesisResult = {"output": final_results, "cost": cost}
+        data: SynthesisResult = {
+            "output": final_results,
+            "prompt": temp_result["prompt"],
+            "cost": cost
+        }
         return data
 
     def _summarize_text(
@@ -77,38 +79,50 @@ class Synthesis(SynthesisInterface):
         """Summarize indexed notes and return reference indices
         for phrases and sentences in the final summary"""
         chunks = split_indexed_lines_into_chunks(text, self.chunk_min_words)
+        last_prompt = ""
         results = []
         cost = 0
         for chunk in chunks:
             result = self._openai_summarize_full(chunk)
             summary = result["output"]
             cost += result["cost"]
+            last_prompt = result["prompt"]
             summary_sentences_and_indices = split_and_extract_indices(summary)
             results.extend(summary_sentences_and_indices)
         n = len(results)
         word_count = 0
         for item in results:
             word_count += len(item['text'].split())
-        # Todo: figure out cutoff logic for recursion
-        if word_count <= self.max_summary_size:
-            return {"output": results, "cost": cost}
 
-        text = "\n".join([f"[{i}] {results[i]['text']}" for i in range(n)])
-        temp_result = self._summarize_text(text)
-        summary_results, summary_cost = temp_result['output'],\
-            temp_result['cost']
-        cost += summary_cost
-        final_results: list[SynthesisResultOutput] = []
-        for i in range(len(summary_results)):
-            item = summary_results[i]
-            temp = set()
-            for num in item['references']:
-                temp.update(results[num]['references'])
-            final_results.append({
-                'text': item['text'],
-                'references': list(temp)
-            })
-        data: SynthesisResult = {"output": final_results, "cost": cost}
+        if len(chunks) == 1:
+            # If we've only had to summarize a single chunk, we're done
+            data: SynthesisResult = {
+                "output": results,
+                "prompt": last_prompt,
+                "cost": cost
+            }
+        else:
+            # Solve recursively
+            text = "\n".join([f"[{i}] {results[i]['text']}" for i in range(n)])
+            temp_result = self._summarize_text(text)
+            summary_results, summary_cost = temp_result['output'],\
+                temp_result['cost']
+            cost += summary_cost
+            final_results: list[SynthesisResultOutput] = []
+            for i in range(len(summary_results)):
+                item = summary_results[i]
+                temp = set()
+                for num in item['references']:
+                    temp.update(results[num]['references'])
+                final_results.append({
+                    'text': item['text'],
+                    'references': list(temp)
+                })
+            data: SynthesisResult = {
+                "output": final_results,
+                "prompt": temp_result['prompt'],
+                "cost": cost
+            }
         return data
 
     def _create_openai_prompt_summarize_chunk(
@@ -138,16 +152,6 @@ class Synthesis(SynthesisInterface):
         )
         return self._create_openai_prompt_citations(text, header,
                                                     self.EG_SUMMARY)
-
-    def _openai_summarize_with_prompt_header(
-        self,
-        text: str,
-        prompt_header: str = None,
-    ) -> dict:
-        """Generate a summary for a chunk of the transcript."""
-        prompt = self._create_openai_prompt_citations(text, prompt_header,
-                                                      self.EG_SUMMARY)
-        return self.openai_client.execute_completion(prompt)
 
     def _openai_summarize_chunk(
         self,
@@ -179,14 +183,22 @@ class Synthesis(SynthesisInterface):
         chunks = split_indexed_transcript_lines_into_chunks(
             indexed_transcript, interviewee, self.chunk_min_words)
         results = []
+        prompts = []
         cost = 0
         for chunk in chunks:
             result = self._openai_concise_chunk(chunk)
             concise = result["output"]
             cost += result["cost"]
+            prompts.extend(result["prompt"])
             sentences_and_indices = split_and_extract_indices(concise)
             results.extend(sentences_and_indices)
-        data: SynthesisResult = {"output": results, "cost": cost}
+
+        separator = f"\n\n{'-' * 50}\n\n"
+        data: SynthesisResult = {
+            "output": results,
+            "prompt": separator.join(prompts),
+            "cost": cost
+        }
         return data
 
     def _create_openai_prompt_concise_chunk(self, text: str) -> dict:
@@ -300,7 +312,9 @@ class Synthesis(SynthesisInterface):
         sentences_and_indices = split_and_extract_indices(query_output)
         cost = embed_result["cost"] + query_results["cost"]
         results: SynthesisResult = {
-            "output": sentences_and_indices, "cost": cost
+            "output": sentences_and_indices,
+            "prompt": query_results["prompt"],
+            "cost": cost
         }
         return results
 
@@ -329,9 +343,7 @@ class Synthesis(SynthesisInterface):
         """Create prompt to generate a query result."""
 
         prompt_header = ('Answer the query using the provided context, '
-                         'which consists of excerpts from interviews. '
-                         'If the answer is not contained within the '
-                         'context, say "I don\'t know."')
+                         'which consists of excerpts from interviews. ')
 
         text = f'{query}\n###\nCONTEXT:\n'
         for section in chosen_sections:

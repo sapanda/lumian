@@ -4,7 +4,7 @@ import re
 def split_text_into_multiple_lines_for_speaker(
         text: str,
         line_min_size: int
-) -> list[dict]:
+) -> 'list[dict]':
     """
     Takes in a string `text` and splits it into multiple lines where each
     line is at least `LINE_MIN_SIZE` characters long and ends with a period
@@ -63,7 +63,7 @@ def split_text_into_multiple_lines_for_speaker(
 
 def split_indexed_lines_into_chunks(
         text: str,
-        chunk_min_words: int) -> list[list[str]]:
+        chunk_min_words: int) -> 'list[list[str]]':
     """Split indexed lines into chunks"""
     results, cur_results, lines, chunk_size = [], [], text.split("\n"), 0
     n = len(lines)
@@ -79,7 +79,7 @@ def split_indexed_lines_into_chunks(
 
 def split_indexed_transcript_lines_into_chunks(
     text: str, interviewee: str, chunk_min_words: int
-) -> list[list[str]]:
+) -> 'list[list[str]]':
     """Split indexed lines into chunks. No chunk (except the first) should
     start with 'interviewee' name"""
     interviewee = interviewee.lower()
@@ -102,7 +102,7 @@ def split_indexed_transcript_lines_into_chunks(
 
 def split_and_extract_indices(
         input_string: str
-) -> list[tuple[str, list[int]]]:
+) -> 'list[tuple[str, list[int]]]':
     """Split the lines into sentences and extract indices
     from parenthesis mentioned at the end of indices
     input_string: "Some text (2-3), some more text (10,13).
@@ -117,13 +117,15 @@ def split_and_extract_indices(
     results = []
     for match in matches:
         if match[0]:
-            results.append({'text': match[0], 'references': _parse_indices(match[1])})
+            results.append({'text': match[0],
+                            'references': _parse_indices(match[1])})
         elif match[2]:
-            results.append({'text': match[2], 'references': []})
+            results.append({'text': match[2],
+                            'references': []})
     return results
 
 
-def _parse_indices(input_string: str) -> list[int]:
+def _parse_indices(input_string: str) -> 'list[int]':
     """Parse the indices string and generate an equivalent
     integer list representation
     input_string: 1,3-5,9

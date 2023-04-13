@@ -66,7 +66,8 @@ notes_indices_references = [
     {'text': 'Some text Some text Some text', 'references': [2, 3]},
     {'text': '. Some text Some text Some text', 'references': [8, 9, 10]},
     {'text': ', Some text Some text Some text Some text',
-     'references': [1, 21, 22, 23, 24, 25, 28]}]
+     'references': [1, 21, 22, 23, 24, 25, 28]},
+    {'text': '.', 'references': []}]
 
 
 def test_split_text_into_multiple_lines_for_speaker():

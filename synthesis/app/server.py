@@ -101,7 +101,6 @@ def get_synthesis(
     return Synthesis(
         openai_client=openai_client,
         embeds_client=embeds_client,
-        max_summary_size=settings.max_summary_size,
         chunk_min_words=settings.chunk_min_words,
         context_max_chars=settings.context_max_chars,
         examples_dir=settings.examples_dir)

@@ -42,7 +42,7 @@ class ReadOnlyInline(admin.StackedInline):
 
 class SynthesisInline(ReadOnlyInline):
     model = Synthesis
-    exclude = ['output', 'output_type']
+    exclude = ['output', 'output_type', 'prompt']
     readonly_fields = ['synthesis', 'cost']
     verbose_name = ""
     verbose_name_plural = "Syntheses"
@@ -57,7 +57,7 @@ class EmbedsInline(ReadOnlyInline):
 
 class QueryInline(ReadOnlyInline):
     model = Query
-    exclude = ['output']
+    exclude = ['query', 'output', 'prompt']
     readonly_fields = ['synthesis', 'cost']
     verbose_name = ""
     verbose_name_plural = "Queries"
@@ -79,13 +79,14 @@ class SynthesisAdmin(admin.ModelAdmin):
     """Admin page for the Synthesis model"""
     list_display = ['transcript', 'output_type', 'synthesis', 'cost']
     fields = ('transcript', 'output_type', 'output',
-              'cost', 'synthesis', 'citations')
-    readonly_fields = ('cost', 'synthesis', 'citations')
+              'cost', 'synthesis', 'citations', 'prompt')
+    readonly_fields = ('cost', 'synthesis', 'citations', 'prompt')
 
 
 @admin.register(Query)
 class QueryAdmin(admin.ModelAdmin):
     """Admin page for the Query model."""
     list_display = ['transcript', 'query', 'synthesis', 'cost']
-    fields = ('transcript', 'output', 'cost', 'synthesis', 'citations')
-    readonly_fields = ('cost', 'synthesis', 'citations')
+    fields = ('transcript', 'output', 'cost', 'synthesis',
+              'citations', 'prompt')
+    readonly_fields = ('cost', 'synthesis', 'citations', 'prompt')

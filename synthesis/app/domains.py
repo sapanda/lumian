@@ -6,7 +6,7 @@ from typing import TypedDict
 class Transcript:
     """Data model for transcript"""
     id: int
-    data: list[dict]
+    data: 'list[dict]'
 
     def __str__(self):
         return '\n'.join([
@@ -17,24 +17,26 @@ class Transcript:
 class CitationResultOutput(TypedDict):
     """Result model for standard request output"""
     text: str
-    references: list[list[int, int]]
+    references: 'list[list[int, int]]'
 
 
 class CitationResult(TypedDict):
     """Result model for standard request"""
-    output: list[CitationResultOutput]
+    output: 'list[CitationResultOutput]'
+    prompt: str
     cost: float
 
 
 class SynthesisResultOutput(TypedDict):
     """Result model for Synthesis output"""
     text: str
-    references: list[int]
+    references: 'list[int]'
 
 
 class SynthesisResult(TypedDict):
     """Result model for synthesis class"""
-    output: list[SynthesisResultOutput]
+    output: 'list[SynthesisResultOutput]'
+    prompt: str
     cost: float
 
 

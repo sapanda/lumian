@@ -18,6 +18,7 @@ def _generate_summary(tct: Transcript) -> Synthesis:
         transcript=tct,
         output_type=SynthesisType.SUMMARY,
         output=result["output"],
+        prompt=result["prompt"],
         cost=result["cost"]
     )
 
@@ -33,6 +34,7 @@ def _generate_concise(tct: Transcript) -> Synthesis:
         transcript=tct,
         output_type=SynthesisType.CONCISE,
         output=result["output"],
+        prompt=result["prompt"],
         cost=result["cost"]
     )
 
@@ -68,12 +70,13 @@ def generate_synthesis(transcript_id):
 # TODO: Move to different file?
 def run_openai_query(tct: Transcript, query: str) -> Query:
     """Run the OpenAI query on the given transcript."""
-    results = synthesis_core.run_query(tct.id, query)
+    result = synthesis_core.run_query(tct.id, query)
     query_obj = Query.objects.create(
         transcript=tct,
         query=query,
-        output=results['output'],
-        cost=results['cost'],
+        output=result['output'],
+        prompt=result["prompt"],
+        cost=result['cost'],
     )
 
     tct.cost = float(tct.cost) + query_obj.cost
