@@ -83,7 +83,7 @@ class Synthesis(SynthesisInterface):
         results = []
         cost = 0
         for chunk in chunks:
-            result = self._openai_summarize_full(chunk)
+            result = self._openai_summarize_full("\n".join(chunk))
             summary = result["output"]
             cost += result["cost"]
             last_prompt = result["prompt"]
@@ -186,10 +186,10 @@ class Synthesis(SynthesisInterface):
         prompts = []
         cost = 0
         for chunk in chunks:
-            result = self._openai_concise_chunk(chunk)
+            result = self._openai_concise_chunk("\n".join(chunk))
             concise = result["output"]
             cost += result["cost"]
-            prompts.extend(result["prompt"])
+            prompts.append(result["prompt"])
             sentences_and_indices = split_and_extract_indices(concise)
             results.extend(sentences_and_indices)
 
@@ -387,7 +387,7 @@ class Synthesis(SynthesisInterface):
         for example in examples:
             input_text = f"INPUT {index}: ###\n{example['input']}\n###\n"
             output_text = f"OUTPUT {index}: ###\n{example['output']}\n###\n"
-            prompt = f"{prompt}\n\n{input_text}\n{output_text}"
+            prompt = f"{prompt}\n\n{input_text}{output_text}"
             index += 1
 
             if index > max_examples:
