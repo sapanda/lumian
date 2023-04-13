@@ -5,7 +5,7 @@ from django import forms
 from django.contrib import admin
 
 from transcript.models import (
-    Transcript, AIChunks, AISynthesis, AIEmbeds, Query, Synthesis
+    Transcript, Synthesis, Embeds, Query
 )
 
 
@@ -26,38 +26,6 @@ class TranscriptForm(forms.ModelForm):
         return instance
 
 
-class ReadOnlyAdmin(admin.ModelAdmin):
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return True
-
-
-@admin.register(AIChunks)
-class AIChunksAdmin(ReadOnlyAdmin):
-    """Admin page for the AI synthesis model."""
-    list_display = ['transcript', 'chunk_type', 'cost']
-
-
-@admin.register(AISynthesis)
-class AISynthesisAdmin(ReadOnlyAdmin):
-    """Admin page for the AI synthesis model."""
-    list_display = ['transcript', 'output_type', 'total_cost']
-
-
-@admin.register(AIEmbeds)
-class AIEmbedsAdmin(ReadOnlyAdmin):
-    """Admin page for the AI synthesis model."""
-    list_display = ['transcript', 'index_cost']
-
-
-@admin.register(Query)
-class QueryAdmin(ReadOnlyAdmin):
-    """Admin page for the Query model."""
-    list_display = ['transcript', 'query', 'query_cost']
-
-
 class ReadOnlyInline(admin.StackedInline):
     show_change_link = True
     extra = 0
@@ -72,40 +40,27 @@ class ReadOnlyInline(admin.StackedInline):
         return False
 
 
-class AIChunksInline(ReadOnlyInline):
-    model = AIChunks
-    exclude = [field.name for field in AIChunks._meta.get_fields()]
-    verbose_name = ""
-    verbose_name_plural = "AI Chunks"
-
-
-class AISynthesisInline(ReadOnlyInline):
-    model = AISynthesis
-    verbose_name = ""
-    verbose_name_plural = "AI Synthesis"
-    exclude = ['model_name', 'tokens_used']
-
-
-class AIEmbedsInline(ReadOnlyInline):
-    model = AIEmbeds
-    exclude = ['chunks', 'pinecone_ids']
-    verbose_name = ""
-    verbose_name_plural = "AI Embeds"
-
-
-class QueryInline(ReadOnlyInline):
-    model = Query
-    exclude = ['search_values', 'search_scores']
-    verbose_name = ""
-    verbose_name_plural = "Queries"
-
-
 class SynthesisInline(ReadOnlyInline):
     model = Synthesis
     exclude = ['output', 'output_type']
     readonly_fields = ['synthesis', 'cost']
     verbose_name = ""
     verbose_name_plural = "Syntheses"
+
+
+class EmbedsInline(ReadOnlyInline):
+    model = Embeds
+    readonly_fields = ['cost']
+    verbose_name = ""
+    verbose_name_plural = "Embeds"
+
+
+class QueryInline(ReadOnlyInline):
+    model = Query
+    exclude = ['output']
+    readonly_fields = ['synthesis', 'cost']
+    verbose_name = ""
+    verbose_name_plural = "Queries"
 
 
 @admin.register(Transcript)
@@ -115,8 +70,7 @@ class TranscriptAdmin(admin.ModelAdmin):
     list_display = ['title', 'interviewee_names']
 
     def get_inlines(self, request, obj=None):
-        return [AISynthesisInline, QueryInline,
-                AIChunksInline, AIEmbedsInline, SynthesisInline] \
+        return [SynthesisInline, EmbedsInline, QueryInline] \
             if obj else []
 
 
@@ -125,5 +79,13 @@ class SynthesisAdmin(admin.ModelAdmin):
     """Admin page for the Synthesis model"""
     list_display = ['transcript', 'output_type', 'synthesis', 'cost']
     fields = ('transcript', 'output_type', 'output',
-              'cost', 'synthesis', 'reverse_lookups')
-    readonly_fields = ('cost', 'synthesis', 'reverse_lookups')
+              'cost', 'synthesis', 'citations')
+    readonly_fields = ('cost', 'synthesis', 'citations')
+
+
+@admin.register(Query)
+class QueryAdmin(admin.ModelAdmin):
+    """Admin page for the Query model."""
+    list_display = ['transcript', 'query', 'synthesis', 'cost']
+    fields = ('transcript', 'output', 'cost', 'synthesis', 'citations')
+    readonly_fields = ('cost', 'synthesis', 'citations')

@@ -4,12 +4,7 @@ Utility functions for testing the transcript app.
 from django.contrib.auth import get_user_model
 
 from transcript.models import (
-    Transcript, AISynthesis, SynthesisType, AIEmbeds
-)
-from transcript.tasks import (
-    pinecone_index,
-    _generate_chunks,
-    _execute_openai_embeds_and_upsert,
+    Transcript, SynthesisType, Synthesis, Embeds
 )
 
 
@@ -31,36 +26,23 @@ def create_transcript(user, **params):
     }
     defaults.update(params)
 
-    tpt = Transcript.objects.create(user=user, **defaults)
-    tpt.save()
+    tct = Transcript.objects.create(user=user, **defaults)
+    tct.save()
 
-    summary = AISynthesis.objects.create(
-        transcript=tpt,
-        output_type=SynthesisType.SUMMARY,
-        output='Test Summary',
-        tokens_used=100,
-    )
-    summary.save()
-
-    concise = AISynthesis.objects.create(
-        transcript=tpt,
-        output_type=SynthesisType.CONCISE,
-        output='Test Concise',
-        tokens_used=0,
-    )
-    concise.save()
-    return tpt
-
-
-def create_embeds(tct: Transcript):
-    """Create and populate the index if it doesn't exist."""
-    chunks = _generate_chunks(tct)
-    result = _execute_openai_embeds_and_upsert(tct, pinecone_index, chunks)
-
-    embeds = AIEmbeds.objects.create(
+    Synthesis.objects.create(
         transcript=tct,
-        chunks=chunks,
-        pinecone_ids=result['request_ids'],
+        output_type=SynthesisType.SUMMARY,
+        output=[{'text': 'summary'}],
+        cost=0.1,
     )
-    embeds.save()
-    return embeds
+    Synthesis.objects.create(
+        transcript=tct,
+        output_type=SynthesisType.CONCISE,
+        output=[{'text': 'concise'}],
+        cost=0.2,
+    )
+    Embeds.objects.create(
+        transcript=tct,
+        cost=0.05,
+    )
+    return tct

@@ -21,13 +21,11 @@ with open(transcript_file, 'r') as f:
 
 def setup():
     """Setup before tests"""
-    # nothing to be done
     pass
 
 
 def teardown():
     """Restore the state before setup was run"""
-    # nothing to be done
     pass
 
 
@@ -142,5 +140,57 @@ def test_get_concise(setup_teardown):
     concise = ''.join([item['text'] for item in body['output']])
     assert 'Jason' in concise
     assert len(concise.split()) > 0
+    response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+
+@pytest.mark.skipif(TEST_ENV_IS_LOCAL, reason=OPENAI_COSTS_REASON)
+def test_create_embeds(setup_teardown):
+    """Test create embeds method"""
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}/embeds?interviewee=Jason&title=Test")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}",
+        content=transcript_text,
+        headers={
+            'Content-Type': 'text/plain'
+        })
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}/embeds?interviewee=Jason&title=Test")
+    assert response.status_code == status.HTTP_200_OK
+    body = json.loads(response.content)
+    assert body['cost'] > 0
+    response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+
+@pytest.mark.skipif(TEST_ENV_IS_LOCAL, reason=OPENAI_COSTS_REASON)
+def test_run_query(setup_teardown):
+    """Test run query method"""
+    from urllib.parse import quote
+    ask = quote("Where does Jason live?")
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}/query?ask={ask}")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}",
+        content=transcript_text,
+        headers={
+            'Content-Type': 'text/plain'
+        })
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}/embeds?interviewee=Jason&title=Test")
+    assert response.status_code == status.HTTP_200_OK
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}/query?ask={ask}")
+    assert response.status_code == status.HTTP_200_OK
+    body = json.loads(response.content)
+    assert body['cost'] > 0
+    assert len(body['output']) > 0
+    output = ''.join([item['text'] for item in body['output']])
+    assert "boise" in output.lower()
     response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
     assert response.status_code == status.HTTP_204_NO_CONTENT

@@ -91,7 +91,7 @@ DATABASES = {
         'HOST': os.environ.get('DB_HOST'),
         'NAME': os.environ.get('DB_NAME'),
         'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASS'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
     }
 }
 
@@ -157,17 +157,8 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 
-# API keys
-OPENAI_ORG_ID = os.environ.get('OPENAI_ORG_ID')
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-PINECONE_API_KEY = os.environ.get('PINECONE_API_KEY')
-
 # Testing parameters
 TEST_ENV_IS_LOCAL = os.environ.get('TEST_ENV', 'local') == 'local'
-
-# Pinecone indexing
-PINECONE_USER = os.environ.get('PINECONE_USER', '')
-PINECONE_NAMESPACE = f'dev-{PINECONE_USER}' if PINECONE_USER else 'dev'
 
 # Synthesis core
 SYNTHESIS_CORE_BASE_URL = os.environ.get('SYNTHESIS_CORE_BASE_URL')

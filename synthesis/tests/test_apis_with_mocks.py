@@ -1,8 +1,12 @@
-from app.server import (app, get_openai_client,
-                        get_transcript_repo, get_settings)
+from app.server import (
+    app, get_openai_client, get_embeds_client,
+    get_transcript_repo, get_settings
+)
 from app.config import Settings
 from app.domains import Transcript
-from app.interfaces import OpenAIClientInterface, TranscriptRepositoryInterface
+from app.interfaces import (
+    OpenAIClientInterface, EmbedsClientInterface, TranscriptRepositoryInterface
+)
 from fastapi.testclient import TestClient
 from fastapi import status
 import json
@@ -34,6 +38,54 @@ class MockOpenAIClient(OpenAIClientInterface):
             'tokens_used': tokens_used
         }
 
+    def execute_embeds(self, text: str) -> dict:
+        return {
+            "embedding": [0.1, 0.2],
+            "tokens_used": 10,
+            "cost": 0.1
+        }
+
+    def execute_embeds_batch(self, request_list: 'list[str]',
+                             object_id: int = None,
+                             object_desc: str = None,
+                             start_index: int = 0,
+                             ) -> dict:
+        return {
+            "upsert_list": [],
+            "request_ids": [],
+            "tokens_used": 10,
+            "cost": 0.1
+        }
+
+
+class MockEmbedsClient(EmbedsClientInterface):
+    """Mock class for Embeddings Client"""
+
+    def upsert(self, vectors: 'list[dict]'):
+        pass
+
+    def search(self, id: int, embedding: 'list[int]', limit: int = 5) -> dict:
+        return {
+            "matches": [{
+                "id": "example-vector-1",
+                "score": 0.08,
+                "values": [0.1, 0.2, 0.3, 0.4],
+                "sparseValues": {
+                    "indices": [1, 312, 822, 14],
+                    "values": [0.1, 0.2, 0.3]
+                },
+                "metadata": {
+                    "text": "this is a transcript",
+                    "object-id": 1,
+                    "object-title": "Transcript Title",
+                }
+            }],
+            "namespace": "string"
+        }
+
+    def delete(self, id: int):
+        pass
+
 
 class MockTranscriptRepo(TranscriptRepositoryInterface):
     """Mock class for Transcript Repository"""
@@ -57,6 +109,11 @@ class MockTranscriptRepo(TranscriptRepositoryInterface):
 def get_mock_openai_client():
     """Mock OpenAI client provider"""
     return MockOpenAIClient()
+
+
+def get_mock_embeds_client():
+    """Mock Embeddings client provider"""
+    return MockEmbedsClient()
 
 
 def get_mock_transcript_repo():
@@ -84,6 +141,7 @@ def get_mock_settings():
 def setup():
     """Setup before tests"""
     app.dependency_overrides[get_openai_client] = get_mock_openai_client
+    app.dependency_overrides[get_embeds_client] = get_mock_embeds_client
     app.dependency_overrides[get_settings] = get_mock_settings
     app.dependency_overrides[get_transcript_repo] = get_mock_transcript_repo
 
@@ -98,6 +156,9 @@ def teardown():
 def setup_teardown():
     """Fixture to run tests between setup and teardown"""
     setup()
+    # import debugpy
+    # debugpy.listen(("localhost", 3002))
+    # debugpy.wait_for_client()
     yield "Do Testing"
     teardown()
 
@@ -191,6 +252,49 @@ def test_get_concise(setup_teardown):
     assert response.status_code == status.HTTP_204_NO_CONTENT
     response = client.get(
         f'/transcript/{TRANSCRIPT_ID}/concise?interviewee=Jason')
+    body = json.loads(response.content)
+    assert body['cost'] > 0
+    assert len(body['output']) > 0
+    response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+
+def test_create_embeds(setup_teardown):
+    """Test create embeds method"""
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}/embeds?interviewee=Jason&title=Test")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}",
+        content=transcript_text,
+        headers={
+            'Content-Type': 'text/plain'
+        })
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}/embeds?interviewee=Jason&title=Test")
+    assert response.status_code == status.HTTP_200_OK
+    body = json.loads(response.content)
+    assert body['cost'] > 0
+    response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+
+def test_run_query(setup_teardown):
+    """Test run query method"""
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}/query?ask=test")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}",
+        content=transcript_text,
+        headers={
+            'Content-Type': 'text/plain'
+        })
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    response = client.post(
+        f"/transcript/{TRANSCRIPT_ID}/query?ask=test")
+    assert response.status_code == status.HTTP_200_OK
     body = json.loads(response.content)
     assert body['cost'] > 0
     assert len(body['output']) > 0

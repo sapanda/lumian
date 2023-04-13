@@ -1,10 +1,11 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, DDL, event
 from sqlalchemy.engine import URL
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 from .config import Settings
 
+
+SCHEMA = 'synthesis'
 
 settings = Settings()
 url = URL.create(
@@ -18,5 +19,10 @@ url = URL.create(
 
 engine = create_engine(url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 Base = declarative_base()
+
+event.listen(
+    Base.metadata,
+    'before_create',
+    DDL(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}")
+)

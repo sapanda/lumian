@@ -36,11 +36,11 @@ services:
     ports:
       - 8001:8001
       - 3001:3001 # for debugger
+      - 3002:3002 # for debugger
     volumes:
       - ./synthesis:/synthesis
     command: >
-      sh -c "PYTHONPATH=. python commands/wait_for_db.py &&
-             uvicorn app.server:app --host 0.0.0.0 --port 8001 --reload"
+      sh -c "uvicorn app.server:app --host 0.0.0.0 --port 8001 --reload"
     environment:
       - DB_HOST=db
       - DEBUG=1
@@ -79,7 +79,7 @@ services:
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
 
 volumes:
   dev-db-data:

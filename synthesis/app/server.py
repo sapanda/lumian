@@ -1,35 +1,24 @@
-import json
-import time
-
-import psycopg2
-from psycopg2._psycopg import connection
-
 from fastapi import (
     FastAPI, Depends, status, Body, Response
 )
+import json
+from sqlalchemy.orm import Session
 
+from . import models, usecases
 from .config import Settings
-from .interfaces import (
-    TranscriptRepositoryInterface, OpenAIClientInterface, SynthesisInterface
-)
-from .openai_client import OpenAIClient
-from .repositories import TranscriptRepository
-from .synthesis import Synthesis
+from .database import SessionLocal, engine
 from .errors import (
     OpenAITimeoutException, ObjectNotFoundException, SynthesisAPIException,
     ObjectAlreadyPresentException
 )
-from .usecases import (
-    save_transcript as _save_transcript,
-    get_transcript as _get_transcript,
-    delete_transcript as _delete_transcript,
-    get_transcript_summary as _get_transcript_summary,
-    get_transcript_concise as _get_transcript_concise,
+from .interfaces import (
+    OpenAIClientInterface, EmbedsClientInterface,
+    TranscriptRepositoryInterface, SynthesisInterface
 )
-
-from . import models
-from .database import SessionLocal, engine
-from sqlalchemy.orm import Session
+from .openai_client import OpenAIClient
+from .pinecone_client import PineconeClient
+from .repositories import TranscriptRepository
+from .synthesis import Synthesis
 
 
 EXCEPTION_TO_STATUS_CODE_MAPPING = {
@@ -45,15 +34,20 @@ if settings.debug:
     import debugpy
     debugpy.listen(("0.0.0.0", 3001))
 
+models.Base.metadata.create_all(bind=engine)
+
+app = FastAPI(
+    title="Synthesis API",
+    version="0.0.1"
+)
+
 
 def get_settings():
     """Settings provider"""
     return settings
 
 
-def get_db(
-    settings: Settings = Depends(get_settings)
-) -> connection:
+def get_db() -> Session:
     """DB connection provider"""
     try:
         db = SessionLocal()
@@ -79,25 +73,38 @@ def get_openai_client(
     )
 
 
+def get_embeds_client(
+    settings: Settings = Depends(get_settings)
+) -> EmbedsClientInterface:
+    """Embeds client provider"""
+
+    if settings.pinecone_user:
+        namespace = f'dev-{settings.pinecone_user}'
+    else:
+        namespace = 'dev'
+
+    return PineconeClient(
+        api_key=settings.pinecone_api_key,
+        index_name=settings.pinecone_index,
+        region=settings.pinecone_region,
+        dimensions=settings.pinecone_dimensions,
+        namespace=namespace
+    )
+
+
 def get_synthesis(
     settings: Settings = Depends(get_settings),
-    openai_client: OpenAIClientInterface = Depends(get_openai_client)
+    openai_client: OpenAIClientInterface = Depends(get_openai_client),
+    embeds_client: EmbedsClientInterface = Depends(get_embeds_client)
 ) -> SynthesisInterface:
     """Synthesis instance provider"""
     return Synthesis(
         openai_client=openai_client,
+        embeds_client=embeds_client,
         max_summary_size=settings.max_summary_size,
         chunk_min_words=settings.chunk_min_words,
+        context_max_chars=settings.context_max_chars,
         examples_dir=settings.examples_dir)
-
-
-models.Base.metadata.schema = 'synthesis'
-models.Base.metadata.create_all(bind=engine)
-
-app = FastAPI(
-    title="Synthesis API",
-    version="0.0.1"
-)
 
 
 @app.exception_handler(SynthesisAPIException)
@@ -114,7 +121,7 @@ def get_transcript(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
 ):
     """API for getting a transcript the way it is stored"""
-    data = _get_transcript(id=id, repo=repo)
+    data = usecases.get_transcript(id, repo)
     return data
 
 
@@ -126,18 +133,20 @@ def save_transcript(
     transcript: str = Body(),
 ):
     """API for saving a transcript"""
-    _save_transcript(id=id, transcript=transcript,
-                     line_min_size=settings.line_min_size, repo=repo)
+    usecases.save_transcript(id=id, transcript=transcript,
+                             line_min_size=settings.line_min_size, repo=repo)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.delete('/transcript/{id}')
 def delete_transcript(
     id: int,
-    repo: TranscriptRepositoryInterface = Depends(get_transcript_repo)
+    repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
+    embeds_client: EmbedsClientInterface = Depends(get_embeds_client)
 ):
     """API for deleting a transcript"""
-    _delete_transcript(id=id, repo=repo)
+    usecases.delete_transcript(id, repo)
+    embeds_client.delete(id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -149,7 +158,7 @@ def get_transcript_summary(
     synthesis: Synthesis = Depends(get_synthesis)
 ):
     """API for getting a summary of a transcript"""
-    results = _get_transcript_summary(
+    results = usecases.get_transcript_summary(
         id=id,
         interviewee=interviewee,
         repo=repo,
@@ -166,9 +175,45 @@ def get_transcript_concise(
     synthesis: Synthesis = Depends(get_synthesis)
 ):
     """API for getting a concise transcript"""
-    results = _get_transcript_concise(
+    results = usecases.get_transcript_concise(
         id=id,
         interviewee=interviewee,
+        repo=repo,
+        synthesis=synthesis
+    )
+    return results
+
+
+@app.post('/transcript/{id}/embeds')
+def create_transcript_embeds(
+    id: int,
+    title: str,
+    interviewee: str,
+    repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
+    synthesis: Synthesis = Depends(get_synthesis)
+):
+    """API for generating vecotr embeds for a transcript"""
+    results = usecases.create_transcript_embeds(
+        id=id,
+        title=title,
+        interviewee=interviewee,
+        repo=repo,
+        synthesis=synthesis
+    )
+    return results
+
+
+@app.post('/transcript/{id}/query')
+def run_transcript_query(
+    id: int,
+    ask: str,
+    repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
+    synthesis: Synthesis = Depends(get_synthesis)
+):
+    """API for running a query against a transcript"""
+    results = usecases.run_transcript_query(
+        id=id,
+        query=ask,
         repo=repo,
         synthesis=synthesis
     )

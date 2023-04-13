@@ -1,6 +1,8 @@
-from .domains import Transcript, SummaryResult
+from .domains import Transcript, CitationResult, EmbedsResult
 from .errors import ObjectNotFoundException, ObjectAlreadyPresentException
-from .interfaces import TranscriptRepositoryInterface, SynthesisInterface
+from .interfaces import (
+    TranscriptRepositoryInterface, SynthesisInterface
+)
 from .utils import split_text_into_multiple_lines_for_speaker
 
 
@@ -44,7 +46,7 @@ def delete_transcript(
         id: int,
         repo: TranscriptRepositoryInterface):
     """Delete a saved transcript from storage"""
-    _get_transcript(id, repo)  # check if transcript exists
+    _get_transcript(id, repo)  # verify transcript exists
     repo.delete(id=id)
 
 
@@ -52,7 +54,8 @@ def get_transcript_summary(
         id: int,
         interviewee: str,
         repo: TranscriptRepositoryInterface,
-        synthesis: SynthesisInterface) -> SummaryResult:
+        synthesis: SynthesisInterface) -> CitationResult:
+    """Generate a summary from the transcript"""
     transcript = _get_transcript(id, repo)
     data = transcript.data
     results = synthesis.summarize_transcript(str(transcript), interviewee)
@@ -73,7 +76,8 @@ def get_transcript_concise(
         id: int,
         interviewee: str,
         repo: TranscriptRepositoryInterface,
-        synthesis: SynthesisInterface) -> SummaryResult:
+        synthesis: SynthesisInterface) -> CitationResult:
+    """Generate a concise transcript from the transcript"""
     transcript = _get_transcript(id, repo)
     data = transcript.data
     results = synthesis.concise_transcript(str(transcript), interviewee)
@@ -88,3 +92,29 @@ def get_transcript_concise(
             'references': references
         })
     return {'output': final_results, 'cost': results['cost']}
+
+
+def create_transcript_embeds(
+        id: int,
+        title: str,
+        interviewee: str,
+        repo: TranscriptRepositoryInterface,
+        synthesis: SynthesisInterface) -> EmbedsResult:
+    """Generate embeds from the transcript"""
+    transcript = _get_transcript(id, repo)
+    return synthesis.embed_transcript(
+        transcript_id=id,
+        transcript_title=title,
+        indexed_transcript=str(transcript),
+        interviewee=interviewee
+    )
+
+
+def run_transcript_query(
+        id: int,
+        query: str,
+        repo: TranscriptRepositoryInterface,
+        synthesis: SynthesisInterface) -> CitationResult:
+    """Run query against the transcript"""
+    _get_transcript(id, repo)  # verify transcript exists
+    return synthesis.query_transcript(id, query)

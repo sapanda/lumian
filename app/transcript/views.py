@@ -14,10 +14,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from transcript.models import (
-    Transcript, AISynthesis, AIEmbeds, SynthesisType, Query
+    Transcript, SynthesisType, Synthesis, Embeds, Query
 )
 from transcript.serializers import (
-    TranscriptSerializer, AISynthesisSerializer, QuerySerializer
+    TranscriptSerializer, SynthesisSerializer, QuerySerializer
 )
 from transcript.tasks import run_openai_query
 
@@ -42,35 +42,35 @@ class TranscriptView(viewsets.ModelViewSet):
         ).order_by('-id').distinct()
 
 
-class AISynthesisView(APIView):
+class SynthesisView(APIView):
     """"Base class for all AI synthesis views."""
 
     def get_of_type(self, request, pk, synthesis_type):
         """Retrieve the AISynthesis of the given type."""
         try:
             Transcript.objects.get(pk=pk)  # Needed for checking 404
-            synthesis = AISynthesis.objects.get(
+            synthesis = Synthesis.objects.get(
                 transcript=pk,
                 output_type=synthesis_type
             )
-            serializer = AISynthesisSerializer(synthesis)
+            serializer = SynthesisSerializer(synthesis)
             response = Response(serializer.data)
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
-        except AISynthesis.DoesNotExist:
+        except Synthesis.DoesNotExist:
             # TODO: Have a way to check if summary in progress
             response = Response(status=status.HTTP_202_ACCEPTED)
 
         return response
 
 
-class SummaryView(AISynthesisView):
+class SummaryView(SynthesisView):
     """View for getting summary of a transcript."""
     def get(self, request, pk):
         return self.get_of_type(request, pk, SynthesisType.SUMMARY)
 
 
-class ConciseView(AISynthesisView):
+class ConciseView(SynthesisView):
     """View for getting concise transcript."""
     def get(self, request, pk):
         return self.get_of_type(request, pk, SynthesisType.CONCISE)
@@ -90,16 +90,16 @@ class QueryView(APIView):
         query = request.data.get('query')
         try:
             tct = Transcript.objects.get(pk=pk)
-            AIEmbeds.objects.get(transcript=pk)  # Needed for checking 202
+            Embeds.objects.get(transcript=pk)  # Needed for checking 202
             query_obj = run_openai_query(tct, query)
             data = {
                 'query': query,
-                'result': query_obj.result
+                'output': query_obj.output
             }
             response = Response(data, status=status.HTTP_201_CREATED)
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
-        except AIEmbeds.DoesNotExist:
+        except Embeds.DoesNotExist:
             # TODO: Have a way to check if summary in progress
             response = Response(status=status.HTTP_202_ACCEPTED)
 
