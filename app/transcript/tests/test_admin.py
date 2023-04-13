@@ -50,4 +50,4 @@ class AdminSiteTests(TestCase):
 
         self.assertEqual(res.status_code, 200)
 
-    # TODO: Test that AISynthesis, AIChunks, AIEmbed, and Query are listed
+    # TODO: Test that Synthesis, Chunks, Embed, and Query are listed

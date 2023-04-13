@@ -5,10 +5,30 @@ def split_text_into_multiple_lines_for_speaker(
         text: str,
         line_min_size: int
 ) -> list[dict]:
-    """Takes in a string `text` and splits it into multiple lines where each
+    """
+    Takes in a string `text` and splits it into multiple lines where each
     line is at least `LINE_MIN_SIZE` characters long and ends with a period
     (.),question mark (?) or exclamation mark (!). Each line starts with the
-    name of the speaker."""
+    name of the speaker.
+
+    Example input:
+        text: "Speaker A: This is a long piece of text that needs \
+              to be split into multiple lines. Speaker B: Yes, I agree."
+        line_min_size: 25
+
+    Example output:
+        [{
+            "text": "Speaker A: This is a long piece of text that needs \
+                to be split into multiple lines.",
+            "start": 0,
+            "end": 82
+        },
+        {
+            "text": "Speaker B: Yes, I agree.",
+            "start": 83,
+            "end": 104
+        }]
+    """
     paras = re.split(r"\n+", text.strip())
     start_loc, results = 0, []
     for para in paras:
@@ -86,15 +106,21 @@ def split_and_extract_indices(
     """Split the lines into sentences and extract indices
     from parenthesis mentioned at the end of indices
     input_string: "Some text (2-3), some more text (10,13).
-                   Some more new text (1,4-5,15)"
+                   Some more new text (1,4-5,15). And more."
     output: [{'text': "Some text", 'references': [2,3]},
              {'text': ", some more text", 'references': [10, 11, 12, 13]},
-             {'text': ".Some more new text", 'references': [1, 4, 5, 15]}]
+             {'text': ". Some more new text", 'references': [1, 4, 5, 15]},
+             {'text': ". And more", 'references': []}]
     """
-    pattern = re.compile(r"(.+?)\s*\(([\d\s,-]+)\)")
+    pattern = re.compile(r"(.+?)\s*\(([\d\s,-]+)\)|(.+)")
     matches = pattern.findall(input_string)
-    return [{'text': match[0], 'references': _parse_indices(match[1])}
-            for match in matches]
+    results = []
+    for match in matches:
+        if match[0]:
+            results.append({'text': match[0], 'references': _parse_indices(match[1])})
+        elif match[2]:
+            results.append({'text': match[2], 'references': []})
+    return results
 
 
 def _parse_indices(input_string: str) -> list[int]:

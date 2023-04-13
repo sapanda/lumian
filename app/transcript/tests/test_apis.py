@@ -2,19 +2,18 @@
 Tests for the creation and upload of transcripts via the API.
 """
 from django.conf import settings
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from transcript.models import Transcript, AISynthesis, SynthesisType
+from transcript.models import Transcript, SynthesisType, Synthesis
 from transcript.serializers import TranscriptSerializer
-from transcript.tasks import pinecone_index
+from transcript.synthesis_core import generate_embeds
 from transcript.tests.utils import (
     create_user,
-    create_transcript,
-    create_embeds,
+    create_transcript
 )
 
 from unittest import skipIf, skip
@@ -44,7 +43,7 @@ def query_url(transcript_id):
     return reverse('transcript:query-detail', args=[transcript_id])
 
 
-class PublicTranscriptAPITests(TestCase):
+class PublicAPITests(TestCase):
     """Test unauthenticated API requests."""
 
     def setUp(self):
@@ -57,8 +56,8 @@ class PublicTranscriptAPITests(TestCase):
 
 
 @patch('transcript.signals._run_generate_synthesis')
-class PrivateTranscriptAPITests(TestCase):
-    """Test the transcript creation features"""
+class MockAPITests(TestCase):
+    """Test the API with mocked synthesis service."""
 
     def setUp(self):
         self.user = create_user(
@@ -86,7 +85,7 @@ class PrivateTranscriptAPITests(TestCase):
         self.assertEqual(tpt.user, self.user)
         self.assertEqual(patched_signal.call_count, 1)
 
-    def test_create_blank_input_failure(self, patched_signal):
+    def test_create_transcript_failure(self, patched_signal):
         """Test creating a transcript with blank input fails."""
         payload = {
             'title': '',
@@ -130,7 +129,7 @@ class PrivateTranscriptAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
 
-    @skip("Not implemented yet")
+    @skip("Not Implemented")
     def test_partial_update(self, patched_signal):
         """Test partial update of a transcript."""
         tpt = create_transcript(user=self.user)
@@ -145,7 +144,7 @@ class PrivateTranscriptAPITests(TestCase):
         self.assertEqual(tpt.interviewee_names, payload['interviewee_names'])
         self.assertEqual(tpt.user, self.user)
 
-    @skip("Not implemented yet")
+    @skip("Not Implemented")
     def test_full_update(self, patched_signal):
         """Test full update of transcript."""
         tpt = create_transcript(user=self.user)
@@ -177,7 +176,8 @@ class PrivateTranscriptAPITests(TestCase):
         tpt.refresh_from_db()
         self.assertEqual(tpt.user, self.user)
 
-    def test_delete_transcript(self, patched_signal):
+    @patch('transcript.signals._delete_transcript_on_synthesis_service')
+    def test_delete_transcript(self, patched_signal, patched_delete):
         """Test deleting a transcript successful."""
         tpt = create_transcript(user=self.user)
 
@@ -221,7 +221,7 @@ class PrivateTranscriptAPITests(TestCase):
         url = summary_url(tpt.id)
         res = self.client.get(url)
 
-        summary = AISynthesis.objects.get(
+        summary = Synthesis.objects.get(
             transcript=tpt,
             output_type=SynthesisType.SUMMARY
         )
@@ -258,7 +258,7 @@ class PrivateTranscriptAPITests(TestCase):
         url = concise_url(tpt.id)
         res = self.client.get(url)
 
-        concise = AISynthesis.objects.get(
+        concise = Synthesis.objects.get(
             transcript=tpt,
             output_type=SynthesisType.CONCISE
         )
@@ -275,13 +275,51 @@ class PrivateTranscriptAPITests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
+    @patch('transcript.synthesis_core.run_query')
+    def test_query_success(self, patched_query, patched_signal):
+        """Test querying a transcript successfully."""
+        tpt = create_transcript(user=self.user)
+        query = "Where does Jason live?"
+        query_output = {
+            'output': 'Jason lives in Boise',
+            'cost': 0.3,
+        }
+        patched_query.return_value = query_output
+
+        url = query_url(tpt.id)
+        res = self.client.post(url, {'query': query})
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data['query'], query)
+        self.assertEqual(res.data['output'], query_output['output'])
+
+    def test_query_failure_invalid_transcript(self, patched_signal):
+        """Test that the query request fails if transcript doesn't exist."""
+        url = query_url(10000000)
+        res = self.client.post(url, {'query': ''})
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch('transcript.synthesis_core.run_query')
+    def test_query_list_empty(self, patched_query, patched_signal):
+        """Test that the query GET request works with empty results."""
+        tpt = create_transcript(user=self.user)
+        url = query_url(tpt.id)
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 0)
+
+    def test_query_list_invalid_transcript(self, patched_signal):
+        """Test that the query GET request fails with invalid transcript."""
+        url = query_url(10000000)
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
 
 @skipIf(settings.TEST_ENV_IS_LOCAL,
         "OpenAI Costs: Run only when testing AI Synthesis changes")
-@override_settings(PINECONE_NAMESPACE=f'test-{settings.PINECONE_USER}')
 @patch('transcript.signals._run_generate_synthesis')
-class PrivateQueryAPITests(TestCase):
-    """Test the transcript querying features"""
+class EndToEndAPITests(TestCase):
+    """Test the full API endpoints."""
 
     def setUp(self):
         self.user = create_user(
@@ -297,17 +335,19 @@ class PrivateQueryAPITests(TestCase):
 
         self.tct = create_transcript(
             user=self.user,
-            transcript=sample_transcript
+            transcript=sample_transcript,
+            interviewee_names=['Jason'],
         )
 
     def tearDown(self):
-        pinecone_index.delete(deleteAll='true',
-                              namespace=settings.PINECONE_NAMESPACE)
+        pass
 
+    @skip("Needs synthesis Service to be running")
     def test_query_execution_success(self, patched_signal):
         """Test that the query request is successfully executed."""
-        create_embeds(self.tct)
-
+        generate_embeds(
+            self.tct.id, self.tct.title, self.tct.interviewee_names[0]
+        )
         query = "Where does Jason live?"
         url = query_url(self.tct.id)
         res = self.client.post(url, {'query': query})
@@ -316,29 +356,12 @@ class PrivateQueryAPITests(TestCase):
         self.assertEqual(res.data['query'], query, "Wrong query string")
         self.assertTrue('Boise' in res.data['result'], "Bad result")
 
-    def test_query_execution_embeds_in_progress(self, patched_signal):
-        """Test that the query request fails if embeds are not yet ready."""
-        url = query_url(self.tct.id)
-        res = self.client.post(url, {'query': ''})
-        self.assertEqual(res.status_code, status.HTTP_202_ACCEPTED)
-
-    def test_query_execution_invalid_transcript(self, patched_signal):
-        """Test that the query request fails if transcript doesn't exist."""
-        url = query_url(10000000)
-        res = self.client.post(url, {'query': ''})
-        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
-
-    def test_query_list_empty(self, patched_signal):
-        """Test that the query GET request works with empty results."""
-        url = query_url(self.tct.id)
-        res = self.client.get(url)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 0)
-
+    @skip("Needs synthesis Service to be running")
     def test_query_list_valid(self, patched_signal):
         """Test that the query GET request is successfully executed."""
-        create_embeds(self.tct)
-
+        generate_embeds(
+            self.tct.id, self.tct.title, self.tct.interviewee_names[0]
+        )
         url = query_url(self.tct.id)
         self.client.post(url, {'query': 'Where does Jason live?'})
         self.client.post(url, {'query': 'Describe Jason\'s family?'})
@@ -346,9 +369,3 @@ class PrivateQueryAPITests(TestCase):
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 2)
-
-    def test_query_list_invalid_transcript(self, patched_signal):
-        """Test that the query GET request fails with invalid transcript."""
-        url = query_url(10000000)
-        res = self.client.get(url)
-        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)

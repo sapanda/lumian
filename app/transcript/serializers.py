@@ -3,7 +3,7 @@ Serializers for the transcript API View.
 """
 from rest_framework import serializers
 
-from transcript.models import Transcript, AISynthesis, Query
+from transcript.models import Transcript, Synthesis, Query
 
 
 class TranscriptSerializer(serializers.ModelSerializer):
@@ -19,15 +19,15 @@ class TranscriptSerializer(serializers.ModelSerializer):
         return Transcript.objects.create(**validated_data)
 
 
-class AISynthesisSerializer(serializers.ModelSerializer):
-    """Serializer for the AISynthesis object."""
+class SynthesisSerializer(serializers.ModelSerializer):
+    """Serializer for the Synthesis object."""
     class Meta:
-        model = AISynthesis
+        model = Synthesis
         fields = ['output']
 
     def create(self, validated_data):
         """Create and return a transcript summary."""
-        return AISynthesis.objects.create(**validated_data)
+        return Synthesis.objects.create(**validated_data)
 
 
 class QuerySerializer(serializers.ModelSerializer):

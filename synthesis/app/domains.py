@@ -14,15 +14,15 @@ class Transcript:
         ])
 
 
-class SummaryResultOutput(TypedDict):
-    """Result model for Summary output"""
+class CitationResultOutput(TypedDict):
+    """Result model for standard request output"""
     text: str
     references: list[list[int, int]]
 
 
-class SummaryResult(TypedDict):
-    """Result model for Summary"""
-    output: list[SummaryResultOutput]
+class CitationResult(TypedDict):
+    """Result model for standard request"""
+    output: list[CitationResultOutput]
     cost: float
 
 
@@ -35,4 +35,9 @@ class SynthesisResultOutput(TypedDict):
 class SynthesisResult(TypedDict):
     """Result model for synthesis class"""
     output: list[SynthesisResultOutput]
+    cost: float
+
+
+class EmbedsResult(TypedDict):
+    """Result model for Embeds"""
     cost: float

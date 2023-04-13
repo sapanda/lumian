@@ -34,7 +34,7 @@ class TranscriptRepository(TranscriptRepositoryInterface):
         self.save(transcript=transcript)
 
     def delete(self, id: int):
-        """Delete transcript of transcript"""
+        """Delete transcript from storage"""
         # TODO: handle database related errors
         tct = self.session.query(models.Transcript) \
             .filter(models.Transcript.id == id).first()
