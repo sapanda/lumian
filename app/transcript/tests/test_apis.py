@@ -282,6 +282,7 @@ class MockAPITests(TestCase):
         query = "Where does Jason live?"
         query_output = {
             'output': 'Jason lives in Boise',
+            'prompt': 'Test prompt',
             'cost': 0.3,
         }
         patched_query.return_value = query_output

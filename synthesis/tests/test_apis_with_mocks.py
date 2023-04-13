@@ -33,6 +33,7 @@ class MockOpenAIClient(OpenAIClientInterface):
         tokens_used = len(prompt.split()) * 2
         cost = tokens_used * 0.000001
         return {
+            'prompt': 'Have some fun',
             'output': 'Some text (0). Some other text (1)',
             'cost': cost,
             'tokens_used': tokens_used
@@ -131,7 +132,6 @@ def get_mock_settings():
         db_user='',
         openai_api_key='',
         openai_org_id='',
-        max_summary_size=8,
         line_min_size=5,
         chunk_min_words=20
     )
@@ -156,9 +156,6 @@ def teardown():
 def setup_teardown():
     """Fixture to run tests between setup and teardown"""
     setup()
-    # import debugpy
-    # debugpy.listen(("localhost", 3002))
-    # debugpy.wait_for_client()
     yield "Do Testing"
     teardown()
 

@@ -34,7 +34,7 @@ class QuerySerializer(serializers.ModelSerializer):
     """Serializer for the Transcript Query object."""
     class Meta:
         model = Query
-        fields = ['id', 'query', 'result']
+        fields = ['query', 'output']
 
     def create(self, validated_data):
         """Create and return a Transcript Query."""

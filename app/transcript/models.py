@@ -11,10 +11,11 @@ def _citations_from_output(transcript: str, output: str):
     for i in range(n):
         item = output[i]
         sentence, references = item["text"], item["references"]
-        result.extend((f"\n\n{i}: ", sentence, "\nReferences: "))
+        result.extend((f"{i}: ", sentence, "\nReferences: "))
         for j in range(len(references)):
             reference = references[j]
-            result.extend(("\n --->", text[reference[0]:reference[1]]))
+            result.extend(("\n ---> ", text[reference[0]:reference[1]]))
+        result.extend("\n\n")
     return ''.join(result)
 
 
@@ -56,6 +57,7 @@ class Synthesis(models.Model):
 
     output_type = models.CharField(max_length=2, choices=SynthesisType.choices)
     output = models.JSONField(blank=True)
+    prompt = models.TextField(max_length=20000, blank=True)
     cost = models.DecimalField(
         max_digits=10, decimal_places=4, default=0.0000, editable=False)
 
@@ -107,6 +109,7 @@ class Query(models.Model):
 
     query = models.TextField(max_length=10000)
     output = models.JSONField(blank=True)
+    prompt = models.TextField(max_length=20000, blank=True)
     cost = models.DecimalField(
         max_digits=10, decimal_places=4, default=0.0000)
 

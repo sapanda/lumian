@@ -18,7 +18,6 @@ class Settings(BaseSettings):
     pinecone_dimensions: int
     pinecone_user: str = None
 
-    max_summary_size: int = 1000
     line_min_size: int = 90
     chunk_min_words: int = 500
     context_max_chars: int = 6000

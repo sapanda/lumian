@@ -67,6 +67,7 @@ class OpenAIClient(OpenAIClientInterface):
             cost = self._calculate_cost(tokens_used, model)
 
             ret_val = {
+                "prompt": prompt,
                 "output": summary,
                 "tokens_used": tokens_used,
                 "cost": cost
