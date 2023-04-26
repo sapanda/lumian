@@ -31,7 +31,7 @@ def add_bot_to_meeting(bot_name: str, meeting_url: str):
         return {"error": error_msg, "status_code": status_code}
     
 
-def get_meeting_transcript(bot_id: str):
+def get_meeting_transcript_list(bot_id: str):
 
     url = f"https://api.recall.ai/api/v1/bot/{bot_id}/transcript/"
 
@@ -41,7 +41,7 @@ def get_meeting_transcript(bot_id: str):
     }
 
     try:
-        response = requests.post(url, headers=headers)
+        response = requests.get(url, headers=headers)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:

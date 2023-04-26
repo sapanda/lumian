@@ -3,6 +3,7 @@ from django.db import models
 from transcript.models import Transcript
 
 class MeetingBot(models.Model):
-    status = models.CharField(max_length=20)
-    transcript = models.ForeignKey(Transcript, on_delete=models.CASCADE)
+    bot_id = models.CharField(max_length=255)
+    status = models.CharField(max_length=255)
+    transcript = models.ForeignKey(Transcript, on_delete=models.CASCADE, null=True)
 

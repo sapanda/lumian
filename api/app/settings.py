@@ -27,7 +27,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'changeme')
 DEBUG = bool(int(os.environ.get('DEBUG', 0)))
 
 ALLOWED_HOSTS = [
-    '40da-2405-201-401a-ebd5-71b1-1e74-a122-92ec.ngrok-free.app'
+    'df87-2405-201-401a-ebd5-ac8d-663f-2b99-beab.ngrok-free.app'
 ]
 
 LOGGING = {

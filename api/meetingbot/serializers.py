@@ -20,7 +20,13 @@ class DataSerializer(serializers.Serializer):
 
 class BotStatusChangeSerializer(serializers.Serializer):
     data = DataSerializer()
-    even = serializers.CharField()
+    event = serializers.CharField()
+
+
+class MeetingBotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MeetingBot
+        fields = ['id', 'status', 'transcript']
 
 
     
