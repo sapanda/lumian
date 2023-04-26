@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  app:
+  api:
     build:
       context: .
       args:
@@ -10,7 +10,7 @@ services:
       - 8000:8000
       - 3000:3000 # for debugger
     volumes:
-      - ./app:/app
+      - ./api:/api
       - dev-static-data:/vol/web
     command: >
       sh -c "python manage.py wait_for_db &&
@@ -20,16 +20,16 @@ services:
       - ./.env
     environment:
       - DB_HOST=db
-      - SYNTHESIS_CORE_BASE_URL=http://app_synthesis:8001
+      - SYNTHESIS_CORE_BASE_URL=http://api_synthesis:8001
       - DEBUG=1
     depends_on:
       - db
       - redis
-      - app_synthesis
+      - api_synthesis
 
-  app_synthesis:
+  api_synthesis:
     build:
-      context: ./synthesis
+      context: ./api-synthesis
       args:
         - DEV=true
       dockerfile: dockerfile
@@ -38,7 +38,7 @@ services:
       - 3001:3001 # for debugger
       - 3002:3002 # for debugger
     volumes:
-      - ./synthesis:/synthesis
+      - ./api-synthesis:/api-synthesis
     command: >
       sh -c "uvicorn app.server:app --host 0.0.0.0 --port 8001 --reload"
     environment:
@@ -55,17 +55,17 @@ services:
       context: .
     command: celery -A app worker -l info
     volumes:
-      - ./app:/app
+      - ./api:/api
     env_file:
       - ./.env
     environment:
       - DB_HOST=db
-      - SYNTHESIS_CORE_BASE_URL=http://app_synthesis:8001
+      - SYNTHESIS_CORE_BASE_URL=http://api_synthesis:8001
       - DEBUG=1
     depends_on:
       - db
       - redis
-      - app
+      - api
 
   redis:
     image: redis:7-alpine

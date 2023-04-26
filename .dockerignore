@@ -6,10 +6,21 @@
 .docker
 
 # Python
-app/__pycache__/
-app/*/__pycache__/
-app/*/*/__pycache__/
-app/*/*/*/__pycache__/
+api/__pycache__/
+api/*/__pycache__/
+api/*/*/__pycache__/
+api/*/*/*/__pycache__/
+
+synthesis-api/__pycache__/
+synthesis-api/*/__pycache__/
+synthesis-api/*/*/__pycache__/
+synthesis-api/*/*/*/__pycache__/
+
+# Node
+web/node_modules
+web/build
+
+# Environment
 .env/
 .venv/
 venv/
