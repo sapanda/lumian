@@ -4,6 +4,7 @@
 
 # Docker
 .docker
+.dockerignore
 
 # Python
 api/__pycache__/
@@ -17,10 +18,13 @@ synthesis-api/*/*/__pycache__/
 synthesis-api/*/*/*/__pycache__/
 
 # Node
-web/node_modules
-web/build
+build
+node_modules
 
 # Environment
 .env/
 .venv/
 venv/
+
+# Other
+.DS_Store
