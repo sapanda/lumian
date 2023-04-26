@@ -2,16 +2,16 @@ FROM python:3.9-alpine3.13
 LABEL maintainer="getmetanext.com"
 
 ENV PYTHONNUNBUFFERED 1
-WORKDIR /synthesis
+WORKDIR /api-synthesis
 
-COPY . /synthesis
+COPY . /api-synthesis
 
 ARG DEV=false
 
 RUN apk add --update --no-cache postgresql-client jpeg-dev && \
     apk add --update --no-cache --virtual .tmp-build-deps build-base \
     postgresql-dev musl-dev zlib zlib-dev linux-headers
-RUN pip install --no-cache-dir --upgrade -r /synthesis/requirements.txt && \
+RUN pip install --no-cache-dir --upgrade -r /api-synthesis/requirements.txt && \
     if [ $DEV = "true" ]; \
-        then pip install --no-cache-dir --upgrade -r /synthesis/requirements.dev.txt ; \
+        then pip install --no-cache-dir --upgrade -r /api-synthesis/requirements.dev.txt ; \
     fi

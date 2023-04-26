@@ -4,12 +4,27 @@
 
 # Docker
 .docker
+.dockerignore
 
 # Python
-app/__pycache__/
-app/*/__pycache__/
-app/*/*/__pycache__/
-app/*/*/*/__pycache__/
+api/__pycache__/
+api/*/__pycache__/
+api/*/*/__pycache__/
+api/*/*/*/__pycache__/
+
+synthesis-api/__pycache__/
+synthesis-api/*/__pycache__/
+synthesis-api/*/*/__pycache__/
+synthesis-api/*/*/*/__pycache__/
+
+# Node
+build
+node_modules
+
+# Environment
 .env/
 .venv/
 venv/
+
+# Other
+.DS_Store
