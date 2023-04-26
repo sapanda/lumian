@@ -8,3 +8,5 @@ RUN npm install
 COPY . .
 
 ARG DEV=false
+
+EXPOSE 8002
