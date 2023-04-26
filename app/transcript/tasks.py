@@ -55,6 +55,9 @@ def _generate_embeds(tct: Transcript) -> Embeds:
 @shared_task
 def generate_synthesis(transcript_id):
     """Generate synthesized outputs using the synthesis service"""
+    all_objects = Transcript.objects.all()
+    all_ids = [obj.id for obj in all_objects]
+    print("Debug ------ " + str(all_ids))
     tct = Transcript.objects.get(id=transcript_id)
     synthesis_core.save_transcript_for_id(
         transcript_id=tct.id, transcript=tct.transcript
