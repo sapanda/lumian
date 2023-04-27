@@ -84,7 +84,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'app.wsgi.application'
 
-CORS_ALLOW_ALL_ORIGINS = True
+
+# CORS Settings
+
+if os.environ.get('DJANGO_ALLOWED_ORIGINS'):
+    CORS_ALLOWED_ORIGINS = []
+    CORS_ALLOWED_ORIGINS.extend(
+        filter(
+            None,
+            os.environ.get('DJANGO_ALLOWED_ORIGINS', '').split(',')
+        )
+    )
+else:
+    CORS_ALLOW_ALL_ORIGINS = True
 
 
 # Database
