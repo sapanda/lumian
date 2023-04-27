@@ -1,6 +1,7 @@
 class TranscriptUtils:
 
     def generate_transcript_text(self,transcript_list):
+
         transcript = {}
 
         for response in transcript_list:
