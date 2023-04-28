@@ -1,18 +1,25 @@
 import requests
+from retry import retry
 
+from meetingbot.errors import RecallAITimeoutException
+from app.settings import CREATE_BOT_URL, MEETING_TRANSCRIPT_URL, RECALL_API_KEY, RECALL_TRANSCRIPT_PROVIDER
+
+@retry(RecallAITimeoutException, tries=3, delay=5, backoff=2)
 def add_bot_to_meeting(bot_name: str, meeting_url: str):
 
-    url = "https://api.recall.ai/api/v1/bot/"
+    url = CREATE_BOT_URL
+    token = RECALL_API_KEY
+    transcript_provider = RECALL_TRANSCRIPT_PROVIDER
 
     payload = {
         "bot_name": bot_name,
-        "transcription_options": {"provider": "assembly_ai"},
+        "transcription_options": {"provider": transcript_provider},
         "meeting_url": meeting_url
     }
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
-        "Authorization": "Token bd5c553e67b74c2d4759e1cbc71f5976b07704b9"
+        "Authorization": "Token " + token
     }
 
     try:
@@ -23,21 +30,22 @@ def add_bot_to_meeting(bot_name: str, meeting_url: str):
         # handle HTTP errors (status code not between 200 and 299)
         error_msg = f"HTTP error occurred: {e}"
         status_code = e.response.status_code
-        return {"error": error_msg, "status_code": status_code}
+        raise RecallAITimeoutException(error_msg, status_code)
     except requests.exceptions.RequestException as e:
         # handle other types of request exceptions (e.g. network errors)
         error_msg = f"An error occurred: {e}"
         status_code = None  # set status code to None for non-HTTP errors
-        return {"error": error_msg, "status_code": status_code}
+        raise RecallAITimeoutException(error_msg, status_code)
     
+@retry(RecallAITimeoutException, tries=3, delay=5, backoff=2)
+def get_meeting_transcript(bot_id: str):
 
-def get_meeting_transcript_list(bot_id: str):
-
-    url = f"https://api.recall.ai/api/v1/bot/{bot_id}/transcript/"
+    url = MEETING_TRANSCRIPT_URL.format(bot_id)
+    token = RECALL_API_KEY
 
     headers = {
         "accept": "application/json",
-        "Authorization": "Token bd5c553e67b74c2d4759e1cbc71f5976b07704b9"
+        "Authorization": "Token " + token
     }
 
     try:
@@ -48,9 +56,9 @@ def get_meeting_transcript_list(bot_id: str):
         # handle HTTP errors (status code not between 200 and 299)
         error_msg = f"HTTP error occurred: {e}"
         status_code = e.response.status_code
-        return {"error": error_msg, "status_code": status_code}
+        raise RecallAITimeoutException(error_msg,status_code)
     except requests.exceptions.RequestException as e:
         # handle other types of request exceptions (e.g. network errors)
         error_msg = f"An error occurred: {e}"
         status_code = None  # set status code to None for non-HTTP errors
-        return {"error": error_msg, "status_code": status_code} 
+        raise RecallAITimeoutException(error_msg,status_code)

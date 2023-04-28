@@ -26,9 +26,13 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'changeme')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(int(os.environ.get('DEBUG', 0)))
 
-ALLOWED_HOSTS = [
-    'df87-2405-201-401a-ebd5-ac8d-663f-2b99-beab.ngrok-free.app'
-]
+ALLOWED_HOSTS = []
+ALLOWED_HOSTS.extend(
+    filter(
+        None,
+        os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(','),
+    )
+)
 
 LOGGING = {
     "version": 1,
@@ -56,12 +60,7 @@ LOGGING = {
     },
 }
 
-ALLOWED_HOSTS.extend(
-    filter(
-        None,
-        os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(','),
-    )
-)
+
 
 # Application definition
 
@@ -192,3 +191,10 @@ TEST_ENV_IS_LOCAL = os.environ.get('TEST_ENV', 'local') == 'local'
 
 # Synthesis core
 SYNTHESIS_CORE_BASE_URL = os.environ.get('SYNTHESIS_CORE_BASE_URL')
+
+#Recall AI URL
+CREATE_BOT_URL = "https://api.recall.ai/api/v1/bot/"
+MEETING_TRANSCRIPT_URL = "https://api.recall.ai/api/v1/bot/{}/transcript/"
+
+RECALL_API_KEY = os.environ.get("RECALL_API_KEY")
+RECALL_TRANSCRIPT_PROVIDER = os.environ.get("RECALL_TRANSCRIPT_PROVIDER")

@@ -26,7 +26,7 @@ class BotStatusChangeSerializer(serializers.Serializer):
 class MeetingBotSerializer(serializers.ModelSerializer):
     class Meta:
         model = MeetingBot
-        fields = ['id', 'status', 'transcript']
+        fields = ['id', 'status', 'transcript','message']
 
 
     
