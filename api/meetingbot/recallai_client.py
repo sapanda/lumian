@@ -2,7 +2,13 @@ import requests
 from retry import retry
 
 from meetingbot.errors import RecallAITimeoutException
-from app.settings import CREATE_BOT_URL, MEETING_TRANSCRIPT_URL, RECALL_API_KEY, RECALL_TRANSCRIPT_PROVIDER
+from app.settings import (
+    CREATE_BOT_URL,
+    MEETING_TRANSCRIPT_URL,
+    RECALL_API_KEY,
+    RECALL_TRANSCRIPT_PROVIDER
+)
+
 
 @retry(RecallAITimeoutException, tries=3, delay=5, backoff=2)
 def add_bot_to_meeting(bot_name: str, meeting_url: str):
@@ -36,7 +42,8 @@ def add_bot_to_meeting(bot_name: str, meeting_url: str):
         error_msg = f"An error occurred: {e}"
         status_code = None  # set status code to None for non-HTTP errors
         raise RecallAITimeoutException(error_msg, status_code)
-    
+
+
 @retry(RecallAITimeoutException, tries=3, delay=5, backoff=2)
 def get_meeting_transcript(bot_id: str):
 
@@ -56,9 +63,9 @@ def get_meeting_transcript(bot_id: str):
         # handle HTTP errors (status code not between 200 and 299)
         error_msg = f"HTTP error occurred: {e}"
         status_code = e.response.status_code
-        raise RecallAITimeoutException(error_msg,status_code)
+        raise RecallAITimeoutException(error_msg, status_code)
     except requests.exceptions.RequestException as e:
         # handle other types of request exceptions (e.g. network errors)
         error_msg = f"An error occurred: {e}"
         status_code = None  # set status code to None for non-HTTP errors
-        raise RecallAITimeoutException(error_msg,status_code)
+        raise RecallAITimeoutException(error_msg, status_code)
