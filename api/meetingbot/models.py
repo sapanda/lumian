@@ -13,12 +13,12 @@ class MeetingBot(models.Model):
         IN_WAITING_ROOM = 'in_waiting_room', _('In waiting room')
         IN_CALL_NOT_RECORDING = 'in_call_not_recording', _('Not recording')
         IN_CALL_RECORDING = 'in_call_recording', _('Call recording')
-        CALL_ENDED = 'call_ended', 'Transcription Complete'
-        DONE = 'done', 'Video available for download'
-        FATAL = 'fatal', 'Error'
-        ANALYSIS_DONE = 'analysis_done', 'Async Intelligence done'
+        CALL_ENDED = 'call_ended', _('Transcription Complete')
+        DONE = 'done', _('Video available for download')
+        FATAL = 'fatal', _('Error')
+        ANALYSIS_DONE = 'analysis_done', _('Async Intelligence done')
 
-    bot_id = models.CharField(max_length=255, primary_key=True)
+    id = models.CharField(max_length=255, primary_key=True)
     status = models.CharField(max_length=32, choices=StatusChoices.choices)
     message = models.CharField(max_length=1024, null=True)
     transcript = models.ForeignKey(

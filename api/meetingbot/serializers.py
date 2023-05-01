@@ -1,26 +1,25 @@
 from rest_framework import serializers
 from meetingbot.models import MeetingBot
 
-
-class CreateBotAPISerializer(serializers.Serializer):
-    bot_name = serializers.CharField()
-    meeting_url = serializers.CharField()
-
-
-class BotStatusSerializer(serializers.Serializer):
+class BotStatusChangeSerializer(serializers.Serializer):
+    bot_id = serializers.CharField()
     code = serializers.CharField()
     created_at = serializers.DateTimeField()
     message = serializers.CharField(allow_null=True)
-
-
-class DataSerializer(serializers.Serializer):
-    bot_id = serializers.CharField()
-    status = BotStatusSerializer()
-
-
-class BotStatusChangeSerializer(serializers.Serializer):
-    data = DataSerializer()
     event = serializers.CharField()
+
+    def to_representation(self, instance):
+        return {
+            'event': instance.event,
+            'data': {
+                'bot_id': instance.bot_id,
+                'status': {
+                    'code': instance.code,
+                    'created_at': instance.created_at,
+                    'message': instance.message
+                    }
+                }
+            }
 
 
 class MeetingBotSerializer(serializers.ModelSerializer):

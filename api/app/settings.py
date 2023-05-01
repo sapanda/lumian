@@ -192,9 +192,6 @@ TEST_ENV_IS_LOCAL = os.environ.get('TEST_ENV', 'local') == 'local'
 # Synthesis core
 SYNTHESIS_CORE_BASE_URL = os.environ.get('SYNTHESIS_CORE_BASE_URL')
 
-#Recall AI URL
-CREATE_BOT_URL = "https://api.recall.ai/api/v1/bot/"
-MEETING_TRANSCRIPT_URL = "https://api.recall.ai/api/v1/bot/{}/transcript/"
-
+#Recall AI settings
 RECALL_API_KEY = os.environ.get("RECALL_API_KEY")
 RECALL_TRANSCRIPT_PROVIDER = os.environ.get("RECALL_TRANSCRIPT_PROVIDER")

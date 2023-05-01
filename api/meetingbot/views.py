@@ -51,7 +51,7 @@ class CreatBotView(APIView):
 
             bot = add_bot_to_meeting(bot_name, meeting_url)
             MeetingBot.objects.create(
-                bot_id=bot['id'],
+                id=bot['id'],
                 status=MeetingBot.StatusChoices.READY,
                 message="Bot is created and ready to join the call",
                 transcript=None,
@@ -81,7 +81,7 @@ class BotStatusChangeView(APIView):
 
     def _update_bot(self, bot_id, status, message="", transcript=None):
 
-        meetingbot = MeetingBot.objects.get(bot_id=bot_id)
+        meetingbot = MeetingBot.objects.get(id=bot_id)
         meetingbot.status = status
         meetingbot.message = message
         meetingbot.transcript = transcript
@@ -91,14 +91,14 @@ class BotStatusChangeView(APIView):
 
         # Change this for API admin user
 
-        meetingbot = MeetingBot.objects.get(bot_id=bot_id)
+        meetingbot = MeetingBot.objects.get(id=bot_id)
         transcript_list = get_meeting_transcript(bot_id)
         transcript_text = generate_transcript_text(transcript_list)
 
         return Transcript.objects.create(
             user=meetingbot.user,
             transcript=transcript_text,
-            title=f"Meeting transcript - {meetingbot.bot_id}",
+            title=f"Meeting transcript - {meetingbot.id}",
             interviewee_names=["Ashutosh"],
             interviewer_names=["Saswat"]
         )

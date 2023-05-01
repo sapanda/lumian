@@ -3,11 +3,12 @@ from retry import retry
 
 from meetingbot.errors import RecallAITimeoutException
 from app.settings import (
-    CREATE_BOT_URL,
-    MEETING_TRANSCRIPT_URL,
     RECALL_API_KEY,
     RECALL_TRANSCRIPT_PROVIDER
 )
+
+CREATE_BOT_URL = "https://api.recall.ai/api/v1/bot/"
+MEETING_TRANSCRIPT_URL = "https://api.recall.ai/api/v1/bot/{}/transcript/"
 
 
 @retry(RecallAITimeoutException, tries=3, delay=5, backoff=2)
