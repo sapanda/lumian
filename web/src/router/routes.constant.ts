@@ -16,7 +16,14 @@ export const PRIVACY_POLICY = "/privacy-policy";
 export const TERMS_OF_SERVICES = "/terms-of-services";
 
 // Private Routes
-export const PROJECTS = "/projects";
+export const PROJECTS = {
+  default: "/all-projects",
+  SELECTED_PROJECT: {
+    default: "/project/:projectId",
+    SELECTED_INTERVIEW: "/project/:projectId/interview/:interviewId",
+  },
+  CREATE_PROJECT: "/create-project",
+};
 
 export const PUBLIC_ROUTES = [
   {
@@ -54,8 +61,24 @@ export const PUBLIC_ROUTES = [
 
 export const PRIVATE_ROUTES = [
   {
-    path: PROJECTS,
-    component: Projects,
+    path: PROJECTS.default,
+    component: Projects.AllProjects,
+    exact: true,
+  },
+  {
+    path: PROJECTS.CREATE_PROJECT,
+    component: Projects.CreateProject,
+    exact: true,
+  },
+  {
+    path: PROJECTS.SELECTED_PROJECT.default,
+    component: Projects.SelectedProject.default,
+    exact: true,
+  },
+
+  {
+    path: PROJECTS.SELECTED_PROJECT.SELECTED_INTERVIEW,
+    component: Projects.SelectedProject.SelectedInterview,
     exact: true,
   },
 ];
