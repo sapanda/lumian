@@ -6,10 +6,15 @@ import Divider from "@mui/material/Divider";
 import theme from "../../theme/theme";
 import { SidebarMenu } from "./menu.constants";
 import { SidebarBtn } from "./Components";
+import { Stack } from "@mui/material";
+import useUser from "../../hooks/useUser";
+import useAuth from "../../hooks/useAuth";
 
 const drawerWidth = 240;
 
 export default function Sidebar() {
+  const user = useUser();
+  const { handleLogout } = useAuth();
   return (
     <Drawer
       sx={{
@@ -48,6 +53,53 @@ export default function Sidebar() {
         ))}
       </List>
       <Divider />
+
+      <Stack
+        sx={{
+          flex: 1,
+          height: "100%",
+          justifyContent: "flex-end",
+        }}
+      >
+        <List>
+          <Stack
+            sx={{
+              padding: "8px 16px",
+            }}
+          >
+            <Stack
+              sx={{
+                cursor: "pointer",
+                borderRadius: "6px",
+                padding: "8px 16px",
+                "&:hover": {
+                  backgroundColor: "rgba(143, 143, 143, 0.13)",
+                },
+              }}
+            >
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 500,
+                }}
+              >
+                {user.name}
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 500,
+                }}
+              >
+                {user.email}
+              </Typography>
+            </Stack>
+          </Stack>
+        </List>
+        <List onClick={() => handleLogout()}>
+          <SidebarBtn item={{ label: "Logout", path: "/logout" }} />
+        </List>
+      </Stack>
     </Drawer>
   );
 }

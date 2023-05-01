@@ -1,4 +1,8 @@
+import { useEffect } from "react";
 import { Stack, Typography } from "@mui/material";
+import useAuth from "../../../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { PROJECTS } from "../../../router/routes.constant";
 
 interface PublicContainerProps {
   children: React.ReactNode;
@@ -7,6 +11,14 @@ interface PublicContainerProps {
 }
 export default function PublicContainer(props: PublicContainerProps) {
   const { children, bodyStyles, align } = props;
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(PROJECTS);
+    }
+  }, [isAuthenticated, navigate]);
   return (
     <Stack
       sx={{

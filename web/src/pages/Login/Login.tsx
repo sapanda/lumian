@@ -1,7 +1,9 @@
 import { Button, Stack, TextField, Typography } from "@mui/material";
 import { PublicContainer } from "../../components/Containers";
+import useLogin from "./useLogin";
 
 export default function Login() {
+  const { email, password, setEmail, setPassword, handleLogin } = useLogin();
   return (
     <PublicContainer align="center">
       <Stack
@@ -28,9 +30,22 @@ export default function Login() {
             Synthesize your expert calls to make the most of your time.
           </Typography>
           <Stack sx={{ marginTop: "32px", gap: "10px" }}>
-            <TextField label="Email" variant="outlined" />
-            <TextField label="Password" variant="outlined" />
-            <Button variant="contained">Continue</Button>
+            <TextField
+              label="Email"
+              variant="outlined"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <TextField
+              type="password"
+              label="Password"
+              variant="outlined"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <Button variant="contained" onClick={() => handleLogin()}>
+              Continue
+            </Button>
           </Stack>
           <Stack
             sx={{

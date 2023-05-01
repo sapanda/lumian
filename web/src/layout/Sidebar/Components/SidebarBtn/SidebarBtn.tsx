@@ -16,7 +16,7 @@ interface SvgProps {
 interface SidebarBtnProps {
   item: {
     label: string;
-    icon: (props: SvgProps) => JSX.Element;
+    icon?: (props: SvgProps) => JSX.Element;
     path: string;
   };
 }
@@ -44,9 +44,11 @@ export default function SidebarBtn(props: SidebarBtnProps) {
           }),
         }}
       >
-        <ListItemIcon>
-          <SvgIcon component={item.icon} />
-        </ListItemIcon>
+        {item.icon && (
+          <ListItemIcon>
+            <SvgIcon component={item.icon} />
+          </ListItemIcon>
+        )}
         <ListItemText primary={item.label} />
       </ListItemButton>
     </ListItem>
