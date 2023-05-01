@@ -27,3 +27,6 @@ class MeetingBotSerializer(serializers.ModelSerializer):
     class Meta:
         model = MeetingBot
         fields = ['id', 'status', 'transcript', 'message']
+
+
+# TODO : Cleanup Nested serialization
