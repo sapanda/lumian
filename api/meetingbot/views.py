@@ -108,7 +108,7 @@ class BotStatusChangeView(APIView):
         try:
             serializer = self.serializer_class(data=request.data)
             if not serializer.is_valid():
-                logger.error(f"---- Error ---- {serializer.errors}")
+                logger.error(f"-- Serialization Error -- {serializer.errors}")
                 return Response({}, HTTP_202_ACCEPTED)
 
             data = serializer.validated_data['data']
@@ -125,7 +125,7 @@ class BotStatusChangeView(APIView):
             self._update_bot(bot_id, status_code, status_message, transcript)
 
         except Exception as e:
-            logger.error(f"---- Error ---- {str(e)}")
+            logger.error(f"-- Exception -- {str(e)}")
 
         return Response({}, HTTP_202_ACCEPTED)
 
