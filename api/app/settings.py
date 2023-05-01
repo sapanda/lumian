@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+from enum import Enum
 import os
 from pathlib import Path
 
@@ -148,17 +149,26 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-# Celery settings
-CELERY_BROKER_URL = 'redis://redis:6379'
-CELERY_RESULT_BACKEND = 'redis://redis:6379'
-
-# Celery task settings
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_ACCEPT_CONTENT = ['json']
-
-# Testing parameters
-TEST_ENV_IS_LOCAL = os.environ.get('TEST_ENV', 'local') == 'local'
-
 # Synthesis core
 SYNTHESIS_CORE_BASE_URL = os.environ.get('SYNTHESIS_CORE_BASE_URL')
+
+# Google cloud settings
+GCLOUD_PROJECT_ID = os.environ.get('GCLOUD_PROJECT_ID')
+GCLOUD_LOCATION = os.environ.get('GCLOUD_LOCATION')
+GCLOUD_QUEUE_NAME = os.environ.get('GCLOUD_QUEUE_NAME')
+GCLOUD_API_SERVICE_NAME = os.environ.get('GCLOUD_API_SERVICE_NAME')
+
+# Google cloud emulator settings
+GCLOUD_EMULATOR_URL = os.environ.get('GCLOUD_EMULATOR_URL')
+GCLOUD_EMULATOR_SERVICE_URL = os.environ.get('GCLOUD_EMULATOR_SERVICE_URL')
+
+
+# Deployment parameters
+class ModeEnum(str, Enum):
+    local = 'local'
+    github = 'github'
+    development = 'dev'
+    production = 'prod'
+
+
+DEPLOY_MODE = ModeEnum(os.environ.get('DEPLOY_MODE', ModeEnum.local))

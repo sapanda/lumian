@@ -4,7 +4,7 @@ from app.settings import SYNTHESIS_CORE_BASE_URL
 
 
 # TODO: Handle errors
-def save_transcript_for_id(transcript_id: int, transcript: str):
+def save_transcript_for_id(transcript_id: int, transcript: str) -> dict:
     """Saves the transcript on the synthesis service."""
     response = requests.post(
         f"{SYNTHESIS_CORE_BASE_URL}/transcript/{transcript_id}",
@@ -14,9 +14,10 @@ def save_transcript_for_id(transcript_id: int, transcript: str):
         print(
             f"Could not save transcript with {transcript_id}"
             " on synthesis service")
+    return response
 
 
-def delete_transcript_for_id(transcript_id: int):
+def delete_transcript_for_id(transcript_id: int) -> dict:
     """Deletes the transcript on the synthesis service."""
     response = requests.delete(
         f"{SYNTHESIS_CORE_BASE_URL}/transcript/{transcript_id}")
@@ -24,9 +25,11 @@ def delete_transcript_for_id(transcript_id: int):
         print(
             f"Could not delete transcript with {transcript_id}"
             " on synthesis service")
+    return response
 
 
-def get_summary_with_citations(transcript_id: int, interviewee: str):
+def get_summary_with_citations(transcript_id: int,
+                               interviewee: str) -> dict:
     """Gets the summary for the transcript from the synthesis service."""
     query_params = {'interviewee': interviewee}
     url = "{}/transcript/{}/summary?{}".format(
@@ -36,10 +39,10 @@ def get_summary_with_citations(transcript_id: int, interviewee: str):
         print(
             "Summary generation failed for transcript"
             f" with id = {transcript_id}")
-    return response.json()
+    return response
 
 
-def get_concise_with_citations(transcript_id: int, interviewee: str):
+def get_concise_with_citations(transcript_id: int, interviewee: str) -> dict:
     """Gets the concise transcript from the synthesis service."""
     query_params = {'interviewee': interviewee}
     url = "{}/transcript/{}/concise?{}".format(
@@ -49,7 +52,7 @@ def get_concise_with_citations(transcript_id: int, interviewee: str):
         print(
             "Concise generation failed for transcript"
             f" with id = {transcript_id}")
-    return response.json()
+    return response
 
 
 def generate_embeds(
@@ -67,7 +70,7 @@ def generate_embeds(
         print(
             "Embeds generation failed for transcript"
             f" with id = {transcript_id}")
-    return response.json()
+    return response
 
 
 def run_query(transcript_id: int, query: str) -> dict:
@@ -80,4 +83,4 @@ def run_query(transcript_id: int, query: str) -> dict:
         print(
             "Running query failed for transcript"
             f" with id = {transcript_id}")
-    return response.json()
+    return response

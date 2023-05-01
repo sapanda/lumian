@@ -1,4 +1,4 @@
-FROM node:20-alpine3.16
+FROM node:19.9-slim
 LABEL maintainer="getmetanext.com"
 
 WORKDIR /web
@@ -9,4 +9,8 @@ COPY . .
 
 ARG DEV=false
 
+RUN chmod +x /web/run.sh
+
 EXPOSE 8002
+
+CMD ["/web/run.sh"]

@@ -1,4 +1,4 @@
-FROM python:3.9-alpine3.13
+FROM python:3.9.15
 LABEL maintainer="getmetanext.com"
 
 ENV PYTHONNUNBUFFERED 1
@@ -8,10 +8,16 @@ COPY . /api-synthesis
 
 ARG DEV=false
 
-RUN apk add --update --no-cache postgresql-client jpeg-dev && \
-    apk add --update --no-cache --virtual .tmp-build-deps build-base \
-    postgresql-dev musl-dev zlib zlib-dev linux-headers
-RUN pip install --no-cache-dir --upgrade -r /api-synthesis/requirements.txt && \
+RUN python -m venv /py && \
+    /py/bin/pip install --upgrade pip && \
+    /py/bin/pip install --no-cache-dir --upgrade -r /api-synthesis/requirements.txt && \
     if [ $DEV = "true" ]; \
-        then pip install --no-cache-dir --upgrade -r /api-synthesis/requirements.dev.txt ; \
-    fi
+        then /py/bin/pip install --no-cache-dir --upgrade -r /api-synthesis/requirements.dev.txt ; \
+    fi && \
+    chmod +x /api-synthesis/run.sh
+
+EXPOSE 8001
+
+ENV PATH="/py/bin:$PATH"
+
+CMD ["/api-synthesis/run.sh"]

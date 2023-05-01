@@ -1,9 +1,10 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from django.urls import reverse
 
+from core.gcloud_client import gcloud_client
 from transcript.models import Transcript
-from transcript.tasks import generate_synthesis
-from transcript.synthesis_core import delete_transcript_for_id
+from transcript.synthesis_client import delete_transcript_for_id
 
 
 @receiver(post_save, sender=Transcript)
@@ -15,7 +16,11 @@ def run_generate_synthesis(sender, instance, created, **kwargs):
 def _run_generate_synthesis(sender, instance, created, **kwargs):
     """Generate AI Synthesis for the transcript object"""
     if created:
-        generate_synthesis.delay(instance.id)
+        gcloud_client.create_task(
+            path=reverse('transcript:generate-synthesis',
+                         args=[instance.id]),
+            payload=''
+        )
 
 
 @receiver(post_delete, sender=Transcript)

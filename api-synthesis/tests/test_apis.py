@@ -6,7 +6,7 @@ import pytest
 import os
 
 
-TEST_ENV_IS_LOCAL = os.environ.get('TEST_ENV', 'local') == 'local'
+TEST_ENV_IS_LOCAL = os.environ.get('DEPLOY_MODE', 'local') == 'local'
 OPENAI_COSTS_REASON = "OpenAI Costs: Run only when\
  testing AI Synthesis changes"
 client = TestClient(app)
