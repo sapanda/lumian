@@ -9,7 +9,7 @@ interface SvgProps {
 interface SidebarMenuItem {
   id: string;
   label: string;
-  icon: (props: SvgProps) => JSX.Element;
+  icon?: (props: SvgProps) => JSX.Element;
   path: string;
 }
 
