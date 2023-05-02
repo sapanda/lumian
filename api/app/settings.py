@@ -46,6 +46,33 @@ CSRF_TRUSTED_ORIGINS.extend(
     )
 )
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+        "meetingbot": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -62,6 +89,7 @@ INSTALLED_APPS = [
     'core',
     'user',
     'transcript',
+    'meetingbot'
 ]
 
 MIDDLEWARE = [
@@ -191,6 +219,10 @@ GCLOUD_API_SERVICE_URL = os.environ.get('GCLOUD_API_SERVICE_URL')
 # Google cloud emulator settings
 GCLOUD_EMULATOR_URL = os.environ.get('GCLOUD_EMULATOR_URL')
 GCLOUD_EMULATOR_SERVICE_URL = os.environ.get('GCLOUD_EMULATOR_SERVICE_URL')
+
+# Recall AI settings
+RECALL_API_KEY = os.environ.get("RECALL_API_KEY")
+RECALL_TRANSCRIPT_PROVIDER = os.environ.get("RECALL_TRANSCRIPT_PROVIDER")
 
 
 # Static files (CSS, JavaScript, Images)
