@@ -1,26 +1,20 @@
 from unittest.mock import patch
 from django.urls import reverse
 from django.db import IntegrityError
-from django.contrib.auth import get_user_model
 
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from meetingbot.models import MeetingBot
 from meetingbot.errors import RecallAITimeoutException
-
-User = get_user_model()
+from meetingbot.models import MeetingBot
+from meetingbot.tests.utils import create_user, create_bot
 
 
 class CreateBotViewTest(APITestCase):
 
     def setUp(self):
         self.url = reverse('add-bot-to-meeting')
-        self.user = User.objects.create_user(
-            name='testuser',
-            email='testuser@example.com',
-            password='testpass'
-        )
+        self.user = create_user()
 
     def tearDown(self):
         self.user.delete()
@@ -88,38 +82,20 @@ class CreateBotViewTest(APITestCase):
         self.assertEqual(MeetingBot.objects.count(), 0)
 
 
-@patch('transcript.signals._run_generate_synthesis')
-@patch('transcript.signals._delete_transcript_on_synthesis_service')
 class BotStatusChangeViewTestCase(APITestCase):
 
     def setUp(self):
         self.url = reverse('webhook-bot-status-change')
-        self.user = User.objects.create_user(
-            name='testuser',
-            email='testuser@example.com',
-            password='testpass'
-        )
-        self.bot = MeetingBot.objects.create(
-            id='testbot',
-            status=MeetingBot.StatusChoices.READY,
-            message="",
-            transcript=None,
-            user=self.user
-        )
-
-    def tearDown(self):
-        self.bot.delete()
-        self.user.delete()
 
     @patch('meetingbot.views.get_meeting_transcript')
     @patch('meetingbot.views.generate_transcript_text')
     def test_successful_bot_status_update(
             self,
             mock_generate_transcript_text,
-            mock_get_meeting_transcript,
-            mock_delete_on_synthesis,
-            mock_generate_synthesis
+            mock_get_meeting_transcript
     ):
+        self.user = create_user()
+        self.bot = create_bot(self.user)
         data = {
             "event": "bot.status_change",
             "data": {
@@ -142,7 +118,11 @@ class BotStatusChangeViewTestCase(APITestCase):
         self.assertEqual(self.bot.transcript, None)
         mock_get_meeting_transcript.assert_not_called()
         mock_generate_transcript_text.assert_not_called()
+        self.bot.delete()
+        self.user.delete()
 
+    @patch('transcript.signals._run_generate_synthesis')
+    @patch('transcript.signals._delete_transcript_on_synthesis_service')
     @patch('meetingbot.views.get_meeting_transcript')
     @patch('meetingbot.views.generate_transcript_text')
     def test_successful_creation_of_transcript(
@@ -152,6 +132,8 @@ class BotStatusChangeViewTestCase(APITestCase):
             mock_delete_on_synthesis,
             mock_generate_synthesis
     ):
+        self.user = create_user()
+        self.bot = create_bot(self.user)
         mock_generate_transcript_text.return_value = "Test"
         data = {
             "event": "bot.status_change",
@@ -171,6 +153,8 @@ class BotStatusChangeViewTestCase(APITestCase):
         self.assertEqual(self.bot.message, "Bot is done")
         self.assertNotEqual(self.bot.transcript, None)
         self.assertEqual(self.bot.transcript.user, self.user)
+        self.bot.delete()
+        self.user.delete()
 
 
 # TODO : Transcript Synthesis error fix, transcript delete bug fix
