@@ -12,9 +12,13 @@ import useUser from "../../../../hooks/useUser";
 import { NavigateNext } from "@mui/icons-material";
 import useAuth from "../../../../hooks/useAuth";
 import { SidebarBtn } from "..";
+import { useNavigate } from "react-router-dom";
+import { ACCOUNT_SETTINGS } from "../../../../router/routes.constant";
+import theme from "../../../../theme/theme";
 
 export default function AccountMenu() {
   const user = useUser();
+  const navigate = useNavigate();
   const { handleLogout } = useAuth();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -43,6 +47,7 @@ export default function AccountMenu() {
             variant="h5"
             sx={{
               fontWeight: 500,
+              color: theme.palette.primary.contrastText,
             }}
           >
             {user.name}
@@ -51,6 +56,7 @@ export default function AccountMenu() {
             variant="h6"
             sx={{
               fontWeight: 500,
+              color: theme.palette.primary.contrastText,
             }}
           >
             {user.email}
@@ -113,6 +119,7 @@ export default function AccountMenu() {
           }}
           onClick={() => {
             handleClose();
+            navigate(ACCOUNT_SETTINGS);
           }}
           isBackgroundWhite={true}
         />
@@ -120,7 +127,7 @@ export default function AccountMenu() {
         <SidebarBtn
           item={{
             label: "Settings",
-            path: "/account",
+            path: ACCOUNT_SETTINGS,
           }}
           onClick={() => {
             handleClose();

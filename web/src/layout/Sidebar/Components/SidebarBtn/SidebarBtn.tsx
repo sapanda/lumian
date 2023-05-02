@@ -24,10 +24,11 @@ interface SidebarBtnProps {
   isBackgroundWhite?: boolean;
 }
 export default function SidebarBtn(props: SidebarBtnProps) {
-  const { item, isBackgroundWhite } = props;
+  const { item, isBackgroundWhite, onClick } = props;
   const isActive = item.path === window.location.pathname;
 
   const nonWhiteBgBtnStyle = {
+    color: theme.palette.primary.contrastText,
     "&:hover": {
       backgroundColor: isActive
         ? theme.palette.primary.dark
@@ -53,6 +54,7 @@ export default function SidebarBtn(props: SidebarBtnProps) {
       sx={{
         padding: "4px 8px",
       }}
+      onClick={onClick}
     >
       <ListItemButton
         sx={{
@@ -65,7 +67,16 @@ export default function SidebarBtn(props: SidebarBtnProps) {
             <SvgIcon component={item.icon} />
           </ListItemIcon>
         )}
-        <ListItemText primary={item.label} />
+        <ListItemText
+          primary={item.label}
+          sx={{
+            "& .MuiListItemText-primary": {
+              ...(!isBackgroundWhite && {
+                color: theme.palette.primary.contrastText,
+              }),
+            },
+          }}
+        />
       </ListItemButton>
     </ListItem>
   );

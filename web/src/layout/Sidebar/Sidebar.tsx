@@ -6,11 +6,13 @@ import Divider from "@mui/material/Divider";
 import theme from "../../theme/theme";
 import { SidebarMenu } from "./menu.constants";
 import { AccountMenu, SidebarBtn } from "./Components";
-import { Stack, ListItemIcon } from "@mui/material";
+import { Stack } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 const drawerWidth = 240;
 
 export default function Sidebar() {
+  const navigate = useNavigate();
   return (
     <Drawer
       sx={{
@@ -32,7 +34,7 @@ export default function Sidebar() {
           variant="h4"
           noWrap
           component="div"
-          sx={{ flexGrow: 1, ml: 2 }}
+          sx={{ flexGrow: 1, ml: 2, color: theme.palette.primary.contrastText }}
         >
           Lumian
         </Typography>
@@ -45,7 +47,11 @@ export default function Sidebar() {
       />
       <List>
         {SidebarMenu.map((item) => (
-          <SidebarBtn item={item} key={item.id} />
+          <SidebarBtn
+            item={item}
+            key={item.id}
+            onClick={() => navigate(item.path)}
+          />
         ))}
       </List>
       <Divider />
@@ -65,7 +71,6 @@ export default function Sidebar() {
           >
             <AccountMenu />
           </Stack>
-          <ListItemIcon></ListItemIcon>
         </List>
       </Stack>
     </Drawer>

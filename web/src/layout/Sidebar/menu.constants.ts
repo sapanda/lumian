@@ -18,6 +18,6 @@ export const SidebarMenu: SidebarMenuItem[] = [
     id: "1",
     label: "Projects",
     icon: ProjectsIcon,
-    path: "/projects",
+    path: "/all-projects",
   },
 ];
