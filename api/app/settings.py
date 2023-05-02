@@ -35,6 +35,42 @@ ALLOWED_HOSTS.extend(
     )
 )
 
+CSRF_TRUSTED_ORIGINS = []
+CSRF_TRUSTED_ORIGINS.extend(
+    filter(
+        None,
+        os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(','),
+    )
+)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+        "meetingbot": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}
+
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -51,6 +87,7 @@ INSTALLED_APPS = [
     'core',
     'user',
     'transcript',
+    'meetingbot'
 ]
 
 MIDDLEWARE = [
@@ -179,3 +216,7 @@ TEST_ENV_IS_LOCAL = os.environ.get('TEST_ENV', 'local') == 'local'
 
 # Synthesis core
 SYNTHESIS_CORE_BASE_URL = os.environ.get('SYNTHESIS_CORE_BASE_URL')
+
+#Recall AI settings
+RECALL_API_KEY = os.environ.get("RECALL_API_KEY")
+RECALL_TRANSCRIPT_PROVIDER = os.environ.get("RECALL_TRANSCRIPT_PROVIDER")

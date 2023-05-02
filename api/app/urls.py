@@ -33,6 +33,7 @@ urlpatterns = [
     ),
     path('api/user/', include('user.urls')),
     path('api/transcript/', include('transcript.urls')),
+    path('api/meetingbot/', include('meetingbot.urls'))
 ]
 
 if settings.DEBUG:
