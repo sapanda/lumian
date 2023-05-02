@@ -88,6 +88,8 @@ class CreateBotViewTest(APITestCase):
         self.assertEqual(MeetingBot.objects.count(), 0)
 
 
+@patch('transcript.signals._run_generate_synthesis')
+@patch('transcript.signals._delete_transcript_on_synthesis_service')
 class BotStatusChangeViewTestCase(APITestCase):
 
     def setUp(self):
@@ -114,7 +116,9 @@ class BotStatusChangeViewTestCase(APITestCase):
     def test_successful_bot_status_update(
             self,
             mock_generate_transcript_text,
-            mock_get_meeting_transcript
+            mock_get_meeting_transcript,
+            mock_delete_on_synthesis,
+            mock_generate_synthesis
     ):
         data = {
             "event": "bot.status_change",
@@ -141,12 +145,12 @@ class BotStatusChangeViewTestCase(APITestCase):
 
     @patch('meetingbot.views.get_meeting_transcript')
     @patch('meetingbot.views.generate_transcript_text')
-    @patch('transcript.signals._run_generate_synthesis')
     def test_successful_creation_of_transcript(
             self,
-            mock_run_generate_synthesis,
             mock_generate_transcript_text,
-            mock_get_meeting_transcript
+            mock_get_meeting_transcript,
+            mock_delete_on_synthesis,
+            mock_generate_synthesis
     ):
         mock_generate_transcript_text.return_value = "Test"
         data = {
