@@ -1,4 +1,4 @@
-authtoken: 2PE0u6RKWwbZSkAPOnALxjCGi4C_Uh8Dob8nC9RiphXX1JrJ
+authtoken: <ngrok-auth-token> 
 version: "2"
 tunnels:
   http:
