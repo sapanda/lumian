@@ -1,6 +1,7 @@
 import { InputAdornment, TextField } from "@mui/material";
 
 interface TextInputLProps {
+  name?: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   startIcon?: {
@@ -16,12 +17,16 @@ interface TextInputLProps {
   placeholder?: string;
 }
 export default function TextInputL(props: TextInputLProps) {
-  const { value, onChange, startIcon, endIcon, type, placeholder } = props;
+  const { value, onChange, startIcon, endIcon, type, placeholder, name } =
+    props;
   return (
     <TextField
       sx={{
+        marginTop: "8px!important",
+
         "& .MuiOutlinedInput-root": {
           borderRadius: "6px",
+
           "& fieldset": {
             borderColor: "#707070",
           },
@@ -50,6 +55,7 @@ export default function TextInputL(props: TextInputLProps) {
       value={value}
       onChange={onChange}
       type={type ?? "text"}
+      name={name}
     />
   );
 }
