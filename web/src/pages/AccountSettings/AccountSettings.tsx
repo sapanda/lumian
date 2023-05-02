@@ -1,40 +1,9 @@
-import {
-  Button,
-  FormHelperText,
-  InputLabel,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import { settings_icon } from "../../assets/icons/svg";
 import { PrivateContainer } from "../../components/Containers";
-import { TextInputL } from "../../components/atoms";
 import useAccountSettings from "./useAccountSettings";
 import useUser from "../../hooks/useUser";
-
-interface LabelInputPairProps {
-  error?: string;
-  name?: string;
-  label: string;
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  value: string;
-  placeholder: string;
-}
-
-const LabelInputPair = (props: LabelInputPairProps) => {
-  const { label, onChange, value, placeholder, name, error } = props;
-  return (
-    <Stack spacing={2}>
-      <InputLabel htmlFor={label}>{label}</InputLabel>
-      <TextInputL
-        onChange={onChange}
-        value={value}
-        placeholder={placeholder}
-        name={name}
-      />
-      <FormHelperText error={!!error}>{error}</FormHelperText>
-    </Stack>
-  );
-};
+import { LabelInputCombo } from "../../components/molecules";
 
 export default function AccountSettings() {
   const user = useUser();
@@ -62,7 +31,7 @@ export default function AccountSettings() {
         >
           <Typography variant="h1">Manage Account</Typography>
 
-          <LabelInputPair
+          <LabelInputCombo
             label="Name"
             onChange={handleChange}
             value={state.name}
@@ -71,7 +40,7 @@ export default function AccountSettings() {
             error={errors.name}
           />
 
-          <LabelInputPair
+          <LabelInputCombo
             label="Primary Email"
             onChange={handleChange}
             value={state.email}
@@ -80,22 +49,24 @@ export default function AccountSettings() {
             error={errors.email}
           />
 
-          <LabelInputPair
+          <LabelInputCombo
             label="Old Password"
             onChange={handleChange}
             value={state.oldPassword}
             placeholder="Old Password"
             name="oldPassword"
             error={errors.oldPassword}
+            type="password"
           />
 
-          <LabelInputPair
+          <LabelInputCombo
             label="New Password"
             onChange={handleChange}
             value={state.newPassword}
             placeholder="New Password"
             name="newPassword"
             error={errors.newPassword}
+            type="password"
           />
 
           <Stack sx={{ flexDirection: "row", gap: "12px" }}>

@@ -13,7 +13,7 @@ interface TextInputLProps {
     content: React.ReactNode;
   };
   variant?: "standard" | "filled" | "outlined";
-  type?: "text" | "password";
+  type?: "text" | "password" | "email" | "number" | "tel" | "url";
   placeholder?: string;
 }
 export default function TextInputL(props: TextInputLProps) {

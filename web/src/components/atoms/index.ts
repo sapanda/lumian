@@ -1,3 +1,4 @@
+import DescriptionText from "./DescriptionText";
 import TextInputL from "./TextInputL";
 
-export { TextInputL };
+export { DescriptionText, TextInputL };
