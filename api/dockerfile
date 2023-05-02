@@ -1,0 +1,33 @@
+FROM python:3.9.15
+LABEL maintainer="getmetanext.com"
+
+ENV PYTHONNUNBUFFERED 1
+WORKDIR /api
+
+COPY . /api
+
+ARG DEV=false
+
+RUN python -m venv /py && \
+    /py/bin/pip install --upgrade pip && \
+    /py/bin/pip install -r /api/requirements.txt && \
+    if [ $DEV = "true" ]; \
+        then /py/bin/pip install -r /api/requirements.dev.txt ; \
+    fi && \
+    adduser \
+        --disabled-password \
+        --no-create-home \
+        django-user && \
+    mkdir -p /vol/web/media && \
+    mkdir -p /vol/web/static && \
+    chown -R django-user:django-user /vol && \
+    chmod -R 755 /vol && \
+    chmod +x /api/run.sh
+
+USER django-user
+
+EXPOSE 8000
+
+ENV PATH="/py/bin:$PATH"
+
+CMD ["/api/run.sh"]

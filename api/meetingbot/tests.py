@@ -23,7 +23,6 @@ class CreateBotViewTest(APITestCase):
         )
 
     def tearDown(self):
-        pass
         self.user.delete()
 
     @patch('meetingbot.views.add_bot_to_meeting')
@@ -142,8 +141,10 @@ class BotStatusChangeViewTestCase(APITestCase):
 
     @patch('meetingbot.views.get_meeting_transcript')
     @patch('meetingbot.views.generate_transcript_text')
+    @patch('transcript.signals._run_generate_synthesis')
     def test_successful_creation_of_transcript(
             self,
+            mock_run_generate_synthesis,
             mock_generate_transcript_text,
             mock_get_meeting_transcript
     ):

@@ -9,8 +9,8 @@ def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
 
     # Use for attaching VSCode debugger
-    from django.conf import settings
-    if settings.DEBUG:
+    from app import settings
+    if settings.DEPLOY_MODE == settings.ModeEnum.local:
         if os.environ.get('RUN_MAIN') or os.environ.get('WERKZEUG_RUN_MAIN'):
             import debugpy
             debugpy.listen(("0.0.0.0", 3000))

@@ -132,4 +132,3 @@ class BotStatusChangeView(APIView):
 # TODO :
 #  Unit testing
 #  AI Generated intervieww, interviewer and title
-#  Add ngrok in the dockerfile itself
