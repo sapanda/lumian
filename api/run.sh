@@ -7,6 +7,7 @@ python manage.py migrate
 
 if [ $DEPLOY_MODE != "local" ]; then
     python manage.py collectstatic --noinput
+fi
 
 if [ $DEPLOY_MODE = "prod" ]; then
     uwsgi --socket :8000 --workers 4 --master --enable-threads --module app.wsgi

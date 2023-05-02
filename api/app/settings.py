@@ -137,14 +137,16 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.1/howto/static-files/
+# Deployment parameters
+class ModeEnum(str, Enum):
+    local = 'local'
+    github = 'github'
+    development = 'dev'
+    production = 'prod'
 
-STATIC_URL = '/static/static/'
-MEDIA_URL = '/static/media/'
 
-STATIC_ROOT = '/vol/web/static'
-MEDIA_ROOT = '/vol/web/media'
+DEPLOY_MODE = ModeEnum(os.environ.get('DEPLOY_MODE', ModeEnum.local))
+TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
 
 # Default primary key field type
@@ -158,7 +160,7 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-# Synthesis core
+# Synthesis settings
 SYNTHESIS_URL = os.environ.get('SYNTHESIS_URL')
 
 # Google cloud settings
@@ -172,13 +174,16 @@ GCLOUD_EMULATOR_URL = os.environ.get('GCLOUD_EMULATOR_URL')
 GCLOUD_EMULATOR_SERVICE_URL = os.environ.get('GCLOUD_EMULATOR_SERVICE_URL')
 
 
-# Deployment parameters
-class ModeEnum(str, Enum):
-    local = 'local'
-    github = 'github'
-    development = 'dev'
-    production = 'prod'
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/4.1/howto/static-files/
 
+STATIC_URL = '/static/static/'
+MEDIA_URL = '/static/media/'
 
-DEPLOY_MODE = ModeEnum(os.environ.get('DEPLOY_MODE', ModeEnum.local))
-TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
+STATIC_ROOT = '/vol/web/static'
+MEDIA_ROOT = '/vol/web/media'
+
+if DEPLOY_MODE == ModeEnum.development or DEPLOY_MODE == ModeEnum.production:
+    STATICFILES_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+    GS_BUCKET_NAME = os.environ.get('GCLOUD_BUCKET_NAME')
