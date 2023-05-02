@@ -13,6 +13,7 @@ services:
       - node-modules:/web/node_modules
     environment:
       - DEBUG=1
+      - VITE_API_URL=http://api:8000/
     env_file:
       - ./.env
     depends_on:
