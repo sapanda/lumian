@@ -1,0 +1,7 @@
+authtoken: 2PE0u6RKWwbZSkAPOnALxjCGi4C_Uh8Dob8nC9RiphXX1JrJ
+version: "2"
+tunnels:
+  http:
+    proto: http
+    addr: api:8000
+    domain: lumian.ngrok.app

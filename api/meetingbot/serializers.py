@@ -6,6 +6,9 @@ class CreateBotAPISerializer(serializers.Serializer):
     bot_name = serializers.CharField()
     meeting_url = serializers.CharField()
 
+    class Meta:
+        model = MeetingBot
+
 
 class BotStatusSerializer(serializers.Serializer):
     code = serializers.CharField()
