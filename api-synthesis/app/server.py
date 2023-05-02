@@ -5,7 +5,7 @@ import json
 from sqlalchemy.orm import Session
 
 from . import models, usecases
-from .config import Settings
+from .config import Settings, ModeEnum
 from .database import SessionLocal, engine
 from .errors import (
     OpenAITimeoutException, ObjectNotFoundException, SynthesisAPIException,
@@ -30,7 +30,7 @@ EXCEPTION_TO_STATUS_CODE_MAPPING = {
 settings = Settings()
 
 # Use for attaching VSCode debugger
-if settings.debug:
+if settings.deploy_mode == ModeEnum.local and settings.debug:
     import debugpy
     debugpy.listen(("0.0.0.0", 3001))
 

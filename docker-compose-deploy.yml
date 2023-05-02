@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  web:
+    build:
+      context: ./web
+    ports:
+      - 8002:8002
+    volumes:
+      - ./web:/web
+      - node-modules:/web/node_modules
+    env_file:
+      - ./.env
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: ./api
+    ports:
+      - 8000:8000
+    volumes:
+      - ./api:/api
+    env_file:
+      - ./.env
+    environment:
+      - DEBUG=1
+      - SYNTHESIS_URL=http://api_synthesis:8001
+    depends_on:
+      - api_synthesis
+
+  api_synthesis:
+    build:
+      context: ./api-synthesis
+    ports:
+      - 8001:8001
+    volumes:
+      - ./api-synthesis:/api-synthesis
+    env_file:
+      - ./.env
+    environment:
+      - DEBUG=1
+
+volumes:
+  node-modules:

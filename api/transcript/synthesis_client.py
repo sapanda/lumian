@@ -5,7 +5,10 @@ from app.settings import SYNTHESIS_URL
 
 def _create_result(response: requests.Response) -> dict:
     """Creates a result dict from the response."""
-    return {**response.json(), 'status_code': response.status_code}
+    if len(response.content) > 0:
+        return {**response.json(), 'status_code': response.status_code}
+    else:
+        return {'status_code': response.status_code}
 
 
 # TODO: Handle errors

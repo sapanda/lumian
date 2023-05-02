@@ -24,14 +24,20 @@ class GCloudClient(GCloudClientInterface):
                  location: str,
                  queue_name: str,
                  service_name: str,
+                 service_url_override: str = None,
                  ) -> None:
         self.project_id = project_id
         self.location = location
         self.queue_name = queue_name
         self.service_name = service_name
         self.tasks_client = CloudTasksClient()
-        self.run_client = ServicesClient()
-        self.service_url = self._get_cloud_run_service_url()
+
+        if service_url_override:
+            self.service_url = service_url_override
+        else:
+            self.run_client = ServicesClient()
+            self.service_url = self._get_cloud_run_service_url()
+
 
     def _get_cloud_run_service_url(self) -> str:
         """Generate the Cloud Run service URL."""
@@ -41,7 +47,7 @@ class GCloudClient(GCloudClientInterface):
         return response.uri
 
     def create_task(self, path, payload):
-        """Create a Google Cloud Task task for a given service."""
+        """Create a Google Cloud Task for a given service."""
         parent = self.tasks_client.queue_path(self.project_id,
                                               self.location,
                                               self.queue_name)
@@ -49,7 +55,7 @@ class GCloudClient(GCloudClientInterface):
         task = {
             "http_request": {
                 "http_method": HttpMethod.POST,
-                "url": f"{self.service_url}{path}",
+                "url": f"{self.service_url}/{path}",
                 "headers": {
                     "Content-Type": "application/json",
                 },
@@ -89,7 +95,7 @@ class GCloudEmulatorClient(GCloudClientInterface):
         task = {
             "http_request": {
                 "http_method": HttpMethod.POST,
-                "url": f"{self.service_url}{path}",
+                "url": f"{self.service_url}/{path}",
                 "headers": {
                     "Content-Type": "application/json",
                 },
@@ -126,5 +132,6 @@ else:
         project_id=settings.GCLOUD_PROJECT_ID,
         location=settings.GCLOUD_LOCATION,
         queue_name=settings.GCLOUD_QUEUE_NAME,
-        service_name=settings.GCLOUD_API_SERVICE_NAME
+        service_name=settings.GCLOUD_API_SERVICE_NAME,
+        service_url_override=settings.GCLOUD_API_SERVICE_URL,
     )

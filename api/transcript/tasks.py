@@ -12,7 +12,7 @@ def _generate_summary(tct: Transcript) -> Synthesis:
         transcript_id=tct.id,
         interviewee=tct.interviewee_names[0]
     )
-    if (result.status_code < 300):
+    if (result['status_code'] < 300):
         return Synthesis.objects.create(
             transcript=tct,
             output_type=SynthesisType.SUMMARY,
@@ -29,7 +29,7 @@ def _generate_concise(tct: Transcript) -> Synthesis:
         transcript_id=tct.id,
         interviewee=tct.interviewee_names[0]
     )
-    if (result.status_code < 300):
+    if (result['status_code'] < 300):
         return Synthesis.objects.create(
             transcript=tct,
             output_type=SynthesisType.CONCISE,
@@ -46,7 +46,7 @@ def _generate_embeds(tct: Transcript) -> Embeds:
         transcript_title=tct.title,
         interviewee=tct.interviewee_names[0]
     )
-    if (result.status_code < 300):
+    if (result['status_code'] < 300):
         return Embeds.objects.create(
             transcript=tct,
             cost=result["cost"]

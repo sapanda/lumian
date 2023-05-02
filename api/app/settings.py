@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 from enum import Enum
+from google.oauth2 import service_account
 import os
 from pathlib import Path
 import sys
@@ -168,6 +169,7 @@ GCLOUD_PROJECT_ID = os.environ.get('GCLOUD_PROJECT_ID')
 GCLOUD_LOCATION = os.environ.get('GCLOUD_LOCATION')
 GCLOUD_QUEUE_NAME = os.environ.get('GCLOUD_QUEUE_NAME')
 GCLOUD_API_SERVICE_NAME = os.environ.get('GCLOUD_API_SERVICE_NAME')
+GCLOUD_API_SERVICE_URL = os.environ.get('GCLOUD_API_SERVICE_URL')
 
 # Google cloud emulator settings
 GCLOUD_EMULATOR_URL = os.environ.get('GCLOUD_EMULATOR_URL')
@@ -187,3 +189,6 @@ if DEPLOY_MODE == ModeEnum.development or DEPLOY_MODE == ModeEnum.production:
     STATICFILES_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
     DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
     GS_BUCKET_NAME = os.environ.get('GCLOUD_BUCKET_NAME')
+    GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+        os.environ.get('GCLOUD_SECRETS_PATH')
+    )
