@@ -1,4 +1,3 @@
-authtoken: <ngrok-auth-token> 
 version: "2"
 tunnels:
   http:

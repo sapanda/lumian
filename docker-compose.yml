@@ -107,6 +107,7 @@ services:
     command:
       - "start"
       - "--all"
+      - "--authtoken=${NGROK_AUTH_TOKEN}"
       - "--config"
       - "/etc/ngrok.yml"
     volumes:
