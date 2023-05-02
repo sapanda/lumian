@@ -56,17 +56,18 @@ def _generate_embeds(tct: Transcript) -> Embeds:
 def generate_synthesis(transcript_id) -> int:
     """Generate synthesized outputs using the synthesis service"""
     tct = Transcript.objects.get(id=transcript_id)
-    synthesis_client.save_transcript_for_id(
+    result = synthesis_client.save_transcript_for_id(
         transcript_id=tct.id, transcript=tct.transcript
     )
-    summary = _generate_summary(tct)
-    concise = _generate_concise(tct)
-    embeds = _generate_embeds(tct)
+    if result['status_code'] < 300:
+        summary = _generate_summary(tct)
+        concise = _generate_concise(tct)
+        embeds = _generate_embeds(tct)
 
-    if summary and concise and embeds:
-        tct.cost = summary.cost + concise.cost + embeds.cost
-        tct.save()
-        return 200
+        if summary and concise and embeds:
+            tct.cost = summary.cost + concise.cost + embeds.cost
+            tct.save()
+            return 200
 
     return 500
 

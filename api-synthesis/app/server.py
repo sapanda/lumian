@@ -1,7 +1,9 @@
 from fastapi import (
-    FastAPI, Depends, status, Body, Response
+    FastAPI, Depends, status, Body, Request, Response
 )
+from fastapi.responses import JSONResponse
 import json
+import logging
 from sqlalchemy.orm import Session
 
 from . import models, usecases
@@ -40,6 +42,8 @@ app = FastAPI(
     title="Synthesis API",
     version="0.0.1"
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_settings():
@@ -112,6 +116,20 @@ def exception_handler(request, exc: SynthesisAPIException):
     status_code = EXCEPTION_TO_STATUS_CODE_MAPPING[type(exc)]
     return Response(content=json.dumps({"error": exc.detail}),
                     status_code=status_code)
+
+
+if settings.debug:
+    @app.middleware("http")
+    async def log_internal_server_errors(request: Request, call_next):
+        try:
+            response = await call_next(request)
+        except Exception as e:
+            logger.exception("Internal server error", exc_info=e)
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Internal server error"}
+            )
+        return response
 
 
 @app.get('/transcript/{id}')

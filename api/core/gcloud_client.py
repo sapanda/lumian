@@ -38,7 +38,6 @@ class GCloudClient(GCloudClientInterface):
             self.run_client = ServicesClient()
             self.service_url = self._get_cloud_run_service_url()
 
-
     def _get_cloud_run_service_url(self) -> str:
         """Generate the Cloud Run service URL."""
         name = (f"projects/{self.project_id}/locations/{self.location}/"
