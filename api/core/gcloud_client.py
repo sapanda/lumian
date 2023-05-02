@@ -35,25 +35,21 @@ class GCloudClient(GCloudClientInterface):
 
     def _get_cloud_run_service_url(self) -> str:
         """Generate the Cloud Run service URL."""
-        name = f"projects/{self.project_id}/locations/{self.location}/services/{self.service_name}"
+        name = (f"projects/{self.project_id}/locations/{self.location}/"
+                f"services/{self.service_name}")
         response = self.run_client.get_service(name=name)
         return response.uri
 
     def create_task(self, path, payload):
         """Create a Google Cloud Task task for a given service."""
-        # Create the task queue path
         parent = self.tasks_client.queue_path(self.project_id,
                                               self.location,
                                               self.queue_name)
 
-        # Get the Cloud Run service URL
-        service_url = self._get_cloud_run_service_url()
-
-        # Create the task
         task = {
             "http_request": {
                 "http_method": HttpMethod.POST,
-                "url": f"{service_url}{path}",
+                "url": f"{self.service_url}{path}",
                 "headers": {
                     "Content-Type": "application/json",
                 },
@@ -91,9 +87,9 @@ class GCloudEmulatorClient(GCloudClientInterface):
 
     def create_task(self, path, payload):
         task = {
-            'http_request': {
-                'http_method': HttpMethod.POST,
-                'url': f"{self.service_url}/{path}",
+            "http_request": {
+                "http_method": HttpMethod.POST,
+                "url": f"{self.service_url}{path}",
                 "headers": {
                     "Content-Type": "application/json",
                 },
@@ -106,15 +102,27 @@ class GCloudEmulatorClient(GCloudClientInterface):
         return response.name
 
 
-if settings.DEPLOY_MODE == settings.ModeEnum.local or \
-   settings.DEPLOY_MODE == settings.ModeEnum.github:
+class GCloudMockClient(GCloudClientInterface):
+    def create_task(self, path, payload):
+        return ""
+
+
+if settings.TESTING:
+    # Use a mock client for testing - technically should be injected
+    client = GCloudMockClient()
+
+elif settings.DEPLOY_MODE == settings.ModeEnum.local or \
+     settings.DEPLOY_MODE == settings.ModeEnum.github:
+    # Use a local emulator for development
     channel = grpc.insecure_channel(settings.GCLOUD_EMULATOR_URL)
-    gcloud_client = GCloudEmulatorClient(
+    client = GCloudEmulatorClient(
         channel=channel,
         service_url=settings.GCLOUD_EMULATOR_SERVICE_URL
     )
+
 else:
-    gcloud_client = GCloudClient(
+    # Use Google Cloud Tasks for deployment
+    client = GCloudClient(
         project_id=settings.GCLOUD_PROJECT_ID,
         location=settings.GCLOUD_LOCATION,
         queue_name=settings.GCLOUD_QUEUE_NAME,

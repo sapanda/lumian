@@ -6,4 +6,4 @@ class TranscriptConfig(AppConfig):
     name = 'transcript'
 
     def ready(self):
-        import transcript.signals # noqa (needed for celery)
+        import transcript.signals  # noqa

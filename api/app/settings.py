@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 from enum import Enum
 import os
 from pathlib import Path
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,6 +33,14 @@ ALLOWED_HOSTS.extend(
     filter(
         None,
         os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(','),
+    )
+)
+
+CSRF_TRUSTED_ORIGINS = []
+CSRF_TRUSTED_ORIGINS.extend(
+    filter(
+        None,
+        os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(','),
     )
 )
 
@@ -150,7 +159,7 @@ REST_FRAMEWORK = {
 }
 
 # Synthesis core
-SYNTHESIS_CORE_BASE_URL = os.environ.get('SYNTHESIS_CORE_BASE_URL')
+SYNTHESIS_URL = os.environ.get('SYNTHESIS_URL')
 
 # Google cloud settings
 GCLOUD_PROJECT_ID = os.environ.get('GCLOUD_PROJECT_ID')
@@ -172,3 +181,4 @@ class ModeEnum(str, Enum):
 
 
 DEPLOY_MODE = ModeEnum(os.environ.get('DEPLOY_MODE', ModeEnum.local))
+TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'

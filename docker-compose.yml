@@ -34,7 +34,7 @@ services:
       - ./.env
     environment:
       - DB_HOST=db
-      - SYNTHESIS_CORE_BASE_URL=http://api_synthesis:8001
+      - SYNTHESIS_URL=http://api_synthesis:8001
       - GCLOUD_EMULATOR_SERVICE_URL=http://api:8000
       - GCLOUD_EMULATOR_URL=gcloud-tasks-emulator:8123
       - DEBUG=1
