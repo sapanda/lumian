@@ -2,24 +2,24 @@ import { useState } from "react";
 import { baseApiUrl, userEndPoints } from "../../../api/apiEndpoints";
 
 const initialState = {
-  name: "",
-  email: "",
-  oldPassword: "",
-  newPassword: "",
+  projectName: "",
+  goal: "",
+  questions: "",
+  members: "",
 };
 
 const initialErrors = {
-  name: "",
-  email: "",
-  oldPassword: "",
-  newPassword: "",
+  projectName: "",
+  goal: "",
+  questions: "",
+  members: "",
 };
 
 interface IState {
-  name: string;
-  email: string;
-  oldPassword: string;
-  newPassword: string;
+  projectName: string;
+  goal: string;
+  questions: string;
+  members: string;
 }
 
 export default function useCreateProject() {
@@ -34,22 +34,22 @@ export default function useCreateProject() {
 
   function isValidated() {
     const errors = { ...initialErrors };
-    if (!state.name) {
-      errors.name = "Name is required";
+    if (!state.projectName) {
+      errors.projectName = "Project Name is required";
     }
-    if (!state.email) {
-      errors.email = "Email is required";
+    if (!state.goal) {
+      errors.goal = "Goal is required";
     }
-    if (!state.oldPassword) {
-      errors.oldPassword = "Old Password is required";
+    if (!state.members) {
+      errors.members = "Members are required";
     }
-    if (!state.newPassword) {
-      errors.newPassword = "New Password is required";
+    if (!state.questions) {
+      errors.questions = "Questions are required";
     }
 
     setErrors(errors);
     return (
-      errors.name || errors.email || errors.oldPassword || errors.newPassword
+      errors.projectName || errors.goal || errors.members || errors.questions
     );
   }
   async function handleSave() {
@@ -58,9 +58,10 @@ export default function useCreateProject() {
     }
 
     const payload = {
-      email: state.email,
-      name: state.name,
-      password: state.newPassword,
+      name: state.projectName,
+      goal: state.goal,
+      questions: state.questions,
+      members: state.members,
     };
     const res = await fetch(baseApiUrl + userEndPoints.me, {
       method: "PUT",

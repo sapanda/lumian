@@ -15,10 +15,21 @@ interface TextInputLProps {
   variant?: "standard" | "filled" | "outlined";
   type?: "text" | "password" | "email" | "number" | "tel" | "url";
   placeholder?: string;
+  size?: "small" | "default";
+  multiline?: boolean;
 }
 export default function TextInputL(props: TextInputLProps) {
-  const { value, onChange, startIcon, endIcon, type, placeholder, name } =
-    props;
+  const {
+    value,
+    onChange,
+    startIcon,
+    endIcon,
+    type,
+    placeholder,
+    name,
+    size = "default",
+    multiline = false,
+  } = props;
   return (
     <TextField
       sx={{
@@ -26,6 +37,13 @@ export default function TextInputL(props: TextInputLProps) {
 
         "& .MuiOutlinedInput-root": {
           borderRadius: "6px",
+          ...(size === "small" && {
+            height: "32px",
+          }),
+
+          ...(multiline && {
+            height: "126px",
+          }),
 
           "& fieldset": {
             borderColor: "#707070",
@@ -56,6 +74,10 @@ export default function TextInputL(props: TextInputLProps) {
       onChange={onChange}
       type={type ?? "text"}
       name={name}
+      multiline={true}
+      {...(multiline && {
+        rows: 4,
+      })}
     />
   );
 }

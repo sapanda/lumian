@@ -13,14 +13,14 @@ export default function CreateProject() {
           width: "100%",
           justifyContent: "center",
           alignItems: "center",
-          marginTop: "10%",
+          marginTop: "5%",
         }}
       >
         <Stack
           sx={{
             minWidth: "600px",
             maxWidth: "600px",
-            gap: "20px",
+            gap: "16px",
           }}
         >
           <Typography variant="h1">Create a New Project</Typography>
@@ -28,41 +28,45 @@ export default function CreateProject() {
           <LabelInputCombo
             label="Name"
             onChange={handleChange}
-            value={state.name}
+            value={state.projectName}
             placeholder="Name of the Project"
-            name="name"
-            error={errors.name}
+            name="projectName"
+            error={errors.projectName}
+            size="small"
           />
 
           <LabelInputCombo
             label="Goal"
             inputDescription="Describe briefly what you’re looking to achieve with the project"
             onChange={handleChange}
-            value={state.email}
-            placeholder=""
+            value={state.goal}
+            placeholder="Explore why older workers do not maximize their 401(k) employer match"
             name="goal"
-            error={errors.email}
+            error={errors.goal}
+            size="small"
           />
 
           <LabelInputCombo
-            label="Old Password"
+            label="Questions"
             inputDescription="These are the questions you’d like us to answer for you. List each question on a new line."
             onChange={handleChange}
-            value={state.oldPassword}
-            placeholder="Old Password"
-            name="oldPassword"
-            error={errors.oldPassword}
-            type="password"
+            value={state.questions}
+            placeholder="What are the main themes around financial priorities that the interviewees expect to have at retirement? Are interviewees with lower debt levels more likely to contribute to their 401(k)?"
+            name="questions"
+            error={errors.questions}
+            size="small"
+            multiline
           />
 
           <LabelInputCombo
-            label="New Password"
+            label="Members"
+            inputDescription="Comma-separated list of emails of people you would like to include in this project."
             onChange={handleChange}
-            value={state.newPassword}
-            placeholder="New Password"
-            name="newPassword"
-            error={errors.newPassword}
-            type="password"
+            value={state.members}
+            placeholder="example1@corp.com,example2@corp.com"
+            name="members"
+            error={errors.members}
+            size="small"
           />
 
           <Stack sx={{ flexDirection: "row", gap: "12px" }}>
