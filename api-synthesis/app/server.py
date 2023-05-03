@@ -167,6 +167,20 @@ def delete_transcript(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@app.get('/transcript/{id}/metadata')
+def get_transcript_metadata(
+    id: int,
+    repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
+    synthesis: Synthesis = Depends(get_synthesis)
+):
+    """API for getting a summary of a transcript"""
+    results = usecases.get_transcript_metadata(
+        id=id,
+        repo=repo,
+        synthesis=synthesis
+    )
+    return results
+
 @app.get('/transcript/{id}/summary')
 def get_transcript_summary(
     id: int,

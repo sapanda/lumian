@@ -4,6 +4,17 @@ from transcript.models import (
     Embeds, Synthesis
 )
 
+def _generate_metadata(tct: Transcript):
+    """Generate the metadata for the transcript."""
+    result = synthesis_client.get_metadata(transcript_id=tct.id)
+    if (result['status_code'] < 300):
+        # update the transcript
+        tct.title = result["title"]
+        tct.interviewee_names = result.interviewees
+        tct.interviewer_names = result.interviewers
+        tct.save()
+    return result
+
 
 def _generate_summary(tct: Transcript) -> Synthesis:
     """Generate synthesized summary using the synthesis service"""
@@ -60,12 +71,13 @@ def generate_synthesis(transcript_id) -> int:
         transcript_id=tct.id, transcript=tct.transcript
     )
     if result['status_code'] < 300:
+        metadata = _generate_metadata(tct)
         summary = _generate_summary(tct)
         concise = _generate_concise(tct)
         embeds = _generate_embeds(tct)
 
         if summary and concise and embeds:
-            tct.cost = summary.cost + concise.cost + embeds.cost
+            tct.cost = metadata.cost + summary.cost + concise.cost + embeds.cost
             tct.save()
             return 200
 

@@ -99,6 +99,24 @@ def split_indexed_transcript_lines_into_chunks(
             cur_results, chunk_size = [], 0
     return results
 
+def split_indexed_transcript_lines_into_chunks_for_metadata(
+    text: str, chunk_min_words: int
+) -> 'list[list[str]]':
+    """Split indexed lines into chunks for fetching metadata"""
+    results, cur_results, lines, chunk_size = [], [], text.split("\n"), 0
+    n = len(lines)
+    for i in range(n):
+        line = lines[i]
+        cur_results.append(line)
+        words = line.split()
+        chunk_size += len(words)
+        if i == n - 1 or (
+            chunk_size > chunk_min_words
+        ):
+            results.append(cur_results)
+            cur_results, chunk_size = [], 0
+    return results
+
 
 def split_and_extract_indices(
         input_string: str
