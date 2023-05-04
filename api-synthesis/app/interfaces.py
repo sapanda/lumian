@@ -75,7 +75,9 @@ class SynthesisInterface(abc.ABC):
     def metadata_transcript(
             self, indexed_transcript: str
     ) -> MetadataResult:
-        """Return following metadata for the transcript : Title, Interviewers, Interviewees"""
+        """Return following metadata for the transcript
+          : Title, Interviewers, Interviewees
+        """
         pass
 
     @abc.abstractmethod

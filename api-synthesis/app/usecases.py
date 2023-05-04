@@ -73,6 +73,7 @@ def _synthesis_to_citation_result(sresults: SynthesisResult,
     }
     return retval
 
+
 def get_transcript_metadata(
         id: int,
         repo: TranscriptRepositoryInterface,
@@ -80,6 +81,7 @@ def get_transcript_metadata(
     """Generate a summary from the transcript"""
     transcript = _get_transcript(id, repo)
     return synthesis.metadata_transcript(str(transcript))
+
 
 def get_transcript_summary(
         id: int,

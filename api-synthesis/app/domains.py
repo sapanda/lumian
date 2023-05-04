@@ -51,3 +51,4 @@ class MetadataResult(TypedDict):
     interviewees: 'list[str]'
     interviewers: 'list[str]'
     cost: float
+    message: str
