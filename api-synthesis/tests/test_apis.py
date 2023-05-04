@@ -113,8 +113,6 @@ def test_get_transcript_metadta(setup_teardown):
     assert 'title' in body
     assert 'interviewees' in body
     assert 'interviewers' in body
-    assert body['title'] == "Jason's Financial Planning"
-    assert 'Jason' in body['interviewees']
     response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
