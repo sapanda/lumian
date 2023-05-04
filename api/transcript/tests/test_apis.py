@@ -1,7 +1,6 @@
 """
 Tests for the creation and upload of transcripts via the API.
 """
-from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 
@@ -10,13 +9,13 @@ from rest_framework import status
 
 from transcript.models import Transcript, SynthesisType, Synthesis
 from transcript.serializers import TranscriptSerializer
-from transcript.synthesis_core import generate_embeds
+from transcript.synthesis_client import generate_embeds
 from transcript.tests.utils import (
     create_user,
     create_transcript
 )
 
-from unittest import skipIf, skip
+from unittest import skip
 from unittest.mock import patch
 
 
@@ -275,7 +274,7 @@ class MockAPITests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
-    @patch('transcript.synthesis_core.run_query')
+    @patch('transcript.synthesis_client.run_query')
     def test_query_success(self, patched_query, patched_signal):
         """Test querying a transcript successfully."""
         tpt = create_transcript(user=self.user)
@@ -300,7 +299,7 @@ class MockAPITests(TestCase):
         res = self.client.post(url, {'query': ''})
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
-    @patch('transcript.synthesis_core.run_query')
+    @patch('transcript.synthesis_client.run_query')
     def test_query_list_empty(self, patched_query, patched_signal):
         """Test that the query GET request works with empty results."""
         tpt = create_transcript(user=self.user)
@@ -316,8 +315,7 @@ class MockAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
 
-@skipIf(settings.TEST_ENV_IS_LOCAL,
-        "OpenAI Costs: Run only when testing AI Synthesis changes")
+@skip("OpenAI Costs: Run only when testing AI Synthesis changes")
 @patch('transcript.signals._run_generate_synthesis')
 class EndToEndAPITests(TestCase):
     """Test the full API endpoints."""

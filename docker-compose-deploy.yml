@@ -1,63 +1,45 @@
 version: "3.9"
 
 services:
-  app:
+  web:
     build:
-      context: .
-    restart: always
-    volumes:
-      - static-data:/vol/web
-    env_file:
-      - ./.env
-    environment:
-      - DB_HOST=db
-    depends_on:
-      - db
-      - redis
-
-  celery:
-    restart: always
-    build:
-      context: .
-    command: celery -A app worker -l info
-    volumes:
-      - ./app:/app
-    env_file:
-      - ./.env
-    environment:
-      - DB_HOST=db
-    depends_on:
-      - db
-      - redis
-      - app
-
-  redis:
-    restart: always
-    image: redis:7-alpine
-
-  db:
-    image: postgres:13-alpine
-    restart: always
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    env_file:
-      - ./.env
-    environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-
-  proxy:
-    build:
-      context: ./proxy
-    restart: always
+      context: ./web
     ports:
-      - 80:8000
+      - 8002:8002
     volumes:
-      - static-data:/vol/static
+      - ./web:/web
+      - node-modules:/web/node_modules
+    env_file:
+      - ./.env
     depends_on:
-      - app
+      - api
+
+  api:
+    build:
+      context: ./api
+    ports:
+      - 8000:8000
+    volumes:
+      - ./api:/api
+    env_file:
+      - ./.env
+    environment:
+      - DEBUG=1
+      - SYNTHESIS_URL=http://api_synthesis:8001
+    depends_on:
+      - api_synthesis
+
+  api_synthesis:
+    build:
+      context: ./api-synthesis
+    ports:
+      - 8001:8001
+    volumes:
+      - ./api-synthesis:/api-synthesis
+    env_file:
+      - ./.env
+    environment:
+      - DEBUG=1
 
 volumes:
-  postgres-data:
-  static-data:
+  node-modules:

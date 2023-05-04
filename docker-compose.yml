@@ -6,16 +6,12 @@ services:
       context: ./web
       args:
         - DEV=true
-      dockerfile: dockerfile
     ports:
       - 8002:8002
     volumes:
       - ./web:/web
-      - /web/node_modules
-    command: >
-      sh -c "npm run dev -- --port 8002"
+      - node-modules:/web/node_modules
     environment:
-      - DEBUG=1
       - VITE_API_URL=http://api:8000/
     env_file:
       - ./.env
@@ -24,7 +20,7 @@ services:
 
   api:
     build:
-      context: .
+      context: ./api
       args:
         - DEV=true
     ports:
@@ -33,66 +29,40 @@ services:
     volumes:
       - ./api:/api
       - dev-static-data:/vol/web
-    command: >
-      sh -c "python manage.py wait_for_db &&
-             python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
     env_file:
       - ./.env
     environment:
       - DB_HOST=db
-      - SYNTHESIS_CORE_BASE_URL=http://api_synthesis:8001
+      - SYNTHESIS_URL=http://api_synthesis:8001
+      - GCLOUD_EMULATOR_SERVICE_URL=http://api:8000
+      - GCLOUD_EMULATOR_URL=gcloud-tasks-emulator:8123
       - DEBUG=1
     depends_on:
       - db
-      - redis
       - api_synthesis
+      - gcloud-tasks-emulator
 
   api_synthesis:
     build:
       context: ./api-synthesis
       args:
         - DEV=true
-      dockerfile: dockerfile
     ports:
       - 8001:8001
       - 3001:3001 # for debugger
       - 3002:3002 # for debugger
     volumes:
       - ./api-synthesis:/api-synthesis
-    command: >
-      sh -c "uvicorn app.server:app --host 0.0.0.0 --port 8001 --reload"
-    environment:
-      - DB_HOST=db
-      - DEBUG=1
-    env_file:
-      - ./.env
-    depends_on:
-      - db
-
-  celery:
-    restart: always
-    build:
-      context: .
-    command: celery -A app worker -l info
-    volumes:
-      - ./api:/api
     env_file:
       - ./.env
     environment:
       - DB_HOST=db
-      - SYNTHESIS_CORE_BASE_URL=http://api_synthesis:8001
       - DEBUG=1
     depends_on:
       - db
-      - redis
-      - api
-
-  redis:
-    image: redis:7-alpine
 
   db:
-    image: postgres:13-alpine
+    image: postgres:14-alpine
     volumes:
       - dev-db-data:/var/lib/postgresql/data
     env_file:
@@ -102,6 +72,27 @@ services:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
 
+  gcloud-tasks-emulator:
+    image: ghcr.io/aertje/cloud-tasks-emulator:latest
+    command: -host 0.0.0.0 -port 8123
+    ports:
+      - 8123:8123
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command:
+      - "start"
+      - "--all"
+      - "--authtoken=${NGROK_AUTH_TOKEN}"
+      - "--config"
+      - "/etc/ngrok.yml"
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+    ports:
+      - 4040:4040
+
 volumes:
   dev-db-data:
   dev-static-data:
+  node-modules:

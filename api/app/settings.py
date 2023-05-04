@@ -10,8 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+from enum import Enum
+from google.oauth2 import service_account
 import os
 from pathlib import Path
+import sys
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -35,6 +38,41 @@ ALLOWED_HOSTS.extend(
     )
 )
 
+CSRF_TRUSTED_ORIGINS = []
+CSRF_TRUSTED_ORIGINS.extend(
+    filter(
+        None,
+        os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(','),
+    )
+)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+        "meetingbot": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -51,6 +89,7 @@ INSTALLED_APPS = [
     'core',
     'user',
     'transcript',
+    'meetingbot'
 ]
 
 MIDDLEWARE = [
@@ -144,14 +183,16 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.1/howto/static-files/
+# Deployment parameters
+class ModeEnum(str, Enum):
+    local = 'local'
+    github = 'github'
+    development = 'dev'
+    production = 'prod'
 
-STATIC_URL = '/static/static/'
-MEDIA_URL = '/static/media/'
 
-STATIC_ROOT = '/vol/web/static'
-MEDIA_ROOT = '/vol/web/media'
+DEPLOY_MODE = ModeEnum(os.environ.get('DEPLOY_MODE', ModeEnum.local))
+TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
 
 # Default primary key field type
@@ -165,17 +206,38 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-# Celery settings
-CELERY_BROKER_URL = 'redis://redis:6379'
-CELERY_RESULT_BACKEND = 'redis://redis:6379'
+# Synthesis settings
+SYNTHESIS_URL = os.environ.get('SYNTHESIS_URL')
 
-# Celery task settings
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_ACCEPT_CONTENT = ['json']
+# Google cloud settings
+GCLOUD_PROJECT_ID = os.environ.get('GCLOUD_PROJECT_ID')
+GCLOUD_LOCATION = os.environ.get('GCLOUD_LOCATION')
+GCLOUD_QUEUE_NAME = os.environ.get('GCLOUD_QUEUE_NAME')
+GCLOUD_API_SERVICE_NAME = os.environ.get('GCLOUD_API_SERVICE_NAME')
+GCLOUD_API_SERVICE_URL = os.environ.get('GCLOUD_API_SERVICE_URL')
 
-# Testing parameters
-TEST_ENV_IS_LOCAL = os.environ.get('TEST_ENV', 'local') == 'local'
+# Google cloud emulator settings
+GCLOUD_EMULATOR_URL = os.environ.get('GCLOUD_EMULATOR_URL')
+GCLOUD_EMULATOR_SERVICE_URL = os.environ.get('GCLOUD_EMULATOR_SERVICE_URL')
 
-# Synthesis core
-SYNTHESIS_CORE_BASE_URL = os.environ.get('SYNTHESIS_CORE_BASE_URL')
+# Recall AI settings
+RECALL_API_KEY = os.environ.get("RECALL_API_KEY")
+RECALL_TRANSCRIPT_PROVIDER = os.environ.get("RECALL_TRANSCRIPT_PROVIDER")
+
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/4.1/howto/static-files/
+
+STATIC_URL = '/static/static/'
+MEDIA_URL = '/static/media/'
+
+STATIC_ROOT = '/vol/web/static'
+MEDIA_ROOT = '/vol/web/media'
+
+if DEPLOY_MODE == ModeEnum.development or DEPLOY_MODE == ModeEnum.production:
+    STATICFILES_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+    GS_BUCKET_NAME = os.environ.get('GCLOUD_BUCKET_NAME')
+    GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+        os.environ.get('GCLOUD_SECRETS_PATH')
+    )

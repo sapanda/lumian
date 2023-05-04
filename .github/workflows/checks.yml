@@ -20,14 +20,12 @@ jobs:
           echo "${{ secrets.ENV_FILE }}" > .env
       - name: Test API
         run: >
-          docker-compose run --rm api sh -c "
-          export TEST_ENV=\"$TEST_ENV\" &&
-          python manage.py wait_for_db && python manage.py test"
+          docker-compose run --rm api sh -c
+          "python manage.py wait_for_db && python manage.py test"
       - name: Test Synthesis API
         run: >
-          docker-compose run --rm api_synthesis sh -c "
-          export TEST_ENV=\"$TEST_ENV\" &&
-          PYTHONPATH=. pytest tests"
+          docker-compose run --rm api_synthesis sh -c
+          "PYTHONPATH=. pytest tests"
       - name: Lint API
         run: docker-compose run --rm api sh -c "flake8"
       - name: Lint Synthesis API

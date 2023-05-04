@@ -19,7 +19,7 @@ from transcript.models import (
 from transcript.serializers import (
     TranscriptSerializer, SynthesisSerializer, QuerySerializer
 )
-from transcript.tasks import run_openai_query
+from transcript.tasks import run_openai_query, generate_synthesis
 
 
 class TranscriptView(viewsets.ModelViewSet):
@@ -40,6 +40,23 @@ class TranscriptView(viewsets.ModelViewSet):
         return queryset.filter(
             user=self.request.user
         ).order_by('-id').distinct()
+
+
+class SynthesizerView(APIView):
+    """Generate synthesis for a transcript."""
+    def post(self, request, pk):
+        try:
+            tct = Transcript.objects.get(pk=pk)
+            status_code = generate_synthesis(tct.id)
+            if status_code == 200:
+                response = Response(status=status.HTTP_200_OK)
+            else:
+                response = Response(status=status.
+                                    HTTP_500_INTERNAL_SERVER_ERROR)
+        except Transcript.DoesNotExist:
+            response = Response(status=status.HTTP_404_NOT_FOUND)
+
+        return response
 
 
 class SynthesisView(APIView):

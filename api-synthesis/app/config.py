@@ -1,4 +1,12 @@
+from enum import Enum
 from pydantic import BaseSettings
+
+
+class ModeEnum(str, Enum):
+    local = 'local'
+    github = 'github'
+    development = 'dev'
+    production = 'prod'
 
 
 class Settings(BaseSettings):
@@ -24,3 +32,4 @@ class Settings(BaseSettings):
     examples_dir: str = 'examples'
 
     debug: bool = False
+    deploy_mode: ModeEnum = ModeEnum.production
