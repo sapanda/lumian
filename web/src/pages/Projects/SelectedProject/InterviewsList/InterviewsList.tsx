@@ -1,11 +1,35 @@
 import { projects_icon } from "../../../../assets/icons/svg";
 import { PrivateContainer } from "../../../../components/Containers";
-import GetStarted from "./GetStarted/GetStarted";
+import { TabNav } from "../../../../components/molecules";
+import { GetStarted, InterviewsTab } from ".";
+
+import useInterviewsList from "./useInterviewsList";
 
 export default function InterviewsList() {
+  const { rows, columns } = useInterviewsList();
+
   return (
     <PrivateContainer title="Project Name" icon={projects_icon}>
-      <GetStarted />
+      {rows.length === 0 && <GetStarted />}
+      {rows.length > 0 && (
+        <TabNav
+          tabs={[
+            {
+              name: "Interviews",
+              component: <InterviewsTab rows={rows} columns={columns} />,
+            },
+            {
+              name: "Insights",
+              component: <h1>Insights</h1>,
+            },
+            {
+              name: "Query",
+              component: <h1>Query</h1>,
+            },
+          ]}
+          activeTabIndex={0}
+        />
+      )}
     </PrivateContainer>
   );
 }
