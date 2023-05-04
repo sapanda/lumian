@@ -1,4 +1,5 @@
 import LabelInputCombo from "./LabelInputCombo";
 import TableL from "./TableL";
+import TabNav from "./TabNav/TabNav";
 
-export { LabelInputCombo, TableL };
+export { LabelInputCombo, TableL, TabNav };
