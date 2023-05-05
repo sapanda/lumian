@@ -1,6 +1,6 @@
 import { Button, Stack, Typography } from "@mui/material";
 
-export default function NewProject() {
+export default function CreateProject() {
   return (
     <Stack
       sx={{
