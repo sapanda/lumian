@@ -137,6 +137,7 @@ def get_transcript(
     id: int,
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
 ):
+    print(" ------- GET request :  /transcript/{id}}")
     """API for getting a transcript the way it is stored"""
     data = usecases.get_transcript(id, repo)
     return data
@@ -149,6 +150,7 @@ def save_transcript(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
     transcript: str = Body(),
 ):
+    print(" ------- POST request :  /transcript/{id}")
     """API for saving a transcript"""
     usecases.save_transcript(id=id, transcript=transcript,
                              line_min_size=settings.line_min_size, repo=repo)
@@ -161,10 +163,30 @@ def delete_transcript(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
     embeds_client: EmbedsClientInterface = Depends(get_embeds_client)
 ):
+    print(" ------- DELETE request :  /transcript/{id}")
     """API for deleting a transcript"""
     usecases.delete_transcript(id, repo)
     embeds_client.delete(id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.get('/transcript/{id}/metadata')
+def get_transcript_metadata(
+    id: int,
+    repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
+    synthesis: Synthesis = Depends(get_synthesis)
+):
+    print(" ------- GET request :  /transcript/{id}/metadata")
+    '''
+        API for getting metadata of a meeting transcript :
+        Metadata : (title, interviewee, interviwerrs)
+    '''
+    results = usecases.get_transcript_metadata(
+        id=id,
+        repo=repo,
+        synthesis=synthesis
+    )
+    return results
 
 
 @app.get('/transcript/{id}/summary')
@@ -174,6 +196,7 @@ def get_transcript_summary(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
     synthesis: Synthesis = Depends(get_synthesis)
 ):
+    print(" ------- GET request :  /transcript/{id}/summary")
     """API for getting a summary of a transcript"""
     results = usecases.get_transcript_summary(
         id=id,
@@ -191,6 +214,7 @@ def get_transcript_concise(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
     synthesis: Synthesis = Depends(get_synthesis)
 ):
+    print(" ------- GET request :  /transcript/{id}/concise")
     """API for getting a concise transcript"""
     results = usecases.get_transcript_concise(
         id=id,
@@ -209,7 +233,8 @@ def create_transcript_embeds(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
     synthesis: Synthesis = Depends(get_synthesis)
 ):
-    """API for generating vecotr embeds for a transcript"""
+    print(" ------- POST request :  /transcript/{id}/embeds")
+    """API for generating vector embeds for a transcript"""
     results = usecases.create_transcript_embeds(
         id=id,
         title=title,
@@ -227,6 +252,7 @@ def run_transcript_query(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
     synthesis: Synthesis = Depends(get_synthesis)
 ):
+    print(" ------- POST request :  /transcript/{id}/query}")
     """API for running a query against a transcript"""
     results = usecases.run_transcript_query(
         id=id,
