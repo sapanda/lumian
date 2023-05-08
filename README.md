@@ -42,6 +42,9 @@ Before pushing your code, be sure to run tests and linting
 
 # Setting up ngrok locally
 
+Ngrok is used to expose local development environment to the internet.
+This allows our local server to receive transcripts callbacks from Recall AI
+
 ## Installation
 
 - Visit the official ngrok website and download ngrok: https://ngrok.com/download 
