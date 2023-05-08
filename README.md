@@ -52,13 +52,15 @@ This allows our local server to receive transcripts callbacks from Recall AI
 - Copy your authentication token from the dashboard: https://dashboard.ngrok.com/get-started/your-authtoken
 - Set the authentication token locally by running the following command and replacing <token> with your copied token:
 
-``` ngrok config add-authtoken <token>
+```
+ngrok config add-authtoken <token>
 ```
 
 ## Usage
 
 - Start the ngrok server locally by running the following command :
-```  ngrok http 127.0.0.1:8000 
+```
+ngrok http 127.0.0.1:8000 
 ```
 - Copy the generated URL from the ngrok output.
 - Paste the generated URL in the .env file under the DJANGO_ALLOWED_HOSTS variable.
