@@ -5,6 +5,7 @@ import {
   TermsOfServices,
   ResetPassword,
   Projects,
+  AccountSettings,
 } from "../pages";
 
 // Public Routes
@@ -14,6 +15,7 @@ export const RESET_PASSWORD = "/reset-password";
 export const HOME = "/";
 export const PRIVACY_POLICY = "/privacy-policy";
 export const TERMS_OF_SERVICES = "/terms-of-services";
+export const ACCOUNT_SETTINGS = "/account-settings";
 
 // Private Routes
 export const PROJECTS = {
@@ -79,6 +81,12 @@ export const PRIVATE_ROUTES = [
   {
     path: PROJECTS.SELECTED_PROJECT.SELECTED_INTERVIEW,
     component: Projects.SelectedProject.SelectedInterview,
+    exact: true,
+  },
+
+  {
+    path: ACCOUNT_SETTINGS,
+    component: AccountSettings,
     exact: true,
   },
 ];

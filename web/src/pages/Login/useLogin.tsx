@@ -5,7 +5,7 @@ import {
   userEndPoints,
 } from "../../api/apiEndpoints";
 import { useNavigate } from "react-router-dom";
-import { PRIVATE_ROUTES } from "../../router/routes.constant";
+
 import { PROJECTS } from "../../router/routes.constant";
 
 export default function useLogin() {
@@ -45,7 +45,7 @@ export default function useLogin() {
     const data = await res.json();
     localStorage.setItem("user", JSON.stringify(data));
 
-    navigate(PROJECTS);
+    navigate(PROJECTS.default);
     return data;
   }
   return { email, password, setEmail, setPassword, handleLogin };

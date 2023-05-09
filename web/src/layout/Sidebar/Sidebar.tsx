@@ -5,16 +5,14 @@ import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import theme from "../../theme/theme";
 import { SidebarMenu } from "./menu.constants";
-import { SidebarBtn } from "./Components";
+import { AccountMenu, SidebarBtn } from "./Components";
 import { Stack } from "@mui/material";
-import useUser from "../../hooks/useUser";
-import useAuth from "../../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const drawerWidth = 240;
 
 export default function Sidebar() {
-  const user = useUser();
-  const { handleLogout } = useAuth();
+  const navigate = useNavigate();
   return (
     <Drawer
       sx={{
@@ -36,7 +34,7 @@ export default function Sidebar() {
           variant="h4"
           noWrap
           component="div"
-          sx={{ flexGrow: 1, ml: 2 }}
+          sx={{ flexGrow: 1, ml: 2, color: theme.palette.primary.contrastText }}
         >
           Lumian
         </Typography>
@@ -49,7 +47,11 @@ export default function Sidebar() {
       />
       <List>
         {SidebarMenu.map((item) => (
-          <SidebarBtn item={item} key={item.id} />
+          <SidebarBtn
+            item={item}
+            key={item.id}
+            onClick={() => navigate(item.path)}
+          />
         ))}
       </List>
       <Divider />
@@ -67,37 +69,8 @@ export default function Sidebar() {
               padding: "8px 16px",
             }}
           >
-            <Stack
-              sx={{
-                cursor: "pointer",
-                borderRadius: "6px",
-                padding: "8px 16px",
-                "&:hover": {
-                  backgroundColor: "rgba(143, 143, 143, 0.13)",
-                },
-              }}
-            >
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: 500,
-                }}
-              >
-                {user.name}
-              </Typography>
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 500,
-                }}
-              >
-                {user.email}
-              </Typography>
-            </Stack>
+            <AccountMenu />
           </Stack>
-        </List>
-        <List onClick={() => handleLogout()}>
-          <SidebarBtn item={{ label: "Logout", path: "/logout" }} />
         </List>
       </Stack>
     </Drawer>
