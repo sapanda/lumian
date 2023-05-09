@@ -10,6 +10,10 @@ class CreateBotAPISerializer(serializers.Serializer):
         model = MeetingBot
 
 
+class OauthCallbackSerializer(serializers.Serializer):
+    code = serializers.CharField()
+
+
 class BotStatusSerializer(serializers.Serializer):
     code = serializers.CharField()
     created_at = serializers.DateTimeField()

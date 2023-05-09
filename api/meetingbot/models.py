@@ -36,12 +36,16 @@ class MeetingDetails(models.Model):
         ZOOM = 'zoom', _('Zoom meeting app')
         # TODO : add other meeting choices
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE)
+    user = models.EmailField(max_length=1024)
     access_token = models.CharField(max_length=1024)
     refresh_token = models.CharField(max_length=1024)
-    meeting_url = models.URLField(max_length=1024,blank=True)
+    meeting_url = models.URLField(max_length=1024,null=True)
     meeting_app = models.CharField(
         max_length=32,
         choices=MeetingAppChoices.choices)
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'meeting_app'],
+                                    name='unique_meeting_details')
+        ]
