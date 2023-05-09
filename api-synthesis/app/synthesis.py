@@ -1,12 +1,17 @@
 import json
-from .domains import SynthesisResult, SynthesisResultOutput, EmbedsResult
+from .domains import (
+    SynthesisResult,
+    SynthesisResultOutput,
+    EmbedsResult,
+    MetadataResult
+)
 from .interfaces import (
     OpenAIClientInterface, EmbedsClientInterface, SynthesisInterface
 )
 from .utils import (
     split_indexed_lines_into_chunks,
     split_indexed_transcript_lines_into_chunks,
-    split_and_extract_indices,
+    split_and_extract_indices
 )
 
 
@@ -28,6 +33,106 @@ class Synthesis(SynthesisInterface):
         self.chunk_min_words = chunk_min_words
         self.context_max_chars = context_max_chars
         self.examples_dir = examples_dir
+
+    def _get_empty_transcript_metadata(self):
+        return {
+            "title": "",
+            "interviewer_names": [],
+            "interviewee_names": [],
+        }
+
+    def metadata_transcript(
+            self, indexed_transcript: str
+    ) -> MetadataResult:
+        '''
+            Return metadata for transcript
+            Example transcript :
+                The interviewee, Sean, had some technical difficulties
+                accessing the Zoom call but eventually joined.
+                The interviewers, Saswat and Wilbert, are working on a startup
+            Output : {
+                        'title': "Sean's Retirement Savings Interview",
+                        'interviewer_names': ['Saswat', 'Wilbert'],
+                        'interviewee_names': ['Sean']
+                    }
+        '''
+        try:
+            chunks = split_indexed_lines_into_chunks(
+                indexed_transcript, self.chunk_min_words)
+            results = []
+            cost = 0
+            message = ""
+            context_char = 0
+            for chunk in chunks:
+                result = self._openai_summarize_chunk(chunk)
+                summary = split_and_extract_indices(result["output"])
+                summary_text = "".join([f"{summary[i]['text']}"
+                                        for i in range(len(summary))])
+                if (context_char + len(summary_text) < self.context_max_chars):
+                    context_char += len(summary_text)
+                    cost += result["cost"]
+                    results.append(summary_text)
+
+            response = self._openai_transcript_metadata(results)
+            transcript_metadata = json.loads(response["output"])
+
+        except json.decoder.JSONDecodeError as e:
+            transcript_metadata = self._get_empty_transcript_metadata()
+            message = str(e)
+        except Exception as e:
+            transcript_metadata = self._get_empty_transcript_metadata()
+            message = str(e)
+
+        cost += response["cost"]
+        data: MetadataResult = {
+                "title": transcript_metadata["title"],
+                "interviewees": transcript_metadata["interviewee_names"],
+                "interviewers": transcript_metadata["interviewer_names"],
+                "cost": cost,
+                "message": message
+            }
+        return data
+
+    def _openai_transcript_metadata(
+        self,
+        summary_list: 'list[str]'
+    ) -> dict:
+        '''
+            Generate metadata for meeting transcript.
+            Metadata : title, interviewees, interviewers
+        '''
+        prompt = self._create_openai_prompt_transcript_metadata(summary_list)
+        return self.openai_client.execute_completion(prompt)
+
+    def _create_openai_prompt_transcript_metadata(
+            self,
+            summary_list: 'list[str]'
+    ) -> dict:
+        '''
+            Create prompt to generate metadata for the summary
+        '''
+
+        header = (
+            "The following are summaries of various sections "
+            "of an interview. Please fill out the Interview Title, "
+            "Interviewee Names and Interviewer Names. Title should "
+            "contain the Interviewee Name. Use a Json Format: "
+            )
+
+        format_dict = {
+            "title": "",
+            "interviewer_names": [""],
+            "interviewee_names": [""],
+        }
+
+        summaries = "\n* ".join(summary_list)
+        format_json = json.dumps(format_dict)
+        prompt = (
+            f"{header}\n\nOutput Format: ###\n{format_json}\n###"
+            f"\n\nSummaries: ###\n* {summaries}\n###\n"
+            )
+
+        return prompt
 
     def summarize_transcript(
             self, indexed_transcript: str, interviewee: str

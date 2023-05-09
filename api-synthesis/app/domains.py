@@ -43,3 +43,12 @@ class SynthesisResult(TypedDict):
 class EmbedsResult(TypedDict):
     """Result model for Embeds"""
     cost: float
+
+
+class MetadataResult(TypedDict):
+    """Result model for Metadata"""
+    title: str
+    interviewees: 'list[str]'
+    interviewers: 'list[str]'
+    cost: float
+    message: str

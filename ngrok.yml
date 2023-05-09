@@ -1,6 +1,0 @@
-version: "2"
-tunnels:
-  http:
-    proto: http
-    addr: api:8000
-    domain: lumian.ngrok.app
