@@ -37,6 +37,16 @@ def delete_transcript_for_id(transcript_id: int) -> dict:
     return _create_result(response)
 
 
+def get_transcript_metadata(transcript_id: int):
+    url = f"{SYNTHESIS_URL}/transcript/{transcript_id}/metadata"
+    response = requests.get(url=url)
+    if response.status_code != 200:
+        print(
+            f"Could not get metadata for transcript with id = {transcript_id}"
+            " on synthesis service")
+    return _create_result(response)
+
+
 def get_summary_with_citations(transcript_id: int,
                                interviewee: str) -> dict:
     """Gets the summary for the transcript from the synthesis service."""

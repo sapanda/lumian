@@ -1,5 +1,5 @@
 import abc
-from .domains import Transcript, SynthesisResult, EmbedsResult
+from .domains import Transcript, SynthesisResult, EmbedsResult, MetadataResult
 
 
 class OpenAIClientInterface(abc.ABC):
@@ -70,6 +70,15 @@ class TranscriptRepositoryInterface(abc.ABC):
 
 
 class SynthesisInterface(abc.ABC):
+
+    @abc.abstractmethod
+    def metadata_transcript(
+            self, indexed_transcript: str
+    ) -> MetadataResult:
+        """Return following metadata for the transcript
+          : Title, Interviewers, Interviewees
+        """
+        pass
 
     @abc.abstractmethod
     def summarize_transcript(

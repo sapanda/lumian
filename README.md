@@ -39,3 +39,29 @@ Before pushing your code, be sure to run tests and linting
 ./scripts/run-tests.sh
 ./scripts/flake8.sh
 ```
+
+# Setting up ngrok locally
+
+Ngrok is used to expose local development environment to the internet.
+This allows our local server to receive transcripts callbacks from Recall AI
+
+## Installation
+
+- Visit the official ngrok website and download ngrok: https://ngrok.com/download 
+- Create a new account or login to your existing account at https://dashboard.ngrok.com/
+- Copy your authentication token from the dashboard: https://dashboard.ngrok.com/get-started/your-authtoken
+- Set the authentication token locally by running the following command and replacing <token> with your copied token:
+
+```
+ngrok config add-authtoken <token>
+```
+
+## Usage
+
+- Start the ngrok server locally by running the following command :
+```
+ngrok http 127.0.0.1:8000 
+```
+- Copy the generated URL from the ngrok output.
+- Paste the generated URL in the .env file under the DJANGO_ALLOWED_HOSTS variable.
+- Use the generated URL to create a new webhook in Recall AI dashboard: https://api.recall.ai/dashboard/webhooks/
