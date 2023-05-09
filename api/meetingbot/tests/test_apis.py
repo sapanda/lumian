@@ -19,7 +19,7 @@ class CreateBotViewTest(APITestCase):
     def tearDown(self):
         self.user.delete()
 
-    @patch('meetingbot.views.add_bot_to_meeting')
+    @patch('meetingbot.views.meeting_bot.add_bot_to_meeting')
     def test_create_bot_success(self, mock_add_bot_to_meeting):
         mock_add_bot_to_meeting.return_value = {'id': 1, 'name': 'bot1'}
         data = {
@@ -38,7 +38,7 @@ class CreateBotViewTest(APITestCase):
         self.assertIsNone(bot.transcript)
         self.assertEqual(bot.user, self.user)
 
-    @patch('meetingbot.views.add_bot_to_meeting')
+    @patch('meetingbot.views.meeting_bot.add_bot_to_meeting')
     def test_create_bot_already_exists(self, mock_add_bot_to_meeting):
         mock_add_bot_to_meeting.side_effect = IntegrityError
         data = {
@@ -51,7 +51,7 @@ class CreateBotViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(MeetingBot.objects.count(), 0)
 
-    @patch('meetingbot.views.add_bot_to_meeting')
+    @patch('meetingbot.views.meeting_bot.add_bot_to_meeting')
     def test_create_bot_timeout(self, mock_add_bot_to_meeting):
         mock_add_bot_to_meeting.side_effect = \
             RecallAITimeoutException(
@@ -68,7 +68,7 @@ class CreateBotViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_408_REQUEST_TIMEOUT)
         self.assertEqual(MeetingBot.objects.count(), 0)
 
-    @patch('meetingbot.views.add_bot_to_meeting')
+    @patch('meetingbot.views.meeting_bot.add_bot_to_meeting')
     def test_create_bot_exception(self, mock_add_bot_to_meeting):
         mock_add_bot_to_meeting.side_effect = ValueError('Invalid input')
         data = {
@@ -87,8 +87,8 @@ class BotStatusChangeViewTestCase(APITestCase):
     def setUp(self):
         self.url = reverse('webhook-bot-status-change')
 
-    @patch('meetingbot.views.get_meeting_transcript')
-    @patch('meetingbot.views.generate_transcript_text')
+    @patch('meetingbot.views.meeting_bot.get_meeting_transcript')
+    @patch('meetingbot.views.meeting_bot.generate_transcript_text')
     def test_successful_bot_status_update(
             self,
             mock_generate_transcript_text,
@@ -123,8 +123,8 @@ class BotStatusChangeViewTestCase(APITestCase):
 
     @patch('transcript.signals._run_generate_synthesis')
     @patch('transcript.signals._delete_transcript_on_synthesis_service')
-    @patch('meetingbot.views.get_meeting_transcript')
-    @patch('meetingbot.views.generate_transcript_text')
+    @patch('meetingbot.views.meeting_bot.get_meeting_transcript')
+    @patch('meetingbot.views.meeting_bot.generate_transcript_text')
     def test_successful_creation_of_transcript(
             self,
             mock_generate_transcript_text,

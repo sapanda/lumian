@@ -1,5 +1,4 @@
 import requests
-from rest_framework.exceptions import APIException
 
 from app.settings import (
     ZOOM_CLIENT_ID,
@@ -11,23 +10,21 @@ from meetingbot.errors import (
     ZoomOauthException,
     ZoomAPIException
 )
+import logging
+logger = logging.getLogger(__name__)
 
 AUTHORISATION_URL = 'https://zoom.us/oauth/authorize'
 ACCESS_TOKEN_URL = 'https://zoom.us/oauth/token'
 GET_MEETINGS_URL = 'https://api.zoom.us/v2/users/me/meetings'
 GET_USER_URL = 'https://api.zoom.us/v2/users/me'
 
-import logging
-logger = logging.getLogger(__name__)
-
 
 class ZoomOAuth:
 
-    def _get_response(self,url,data):
-        logger.debug(f"data {data}")
+    def _get_response(self, url, data):
         try:
             response = requests.post(url, data=data)
-            logger.debug(f'{response.json()}')
+            response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as e:
             error_msg = f"HTTP error occurred: {e}"
@@ -48,7 +45,7 @@ class ZoomOAuth:
             'client_id': ZOOM_CLIENT_ID,
             'client_secret': ZOOM_CLIENT_SECRET
         }
-        return self._get_response(url,data)
+        return self._get_response(url, data)
 
     def refresh_access_token(self, refresh_token):
         logger.debug("-- REFRESH ACCESS TOKEN --")
@@ -59,8 +56,8 @@ class ZoomOAuth:
             'client_id': ZOOM_CLIENT_ID,
             'client_secret': ZOOM_CLIENT_SECRET
         }
-        
-        return self._get_response(url,data) 
+
+        return self._get_response(url, data)
 
     def is_access_token_expired(self, access_token):
         logger.debug("-- ACCESS TOKEN EXPIRED --")
@@ -80,9 +77,10 @@ class ZoomAPI:
     def __init__(self, access_token):
         self.access_token = access_token
 
-    def _get_response(self,url,headers):
+    def _get_response(self, url, headers):
         try:
             response = requests.get(url, headers=headers)
+            response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as e:
             error_msg = f"HTTP error occurred: {e}"
@@ -100,7 +98,7 @@ class ZoomAPI:
             'Authorization': f'Bearer {self.access_token}',
             'Content-Type': 'application/json'
         }
-        return self._get_response(url,headers)
+        return self._get_response(url, headers)
 
     def get_meetings(self):
         logger.debug("-- Get MEETINGS --")
@@ -109,4 +107,4 @@ class ZoomAPI:
             'Authorization': f'Bearer {self.access_token}',
             'Content-Type': 'application/json'
         }
-        return self._get_response(url,headers)
+        return self._get_response(url, headers)

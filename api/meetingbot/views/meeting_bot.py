@@ -128,5 +128,3 @@ class BotStatusChangeView(APIView):
             logger.error(f"-- Exception -- {str(e)}")
 
         return Response({}, HTTP_202_ACCEPTED)
-
-

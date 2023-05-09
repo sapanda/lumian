@@ -39,11 +39,11 @@ class MeetingDetails(models.Model):
     user = models.EmailField(max_length=1024)
     access_token = models.CharField(max_length=1024)
     refresh_token = models.CharField(max_length=1024)
-    meeting_url = models.URLField(max_length=1024,null=True)
+    meeting_url = models.URLField(max_length=1024, null=True)
     meeting_app = models.CharField(
         max_length=32,
         choices=MeetingAppChoices.choices)
-    
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'meeting_app'],
