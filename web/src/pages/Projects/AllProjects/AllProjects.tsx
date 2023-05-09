@@ -3,6 +3,9 @@ import { projects_icon } from "../../../assets/icons/svg";
 import { PrivateContainer } from "../../../components/Containers";
 import { TableL } from "../../../components/molecules";
 import GetStarted from "./GetStarted";
+import { PrivateAppbar } from "../../../layout";
+import { PROJECTS } from "../../../router/routes.constant";
+import { useNavigate } from "react-router-dom";
 
 const allProjects = [
   {
@@ -49,9 +52,33 @@ const columns = [
     width: 200,
   },
 ];
+
+interface rowType {
+  [key: string]: string | number;
+}
+
 export default function AllProjects() {
+  const navigate = useNavigate();
+
+  function onCellClick(row: rowType) {
+    const projectId = row.id;
+
+    if (!projectId) return;
+
+    navigate(
+      PROJECTS.SELECTED_PROJECT.default.replace(":projectId", `${projectId}`)
+    );
+  }
   return (
-    <PrivateContainer title="Projects" icon={projects_icon}>
+    <PrivateContainer
+      appBar={
+        <PrivateAppbar
+          title="Projects"
+          icon={projects_icon}
+          subtitle="All Projects"
+        />
+      }
+    >
       {allProjects.length === 0 && <GetStarted />}
       {allProjects.length > 0 && (
         <Stack
@@ -59,7 +86,11 @@ export default function AllProjects() {
             padding: "40px 132px",
           }}
         >
-          <TableL rows={allProjects} columns={columns} />
+          <TableL
+            rows={allProjects}
+            columns={columns}
+            onCellClick={onCellClick}
+          />
         </Stack>
       )}
     </PrivateContainer>

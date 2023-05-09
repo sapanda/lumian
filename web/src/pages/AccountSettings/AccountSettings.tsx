@@ -4,6 +4,7 @@ import { PrivateContainer } from "../../components/Containers";
 import useAccountSettings from "./useAccountSettings";
 import useUser from "../../hooks/useUser";
 import { LabelInputCombo } from "../../components/molecules";
+import { PrivateAppbar } from "../../layout";
 
 export default function AccountSettings() {
   const user = useUser();
@@ -13,7 +14,9 @@ export default function AccountSettings() {
     newPassword: "",
   });
   return (
-    <PrivateContainer icon={settings_icon} title="Account Settings">
+    <PrivateContainer
+      appBar={<PrivateAppbar icon={settings_icon} title="Account Settings" />}
+    >
       <Stack
         sx={{
           width: "100%",
