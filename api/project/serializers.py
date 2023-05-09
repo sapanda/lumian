@@ -5,7 +5,6 @@ from rest_framework import serializers
 
 from .models import Project
 from transcript.models import Transcript
-from transcript.serializers import TranscriptSerializer
 
 
 class ProjectSerializer(serializers.ModelSerializer):

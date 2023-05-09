@@ -1,17 +1,11 @@
 """
 Views for the projects API.
 """
-from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import (
     authentication,
-    parsers,
     permissions,
-    status,
-    serializers,
     viewsets,
 )
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from .models import Project
 from .serializers import ProjectSerializer
