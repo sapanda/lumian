@@ -129,6 +129,4 @@ class BotStatusChangeView(APIView):
 
         return Response({}, HTTP_202_ACCEPTED)
 
-# TODO :
-#  Unit testing
-#  AI Generated intervieww, interviewer and title
+

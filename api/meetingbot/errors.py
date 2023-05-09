@@ -13,3 +13,9 @@ class MeetingBotException(APIException):
 
 class RecallAITimeoutException(MeetingBotException):
     pass
+
+class ZoomTimeoutException(MeetingBotException):
+    pass 
+
+class ZoomNotIntegratedException(MeetingBotException):
+    pass

@@ -224,6 +224,11 @@ GCLOUD_EMULATOR_SERVICE_URL = os.environ.get('GCLOUD_EMULATOR_SERVICE_URL')
 RECALL_API_KEY = os.environ.get("RECALL_API_KEY")
 RECALL_TRANSCRIPT_PROVIDER = os.environ.get("RECALL_TRANSCRIPT_PROVIDER")
 
+# Zoom settings
+ZOOM_CLIENT_ID = os.environ.get("ZOOM_CLIENT_ID")
+ZOOM_CLIENT_SECRET = os.environ.get("ZOOM_CLIENT_ID")
+ZOOM_REDIRECT_URL = os.environ.get("ZOOM_REDIRECT_URL")
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
