@@ -32,7 +32,7 @@ class TranscriptView(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Create a new transcript."""
-        serializer.save(user=self.request.user)
+        serializer.save()
 
     def get_queryset(self):
         """Retrieve transcripts for authenticated user."""

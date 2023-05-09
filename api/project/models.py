@@ -12,7 +12,7 @@ class Project(models.Model):
         on_delete=models.CASCADE,
     )
     title = models.CharField(max_length=255)
-    questions_list = ArrayField(
+    questions = ArrayField(
         models.CharField(max_length=10000), default=list)
 
     def __str__(self):

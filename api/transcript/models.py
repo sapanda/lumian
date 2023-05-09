@@ -22,8 +22,8 @@ def _citations_from_output(transcript: str, output: str):
 class Transcript(models.Model):
     """Model representing a transcript and corresponding AI synthesis."""
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+    project = models.ForeignKey(
+        'project.Project',
         on_delete=models.CASCADE,
     )
     title = models.CharField(max_length=255)
