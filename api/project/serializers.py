@@ -17,9 +17,17 @@ class ProjectSerializer(serializers.ModelSerializer):
         model = Project
         fields = ['id', 'title', 'questions', 'transcripts']
 
-    def get_transcripts(self, obj):
+    def get_transcripts(self, obj) -> list[dict]:
         transcripts = Transcript.objects.filter(project=obj)
-        return transcripts.values_list('id', flat=True)
+        return [
+            {
+                'id': transcript.id,
+                'title': transcript.title,
+                'interviewees': transcript.interviewee_names,
+                'interviewers': transcript.interviewer_names,
+            }
+            for transcript in transcripts
+        ]
 
     def create(self, validated_data):
         """Create and return a project."""

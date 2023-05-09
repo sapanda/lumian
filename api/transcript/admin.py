@@ -4,6 +4,7 @@
 from django import forms
 from django.contrib import admin
 
+from core.admin import ReadOnlyInline
 from transcript.models import (
     Transcript, Synthesis, Embeds, Query
 )
@@ -24,20 +25,6 @@ class TranscriptForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
-
-
-class ReadOnlyInline(admin.StackedInline):
-    show_change_link = True
-    extra = 0
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return True
-
-    def has_add_permission(self, request, obj=None):
-        return False
 
 
 class SynthesisInline(ReadOnlyInline):

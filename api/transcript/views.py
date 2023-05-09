@@ -9,6 +9,7 @@ from rest_framework import (
     status,
     serializers,
     viewsets,
+    mixins
 )
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -22,7 +23,11 @@ from transcript.serializers import (
 from transcript.tasks import run_openai_query, generate_synthesis
 
 
-class TranscriptView(viewsets.ModelViewSet):
+class TranscriptView(mixins.CreateModelMixin,
+                     mixins.RetrieveModelMixin,
+                     mixins.UpdateModelMixin,
+                     mixins.DestroyModelMixin,
+                     viewsets.GenericViewSet):
     """View for managing Transcript APIs."""
     serializer_class = TranscriptSerializer
     queryset = Transcript.objects.all()
@@ -58,9 +63,16 @@ class SynthesizerView(APIView):
 
         return response
 
+    def get_serializer(self, *args, **kwargs):
+        pass  # Don't need serialization
+
+    def get_serializer_class(self):
+        pass  # Don't need serialization
+
 
 class SynthesisView(APIView):
     """"Base class for all AI synthesis views."""
+    serializer_class = SynthesisSerializer
 
     def get_of_type(self, request, pk, synthesis_type):
         """Retrieve the AISynthesis of the given type."""
@@ -96,6 +108,7 @@ class ConciseView(SynthesisView):
 class QueryView(APIView):
     """View for executing a query and getting all existing query results."""
     parser_classes = [parsers.MultiPartParser]
+    serializer_class = QuerySerializer
 
     @extend_schema(
         request=inline_serializer(
