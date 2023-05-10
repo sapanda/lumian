@@ -3,9 +3,10 @@ Tests for the creation and upload of transcripts via the API.
 """
 from django.test import TestCase
 from django.urls import reverse
-
 from rest_framework.test import APIClient
 from rest_framework import status
+from unittest import skip
+from unittest.mock import patch
 
 from transcript.models import Transcript, SynthesisType, Synthesis
 from transcript.serializers import TranscriptSerializer
@@ -16,9 +17,6 @@ from transcript.tests.utils import (
     create_transcript,
 )
 from project.models import Project
-
-from unittest import skip
-from unittest.mock import patch
 
 
 TRANSCRIPT_URL = reverse('transcript:transcript-list')
