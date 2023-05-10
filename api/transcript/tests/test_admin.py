@@ -7,7 +7,11 @@ from django.urls import reverse
 from rest_framework import status
 from unittest.mock import patch
 
-from transcript.tests.utils import create_user, create_transcript
+from transcript.tests.utils import (
+    create_user,
+    create_project,
+    create_transcript
+)
 
 
 @patch('transcript.signals._run_generate_synthesis')
@@ -20,14 +24,13 @@ class AdminSiteTests(TestCase):
             password='testpass123',
         )
         self.client.force_login(self.admin_user)
-
         self.user = create_user(
             email='test@example.com',
             password='testpass123',
             name='Test Name',
         )
-
-        self.tpt = create_transcript(self.user)
+        self.project = create_project(user=self.user)
+        self.tpt = create_transcript(project=self.project)
 
     def test_transcript_lists(self, patched_signal):
         """Test that transcripts are listed on page."""

@@ -12,8 +12,10 @@ from transcript.serializers import TranscriptSerializer
 from transcript.synthesis_client import generate_embeds
 from transcript.tests.utils import (
     create_user,
-    create_transcript
+    create_project,
+    create_transcript,
 )
+from project.models import Project
 
 from unittest import skip
 from unittest.mock import patch
@@ -66,27 +68,30 @@ class MockAPITests(TestCase):
         )
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
+        self.project = create_project(user=self.user)
 
     def test_create_transcript_success(self, patched_signal):
         """Test creating a transcript is successful."""
         payload = {
+            'project': self.project.id,
             'title': 'Test Title',
             'interviewee_names': ['Interviewee'],
             'interviewer_names': ['Interviewer 1', 'Interviewer 2'],
             'transcript': 'Test Transcript',
         }
         res = self.client.post(TRANSCRIPT_URL, payload)
-
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         tpt = Transcript.objects.get(id=res.data['id'])
         for k, v in payload.items():
-            self.assertEqual(getattr(tpt, k), v)
-        self.assertEqual(tpt.user, self.user)
+            attr = getattr(tpt,k)
+            if not isinstance(attr, Project):
+                self.assertEqual(attr, v)
         self.assertEqual(patched_signal.call_count, 1)
 
     def test_create_transcript_failure(self, patched_signal):
         """Test creating a transcript with blank input fails."""
         payload = {
+            'project': self.project.id,
             'title': '',
             'interviewee_names': [''],
             'interviewer_names': [''],
@@ -105,8 +110,8 @@ class MockAPITests(TestCase):
 
     def test_retrieve_transcripts(self, patched_signal):
         """Test retrieving a list of transcripts."""
-        create_transcript(user=self.user)
-        create_transcript(user=self.user)
+        create_transcript(project=self.project)
+        create_transcript(project=self.project)
 
         res = self.client.get(TRANSCRIPT_URL)
 
@@ -118,20 +123,33 @@ class MockAPITests(TestCase):
     def test_transcript_list_limited_to_user(self, patched_signal):
         """Test list of transcripts is limited to authenticated user."""
         other_user = create_user(email='other@example.com', password='test123')
-        create_transcript(user=other_user)
-        create_transcript(user=self.user)
+        other_project = create_project(user=other_user)
+        create_transcript(project=other_project)
+        create_transcript(project=self.project)
 
         res = self.client.get(TRANSCRIPT_URL)
 
-        transcripts = Transcript.objects.filter(user=self.user)
-        serializer = TranscriptSerializer(transcripts, many=True)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serializer.data)
+        self.assertEqual(len(res.data), 1)
+        self.assertEqual(res.data[0]['project'], self.project.id)
 
-    @skip("Not Implemented")
+    def test_transcript_filter(self, patched_signal):
+        """Test filtering the transcript list to requested project."""
+        new_project = create_project(user=self.user)
+        create_transcript(project=self.project)
+        create_transcript(project=new_project)
+
+        payload = {'project': self.project.id}
+        res = self.client.get(TRANSCRIPT_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
+        self.assertEqual(res.data[0]['project'], self.project.id)
+
     def test_partial_update(self, patched_signal):
         """Test partial update of a transcript."""
-        tpt = create_transcript(user=self.user)
+        tpt = create_transcript(project=self.project)
+        old_interviewer_names = tpt.interviewer_names
 
         payload = {'title': 'New Title', 'interviewee_names': ['New Guy']}
         url = detail_url(tpt.id)
@@ -141,44 +159,12 @@ class MockAPITests(TestCase):
         tpt.refresh_from_db()
         self.assertEqual(tpt.title, payload['title'])
         self.assertEqual(tpt.interviewee_names, payload['interviewee_names'])
-        self.assertEqual(tpt.user, self.user)
-
-    @skip("Not Implemented")
-    def test_full_update(self, patched_signal):
-        """Test full update of transcript."""
-        tpt = create_transcript(user=self.user)
-
-        payload = {
-            'title': 'New Title',
-            'interviewee_names': ['New Guy'],
-            'interviewer_names': ['New Interviewer 1', 'New Interviewer 2'],
-            'transcript': 'New Transcript',
-        }
-        url = detail_url(tpt.id)
-        res = self.client.put(url, payload)
-
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        tpt.refresh_from_db()
-        for k, v in payload.items():
-            self.assertEqual(getattr(tpt, k), v)
-        self.assertEqual(tpt.user, self.user)
-
-    def test_update_user_returns_error(self, patched_signal):
-        """Test changing the transcript user results in an error."""
-        new_user = create_user(email='user2@example.com', password='test123')
-        tpt = create_transcript(user=self.user)
-
-        payload = {'user': new_user.id}
-        url = detail_url(tpt.id)
-        self.client.patch(url, payload)
-
-        tpt.refresh_from_db()
-        self.assertEqual(tpt.user, self.user)
+        self.assertEqual(tpt.interviewer_names, old_interviewer_names)
 
     @patch('transcript.signals._delete_transcript_on_synthesis_service')
     def test_delete_transcript(self, patched_signal, patched_delete):
         """Test deleting a transcript successful."""
-        tpt = create_transcript(user=self.user)
+        tpt = create_transcript(project=self.project)
 
         url = detail_url(tpt.id)
         res = self.client.delete(url)
@@ -186,10 +172,27 @@ class MockAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Transcript.objects.filter(id=tpt.id).exists())
 
-    def test_transcript_other_users_transcript_error(self, patched_signal):
+    def test_create_transcript_other_users_failure(self, patched_signal):
+        """
+        Test failure when creating transcript using wrong project ID.
+        """
+        new_user = create_user(email='user2@example.com', password='test123')
+        new_project = create_project(user=new_user)
+        payload = {
+            'project': new_project.id,
+            'title': 'Test Title',
+            'interviewee_names': ['Interviewee'],
+            'interviewer_names': ['Interviewer 1', 'Interviewer 2'],
+            'transcript': 'Test Transcript',
+        }
+        res = self.client.post(TRANSCRIPT_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_transcript_other_users_failure(self, patched_signal):
         """Test trying to delete another users transcript gives error."""
         new_user = create_user(email='user2@example.com', password='test123')
-        tpt = create_transcript(user=new_user)
+        new_project = create_project(user=new_user)
+        tpt = create_transcript(project=new_project)
 
         url = detail_url(tpt.id)
         res = self.client.delete(url)
@@ -200,7 +203,7 @@ class MockAPITests(TestCase):
     def test_summary_in_progress(self, patched_signal):
         """Test getting a summary of a transcript that is in progress."""
         tpt = Transcript.objects.create(
-            user=self.user,
+            project=self.project,
             title='Test Title',
             interviewee_names=['Test Interviewee'],
             interviewer_names=['Test Interviewer'],
@@ -215,7 +218,7 @@ class MockAPITests(TestCase):
 
     def test_summary_valid(self, patched_signal):
         """Test getting a summary of a transcript."""
-        tpt = create_transcript(user=self.user)
+        tpt = create_transcript(project=self.project)
 
         url = summary_url(tpt.id)
         res = self.client.get(url)
@@ -237,7 +240,7 @@ class MockAPITests(TestCase):
     def test_concise_in_progress(self, patched_signal):
         """Test getting a concise transcript that is in progress."""
         tpt = Transcript.objects.create(
-            user=self.user,
+            project=self.project,
             title='Test Title',
             interviewee_names=['Test Interviewee'],
             interviewer_names=['Test Interviewer'],
@@ -252,7 +255,7 @@ class MockAPITests(TestCase):
 
     def test_concise_valid(self, patched_signal):
         """Test getting a concise transcript."""
-        tpt = create_transcript(user=self.user)
+        tpt = create_transcript(project=self.project)
 
         url = concise_url(tpt.id)
         res = self.client.get(url)
@@ -277,7 +280,7 @@ class MockAPITests(TestCase):
     @patch('transcript.synthesis_client.run_query')
     def test_query_success(self, patched_query, patched_signal):
         """Test querying a transcript successfully."""
-        tpt = create_transcript(user=self.user)
+        tpt = create_transcript(project=self.project)
         query = "Where does Jason live?"
         query_output = {
             'output': 'Jason lives in Boise',
@@ -302,7 +305,7 @@ class MockAPITests(TestCase):
     @patch('transcript.synthesis_client.run_query')
     def test_query_list_empty(self, patched_query, patched_signal):
         """Test that the query GET request works with empty results."""
-        tpt = create_transcript(user=self.user)
+        tpt = create_transcript(project=self.project)
         url = query_url(tpt.id)
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -328,12 +331,13 @@ class EndToEndAPITests(TestCase):
         )
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
+        self.project = create_project(user=self.user)
 
         with open('transcript/tests/data/transcript_short.txt', 'r') as f:
             sample_transcript = f.read()
 
         self.tct = create_transcript(
-            user=self.user,
+            project=self.project,
             transcript=sample_transcript,
             interviewee_names=['Jason'],
         )

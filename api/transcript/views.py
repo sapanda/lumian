@@ -1,7 +1,9 @@
 """
 Views for the transcript API.
 """
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import (
+    extend_schema, inline_serializer, OpenApiParameter, OpenApiTypes
+)
 from rest_framework import (
     authentication,
     parsers,
@@ -9,42 +11,71 @@ from rest_framework import (
     status,
     serializers,
     viewsets,
-    mixins
 )
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from transcript.models import (
+from .models import (
     Transcript, SynthesisType, Synthesis, Embeds, Query
 )
-from transcript.serializers import (
+from .serializers import (
     TranscriptSerializer, SynthesisSerializer, QuerySerializer
 )
-from transcript.tasks import run_openai_query, generate_synthesis
+from .tasks import run_openai_query, generate_synthesis
+from project.models import Project
 
 
-class TranscriptView(mixins.CreateModelMixin,
-                     mixins.RetrieveModelMixin,
-                     mixins.UpdateModelMixin,
-                     mixins.DestroyModelMixin,
-                     viewsets.GenericViewSet):
+class TranscriptView(viewsets.ModelViewSet):
     """View for managing Transcript APIs."""
     serializer_class = TranscriptSerializer
     queryset = Transcript.objects.all()
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
-    http_method_names = ['get', 'post', 'head', 'delete']
+    http_method_names = ['get', 'post', 'patch', 'head', 'delete']
 
     def perform_create(self, serializer):
         """Create a new transcript."""
+        project_id = self.request.data.get('project')
+        if not project_id:
+            raise serializers.ValidationError(
+                {"project": "This field is required."})
+        try:
+            project = Project.objects.get(id=project_id)
+        except Project.DoesNotExist:
+            raise serializers.ValidationError(
+                {"project": "Invalid project ID."})
+
+        if project.user != self.request.user:
+            raise serializers.ValidationError(
+                {"project": "This project does not belong to the requesting user."})
+
         serializer.save()
+
+    @extend_schema(parameters=[
+        OpenApiParameter(
+            name='project',
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.QUERY,
+            description='Filter by project ID',
+            required=False
+        )
+    ])
+    def list(self, request, *args, **kwargs):
+        """Override the list method to enable filtering by project"""
+        return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
         """Retrieve transcripts for authenticated user."""
-        queryset = self.queryset
-        return queryset.filter(
-            user=self.request.user
-        ).order_by('-id').distinct()
+        project_ids = Project.objects.filter(
+            user=self.request.user).values_list('id', flat=True)
+        qset = self.queryset.filter(
+            project__in=project_ids).order_by('-id')
+
+        project_id = self.request.query_params.get('project', None)
+        if project_id is not None:
+            qset = qset.filter(project=project_id)
+
+        return qset
 
 
 class SynthesizerView(APIView):
