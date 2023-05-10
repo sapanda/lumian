@@ -6,15 +6,12 @@ from django.urls import reverse
 
 from rest_framework.test import APIClient
 from rest_framework import status
-from unittest.mock import patch
 
 from project.models import Project
-from project.serializers import ProjectSerializer
 from project.tests.utils import (
     create_user,
     create_project,
 )
-from project.models import Project
 
 
 PROJECT_URL = reverse('project:project-list')
@@ -73,7 +70,7 @@ class PrivateAPITests(TestCase):
         self.assertEqual(res.data['title'][0],
                          'This field may not be blank.')
         self.assertTrue('questions' not in res.data,
-                         'questions param can be left blank.')
+                        'questions param can be left blank.')
 
     def test_retrieve_projects(self):
         """Test retrieving projects for current user only."""
@@ -89,7 +86,7 @@ class PrivateAPITests(TestCase):
         self.assertEqual(len(res.data), 3)
         self.assertFalse(any(item['id'] == other_project.id
                              for item in res.data),
-                             "Wrong project returned for user")
+                         "Wrong project returned for user")
 
     def test_patch_project_success(self):
         """Test updating the project metadata is successful."""

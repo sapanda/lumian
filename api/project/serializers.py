@@ -4,7 +4,6 @@ Serializers for the project API View.
 from rest_framework import serializers
 
 from .models import Project
-from transcript.models import Transcript
 
 
 class ProjectSerializer(serializers.ModelSerializer):

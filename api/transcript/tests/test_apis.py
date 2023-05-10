@@ -81,7 +81,7 @@ class MockAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         tpt = Transcript.objects.get(id=res.data['id'])
         for k, v in payload.items():
-            attr = getattr(tpt,k)
+            attr = getattr(tpt, k)
             if not isinstance(attr, Project):
                 self.assertEqual(attr, v)
         self.assertEqual(patched_signal.call_count, 1)

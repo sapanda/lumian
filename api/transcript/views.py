@@ -47,7 +47,7 @@ class TranscriptView(viewsets.ModelViewSet):
 
         if project.user != self.request.user:
             raise serializers.ValidationError(
-                {"project": "This project does not belong to the requesting user."})
+                {"project": "Project does not belong to the requesting user."})
 
         serializer.save()
 
