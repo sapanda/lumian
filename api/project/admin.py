@@ -31,7 +31,7 @@ class TranscriptInline(ReadOnlyInline):
 class ProjectAdmin(admin.ModelAdmin):
     """Admin page for the project model."""
     list_display = ['title', 'user']
-    fields = ['title', 'questions']
+    fields = ['title', 'goal', 'questions']
     form = ProjectAdminForm
 
     def get_inlines(self, request, obj=None):

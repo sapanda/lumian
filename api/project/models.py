@@ -11,6 +11,7 @@ class Project(models.Model):
         on_delete=models.CASCADE,
     )
     title = models.CharField(max_length=255)
+    goal = models.TextField(max_length=10000, blank=True)
     questions = ArrayField(models.CharField(max_length=10000),
                            default=list, blank=True, null=True)
 

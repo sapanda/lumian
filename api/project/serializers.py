@@ -11,7 +11,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['id', 'title', 'questions']
+        fields = ['id', 'title', 'goal', 'questions']
 
     def create(self, validated_data):
         """Create and return a project."""
