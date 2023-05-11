@@ -14,7 +14,7 @@ urlpatterns = [
           CreatBotView.as_view(), name='add-bot-to-meeting'),
      path('status-change',
           BotStatusChangeView.as_view(), name='webhook-bot-status-change'),
-     path('meetings/<str:user_email>/<str:meeting_app>',
+     path('meetings',
           MeetingDetailView.as_view(), name='meetings'),
      path('access-token', OAuthCallbackView.as_view(), name='access-token')
 ]

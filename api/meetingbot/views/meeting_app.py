@@ -13,8 +13,8 @@ from meetingbot.errors import (
     ZoomAPIException
 )
 
-from meetingbot.models import MeetingDetails
-from meetingbot.meeting_clients.zoom import (
+from meetingbot.models import MeetingAppDetails
+from meetingbot.external_clients.zoom import (
     ZoomOAuth,
     ZoomAPI
 )
@@ -44,12 +44,11 @@ class OAuthCallbackView(APIView):
             refresh_token = token.get('refresh_token')
             user_email = ZoomAPI(access_token).get_user().get('email')
 
-            MeetingDetails.objects.create(
-                user=user_email,
+            MeetingAppDetails.objects.create(
+                user_email=user_email,
                 access_token=access_token,
                 refresh_token=refresh_token,
-                meeting_url=None,
-                meeting_app=MeetingDetails.MeetingAppChoices.ZOOM
+                meeting_app=MeetingAppDetails.MeetingAppChoices.ZOOM
             )
 
         except Exception as e:
@@ -60,26 +59,27 @@ class OAuthCallbackView(APIView):
 
 class MeetingDetailView(APIView):
 
-    def get(self, request, meeting_app, user_email):
-
+    def get(self, request):
         try:
-            meeting_details = MeetingDetails.objects.get(
-                user=user_email,
+            user_email = request.query_params.get('user_email')
+            meeting_app = request.query_params.get('meeting_app')
+            meeting_app_details = MeetingAppDetails.objects.get(
+                user_email=user_email,
                 meeting_app=meeting_app
             )
 
             # TODO : Add check for meeting app type and initialize accordingly
             oauth = ZoomOAuth()
-            access_token = meeting_details.access_token
-            refresh_token = meeting_details.refresh_token
+            access_token = meeting_app_details.access_token
+            refresh_token = meeting_app_details.refresh_token
 
             if (oauth.is_access_token_expired(access_token)):
                 new_token = oauth.refresh_access_token(refresh_token)
                 access_token = new_token['access_token']
                 refresh_token = new_token['refresh_token']
-                meeting_details.access_token = access_token
-                meeting_details.refresh_token = refresh_token
-                meeting_details.save()
+                meeting_app_details.access_token = access_token
+                meeting_app_details.refresh_token = refresh_token
+                meeting_app_details.save()
 
             meeting_api = ZoomAPI(access_token)
             meetings = meeting_api.get_meetings().get('meetings')
@@ -87,7 +87,7 @@ class MeetingDetailView(APIView):
 
             return Response(meeting_urls)
 
-        except MeetingDetails.DoesNotExist:
+        except MeetingAppDetails.DoesNotExist:
             message = "Meeting details not found"
             status_code = HTTP_404_NOT_FOUND
         except ZoomOauthException as e:

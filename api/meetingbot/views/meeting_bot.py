@@ -14,7 +14,7 @@ from rest_framework import (
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from meetingbot.recallai_client import (
+from meetingbot.external_clients.recallai import (
     add_bot_to_meeting,
     get_meeting_transcript
 )
