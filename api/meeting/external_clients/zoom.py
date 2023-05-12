@@ -6,7 +6,7 @@ from app.settings import (
     ZOOM_REDIRECT_URL
 )
 
-from meetingbot.errors import (
+from meeting.errors import (
     ZoomOauthException,
     ZoomAPIException
 )

@@ -1,7 +1,7 @@
 from rest_framework.exceptions import APIException
 
 
-class MeetingBotException(APIException):
+class BaseException(APIException):
 
     default_code = "Meeting Bot Exception"
 
@@ -11,13 +11,13 @@ class MeetingBotException(APIException):
         super().__init__(detail=message, code=self.default_code)
 
 
-class RecallAITimeoutException(MeetingBotException):
+class RecallAITimeoutException(BaseException):
     pass
 
 
-class ZoomOauthException(MeetingBotException):
+class ZoomOauthException(BaseException):
     pass
 
 
-class ZoomAPIException(MeetingBotException):
+class ZoomAPIException(BaseException):
     pass

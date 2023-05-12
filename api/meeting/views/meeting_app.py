@@ -7,19 +7,21 @@ from rest_framework.status import (
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 
-from meetingbot.errors import (
+from meeting.errors import (
     ZoomOauthException,
     ZoomAPIException
 )
 
-from meetingbot.models import MeetingAppDetails
-from meetingbot.external_clients.zoom import (
+from meeting.models import MeetingApp
+from meeting.external_clients.zoom import (
     ZoomOAuth,
     ZoomAPI
 )
-from meetingbot.serializers import (
-    OauthCallbackSerializer
+from meeting.serializers import (
+    OauthCallbackSerializer,
+    MeetingDetailsSerializer
 )
 
 import logging
@@ -44,11 +46,11 @@ class OAuthCallbackView(APIView):
             refresh_token = token.get('refresh_token')
             user_email = ZoomAPI(access_token).get_user().get('email')
 
-            MeetingAppDetails.objects.create(
+            MeetingApp.objects.create(
                 user_email=user_email,
                 access_token=access_token,
                 refresh_token=refresh_token,
-                meeting_app=MeetingAppDetails.MeetingAppChoices.ZOOM
+                meeting_app=MeetingApp.MeetingAppChoices.ZOOM
             )
 
         except Exception as e:
@@ -59,11 +61,18 @@ class OAuthCallbackView(APIView):
 
 class MeetingDetailView(APIView):
 
+    serializer_class = MeetingDetailsSerializer
+
     def get(self, request):
         try:
-            user_email = request.query_params.get('user_email')
-            meeting_app = request.query_params.get('meeting_app')
-            meeting_app_details = MeetingAppDetails.objects.get(
+            serializer = self.serializer_class(request.query_params)
+            if (not serializer.is_valid()):
+                logger.error(f"-- Serialization Error -- {serializer.errors}")
+                raise ValidationError(serializer.errors)
+ 
+            meeting_app = serializer.validated_data['meeting_app']
+            user_email = serializer.validated_data['user_email']
+            meeting_app_details = MeetingApp.objects.get(
                 user_email=user_email,
                 meeting_app=meeting_app
             )
@@ -87,9 +96,12 @@ class MeetingDetailView(APIView):
 
             return Response(meeting_urls)
 
-        except MeetingAppDetails.DoesNotExist:
+        except MeetingApp.DoesNotExist:
             message = "Meeting details not found"
             status_code = HTTP_404_NOT_FOUND
+        except ValidationError as e:
+            message = str(e)
+            status_code = HTTP_400_BAD_REQUEST
         except ZoomOauthException as e:
             message = str(e)
             status_code = HTTP_401_UNAUTHORIZED

@@ -102,7 +102,7 @@ INSTALLED_APPS = [
     'user',
     'project',
     'transcript',
-    'meetingbot'
+    'meeting'
 ]
 
 MIDDLEWARE = [

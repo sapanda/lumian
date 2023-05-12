@@ -1,8 +1,5 @@
 from django.db import models
-from django.conf import settings
 from django.utils.translation import gettext as _
-
-from transcript.models import Transcript
 
 
 class MeetingBot(models.Model):
@@ -22,21 +19,21 @@ class MeetingBot(models.Model):
     status = models.CharField(max_length=32, choices=StatusChoices.choices)
     message = models.CharField(max_length=1024, null=True)
     transcript = models.ForeignKey(
-        Transcript,
+        "transcript.Transcript",
         on_delete=models.CASCADE,
         null=True)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+    project = models.ForeignKey(
+        "project.Project",
         on_delete=models.CASCADE)
 
 
-class MeetingAppDetails(models.Model):
+class MeetingApp(models.Model):
 
     class MeetingAppChoices(models.TextChoices):
         ZOOM = 'zoom', _('Zoom meeting app')
         # TODO : add other meeting choices
 
-    user_email = models.EmailField(max_length=1024)
+    meeting_email = models.EmailField(max_length=1024)
     access_token = models.CharField(max_length=1024)
     refresh_token = models.CharField(max_length=1024)
     meeting_app = models.CharField(
@@ -45,6 +42,6 @@ class MeetingAppDetails(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['user_email', 'meeting_app'],
+            models.UniqueConstraint(fields=['meeting_email', 'meeting_app'],
                                     name='unique_meeting_details')
         ]
