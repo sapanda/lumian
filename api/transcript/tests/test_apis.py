@@ -1,7 +1,6 @@
 """
 Tests for the creation and upload of transcripts via the API.
 """
-from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
