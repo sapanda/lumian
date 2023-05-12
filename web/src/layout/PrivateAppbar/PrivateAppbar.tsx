@@ -1,15 +1,27 @@
 import { AppBar, IconButton, Stack, Toolbar, Typography } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 const drawerWidth = 240;
 
 interface PrivateAppbarProps {
-  title: string;
+  breadcrumb?: {
+    title: string;
+    path: string;
+  };
   icon: string;
-  subtitle?: string;
+  title: string;
   children?: React.ReactNode;
 }
 
-function appBarLabel(title: string, icon: string, subtitle?: string) {
+function AppBarLabel(
+  icon: string,
+  title: string,
+  breadcrumb?: {
+    title: string;
+    path: string;
+  }
+) {
+  const navigate = useNavigate();
   return (
     <Toolbar>
       <Stack
@@ -29,14 +41,16 @@ function appBarLabel(title: string, icon: string, subtitle?: string) {
           <Typography variant="h2" noWrap component="div" sx={{ flexGrow: 1 }}>
             {title}
           </Typography>
-          {!!subtitle && (
+          {!!breadcrumb && breadcrumb.title && (
             <Typography
               variant="h6"
               noWrap
               component="div"
-              sx={{ flexGrow: 1 }}
+              fontWeight="light"
+              sx={{ flexGrow: 1, cursor: "pointer" }}
+              onClick={() => navigate(breadcrumb.path)}
             >
-              {subtitle}
+              {breadcrumb.title}
             </Typography>
           )}
         </Stack>
@@ -46,7 +60,8 @@ function appBarLabel(title: string, icon: string, subtitle?: string) {
 }
 
 export default function PrivateAppbar(props: PrivateAppbarProps) {
-  const { children, title, icon, subtitle } = props;
+  const { children, breadcrumb, icon, title } = props;
+
   return (
     <AppBar
       position="fixed"
@@ -54,7 +69,7 @@ export default function PrivateAppbar(props: PrivateAppbarProps) {
       sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}
     >
       <Stack direction="row" gap="20px">
-        <Toolbar>{appBarLabel(title, icon, subtitle)}</Toolbar>
+        <Toolbar>{AppBarLabel(icon, title, breadcrumb)}</Toolbar>
         {!!children && children}
       </Stack>
     </AppBar>

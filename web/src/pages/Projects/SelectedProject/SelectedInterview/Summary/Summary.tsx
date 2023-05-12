@@ -39,8 +39,6 @@ export default function Summary(props: SummaryType) {
           flexDirection: "column",
           gap: "8px",
           padding: "1rem",
-          height: "100%",
-          minHeight: "72.5vh",
           minWidth: "49%",
           maxWidth: "49%",
         }}
@@ -48,7 +46,13 @@ export default function Summary(props: SummaryType) {
         <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
           Summary
         </Typography>
-        <div>
+        <div
+          style={{
+            minHeight: "63vh",
+            maxHeight: "63vh",
+            overflowY: "auto",
+          }}
+        >
           {data.map((item, index) => {
             const regex = /^[a-zA-Z0-9]/;
             if (item.text[0] === " " || !regex.test(item.text[0])) {
@@ -87,39 +91,43 @@ export default function Summary(props: SummaryType) {
 
       <Paper
         sx={{
-          padding: "3.5rem 1rem 1rem 1rem",
+          padding: "1rem",
           height: "100%",
           minWidth: "49%",
           maxWidth: "49%",
           position: "relative",
+          ...(citationsCount > 0 && { paddingTop: "3.5rem" }),
         }}
       >
-        <div className="absolute top-0 right-0 p-2 m-2 bg-white rounded-md shadow-md">
-          <span className="text-primary">{`Citation ${activeCitationIndex} of ${citationsCount}`}</span>
-          <KeyboardArrowUp
-            sx={{
-              color: theme.palette.text.secondary,
-              cursor: "pointer",
-            }}
-            onClick={() => {
-              scrollToNextHighlightedText(activeCitationIndex - 2);
-            }}
-          />
-          <KeyboardArrowDown
-            sx={{
-              color: theme.palette.text.secondary,
-              cursor: "pointer",
-            }}
-            onClick={() => {
-              scrollToNextHighlightedText(activeCitationIndex);
-            }}
-          />
-        </div>
+        {citationsCount > 0 && (
+          <div className="absolute top-0 right-0 p-2 m-2 bg-white rounded-md shadow-md">
+            <span className="text-primary">{`Citation ${activeCitationIndex} of ${citationsCount}`}</span>
+            <KeyboardArrowUp
+              sx={{
+                color: theme.palette.text.secondary,
+                cursor: "pointer",
+              }}
+              onClick={() => {
+                scrollToNextHighlightedText(activeCitationIndex - 2);
+              }}
+            />
+            <KeyboardArrowDown
+              sx={{
+                color: theme.palette.text.secondary,
+                cursor: "pointer",
+              }}
+              onClick={() => {
+                scrollToNextHighlightedText(activeCitationIndex);
+              }}
+            />
+          </div>
+        )}
         <div
           ref={transcriptRef}
           dangerouslySetInnerHTML={{ __html: conversation }}
           style={{
-            height: "63vh",
+            minHeight: "63vh",
+            maxHeight: "63vh",
             overflowY: "auto",
           }}
         />

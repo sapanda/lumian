@@ -16,7 +16,10 @@ export default function InterviewsList() {
         <PrivateAppbar
           title="Projects"
           icon={projects_icon}
-          subtitle="All projects"
+          breadcrumb={{
+            title: "All projects",
+            path: "/all-projects",
+          }}
         >
           <Stack
             direction="row"

@@ -6,11 +6,26 @@ import { PrivateAppbar } from "../../../../layout";
 import useInterview from "./useInterview";
 
 export default function SelectedInterview() {
-  const { summary, interviewTranscript, concise, query, setActiveTab } =
-    useInterview();
+  const {
+    summary,
+    interviewTranscript,
+    concise,
+    query,
+    setActiveTab,
+    interviewTitle,
+  } = useInterview();
   return (
     <PrivateContainer
-      appBar={<PrivateAppbar title="Interview Title" icon={profile_icon} />}
+      appBar={
+        <PrivateAppbar
+          title={interviewTitle}
+          icon={profile_icon}
+          breadcrumb={{
+            title: "Current Project Name",
+            path: "/project/1",
+          }}
+        />
+      }
     >
       <TabNav
         tabs={[
@@ -34,7 +49,9 @@ export default function SelectedInterview() {
           },
           {
             name: "Query",
-            component: <Query data={query} />,
+            component: (
+              <Query data={query} interviewTranscript={interviewTranscript} />
+            ),
           },
         ]}
         activeTabIndex={0}

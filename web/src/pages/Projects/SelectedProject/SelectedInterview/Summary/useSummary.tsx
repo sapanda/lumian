@@ -23,21 +23,45 @@ export default function useSummary(interviewTranscipt: string) {
   const handleSummaryItemClick = useCallback(
     (ranges: [number, number][], index: number) => {
       setSelectedIndex(index);
-      setCitationsCount(ranges.length);
+
       setActiveCitationIndex(0);
       let transcript = originalTranscriptRef.current;
 
-      ranges.forEach((range, index) => {
+      // merge ranges that are adjacent and have a difference of 100 or less
+      ranges.sort((a, b) => a[0] - b[0]);
+      const mergedRanges: [number, number][] = [];
+      let currentRange = ranges[0];
+
+      for (let i = 1; i < ranges.length; i++) {
+        const nextRange = ranges[i];
+
+        if (nextRange[0] - currentRange[1] <= 100) {
+          currentRange[1] = nextRange[1];
+        } else {
+          mergedRanges.push(currentRange);
+          currentRange = nextRange;
+        }
+      }
+
+      mergedRanges.push(currentRange);
+
+      // set the citations count
+      setCitationsCount(mergedRanges.length);
+
+      console.log(ranges, mergedRanges);
+
+      mergedRanges.forEach((range, index) => {
         const [start, end] = range;
-        const selectedText = originalTranscriptRef?.current?.slice(start, end);
+        const selectedText = originalTranscriptRef?.current
+          ?.slice(start, end)
+          ?.replaceAll("\n\n", "<br/> <br/>");
 
         if (transcript && selectedText) {
           transcript = transcript
             ?.replace(
               selectedText,
               `<span style="background-color:#dbeafe;"id="highlight${index}"
-            >${selectedText}</span>
-            `
+            >${selectedText}</span>`
             )
             ?.replaceAll('"\n\n', '"<br/> <br/>');
         }

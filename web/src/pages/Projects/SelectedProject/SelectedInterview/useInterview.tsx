@@ -15,6 +15,7 @@ export default function useInterview() {
   const [summary, setSummary] = useState<summaryProps[]>([]);
   const [concise, setConcise] = useState<summaryProps[]>([]);
   const [query, setQuery] = useState<summaryProps[]>([]);
+  const [interviewTitle, setInterviewTitle] = useState<string>("");
 
   const { interviewId } = useParams();
 
@@ -36,6 +37,7 @@ export default function useInterview() {
 
     const data = await res.json();
     if (data.transcript) setInterviewTranscript(data.transcript);
+    if (data.title) setInterviewTitle(data.title);
   }, [interviewId]);
 
   const getInterviewSummary = useCallback(async () => {
@@ -95,7 +97,7 @@ export default function useInterview() {
     );
 
     const data = await res.json();
-    if (data.output) setQuery(data.output);
+    if (data) setQuery(data);
   }, [interviewId]);
 
   useEffect(() => {
@@ -108,5 +110,12 @@ export default function useInterview() {
     getInterviewTranscript();
   }, [getInterviewTranscript]);
 
-  return { interviewTranscript, summary, concise, query, setActiveTab };
+  return {
+    interviewTranscript,
+    summary,
+    concise,
+    query,
+    setActiveTab,
+    interviewTitle,
+  };
 }

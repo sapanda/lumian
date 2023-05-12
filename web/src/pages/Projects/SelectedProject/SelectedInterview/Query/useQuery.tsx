@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 
-export default function useConcise(interviewTranscipt: string) {
+export default function useQuery(interviewTranscipt: string) {
   const originalTranscriptRef = useRef<string>("");
   const transcriptRef = useRef<HTMLDivElement>(null);
 
@@ -72,7 +72,7 @@ export default function useConcise(interviewTranscipt: string) {
 
   useEffect(() => {
     originalTranscriptRef.current = interviewTranscipt;
-    const _transcript = interviewTranscipt.replaceAll('"\n\n', '"<br/> <br/>');
+    const _transcript = interviewTranscipt?.replaceAll('"\n\n', '"<br/> <br/>');
     setConversation(_transcript);
   }, [interviewTranscipt]);
 
