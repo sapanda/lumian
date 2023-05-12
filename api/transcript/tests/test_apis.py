@@ -314,7 +314,7 @@ class MockAPITests(APITestCase):
 
 @skip("OpenAI Costs: Run only when testing AI Synthesis changes")
 @patch('transcript.signals._run_generate_synthesis')
-class EndToEndAPITests(TestCase):
+class EndToEndAPITests(APITestCase):
     """Test the full API endpoints."""
 
     def setUp(self):
@@ -323,7 +323,6 @@ class EndToEndAPITests(TestCase):
             password='testpass123',
             name='Test Name',
         )
-        self.client = APIClient()
         self.client.force_authenticate(user=self.user)
         self.project = create_project(user=self.user)
 
