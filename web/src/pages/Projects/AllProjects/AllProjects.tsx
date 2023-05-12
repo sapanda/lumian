@@ -6,30 +6,8 @@ import GetStarted from "./GetStarted";
 import { PrivateAppbar } from "../../../layout";
 import { PROJECTS } from "../../../router/routes.constant";
 import { useNavigate } from "react-router-dom";
+import useProjects from "../useProjects";
 
-const allProjects = [
-  {
-    id: 1,
-    name: "Project 1",
-    date: "2022-09-01 to 2022-09-12",
-    participants: 10,
-    owner: "John Doe",
-  },
-  {
-    id: 2,
-    name: "Project 2",
-    date: "2021-11-01 to 2021-12-03",
-    participants: 8,
-    owner: "Trisha Johansson",
-  },
-  {
-    id: 3,
-    name: "Project 3",
-    date: "2021-10-01 to 2021-10-12",
-    participants: 10,
-    owner: "Tony Stark",
-  },
-];
 const columns = [
   {
     field: "name",
@@ -59,6 +37,7 @@ interface rowType {
 
 export default function AllProjects() {
   const navigate = useNavigate();
+  const { allProjects } = useProjects();
 
   function onCellClick(row: rowType) {
     const projectId = row.id;
@@ -71,13 +50,7 @@ export default function AllProjects() {
   }
   return (
     <PrivateContainer
-      appBar={
-        <PrivateAppbar
-          title="Projects"
-          icon={projects_icon}
-          subtitle="All Projects"
-        />
-      }
+      appBar={<PrivateAppbar title="Projects" icon={projects_icon} />}
     >
       {allProjects.length === 0 && <GetStarted />}
       {allProjects.length > 0 && (

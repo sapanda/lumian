@@ -1,5 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
-import { baseApiUrl, interviewEndPoints } from "../../../../api/apiEndpoints";
+import {
+  baseApiUrl,
+  interviewEndPoints,
+  projectEndpoints,
+} from "../../../../api/apiEndpoints";
 import { useParams } from "react-router-dom";
 
 interface summaryProps {
@@ -8,16 +12,26 @@ interface summaryProps {
   [key: string]: string | number | Array<Array<number>>;
 }
 
+interface answerType {
+  text: string;
+  references: [number, number][];
+}
+interface queryProps {
+  query: string;
+  output: answerType[];
+}
+
 export default function useInterview() {
   const [activeTab, setActiveTab] = useState(0);
 
   const [interviewTranscript, setInterviewTranscript] = useState<string>("");
   const [summary, setSummary] = useState<summaryProps[]>([]);
   const [concise, setConcise] = useState<summaryProps[]>([]);
-  const [query, setQuery] = useState<summaryProps[]>([]);
+  const [query, setQuery] = useState<queryProps[]>([]);
+  const [projectTitle, setProjectTitle] = useState<string>("");
   const [interviewTitle, setInterviewTitle] = useState<string>("");
 
-  const { interviewId } = useParams();
+  const { interviewId, projectId } = useParams();
 
   const getInterviewTranscript = useCallback(async () => {
     const res = await fetch(
@@ -100,6 +114,25 @@ export default function useInterview() {
     if (data) setQuery(data);
   }, [interviewId]);
 
+  const getProjectDetail = useCallback(async () => {
+    const res = await fetch(
+      baseApiUrl +
+        projectEndpoints.projectDetail.replace(":projectId", `${projectId}`),
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Token " + localStorage.getItem("token"),
+        },
+      }
+    );
+
+    const data = await res.json();
+    if (data.title) {
+      setProjectTitle(data.title);
+    }
+  }, [projectId]);
+
   useEffect(() => {
     if (activeTab === 0) getInterviewSummary();
     else if (activeTab === 1) getInterviewConcise();
@@ -110,6 +143,10 @@ export default function useInterview() {
     getInterviewTranscript();
   }, [getInterviewTranscript]);
 
+  useEffect(() => {
+    getProjectDetail();
+  }, [getProjectDetail]);
+
   return {
     interviewTranscript,
     summary,
@@ -117,5 +154,7 @@ export default function useInterview() {
     query,
     setActiveTab,
     interviewTitle,
+    projectTitle,
+    projectId,
   };
 }

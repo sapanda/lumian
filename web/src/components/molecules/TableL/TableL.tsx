@@ -69,7 +69,12 @@ export default function TableL(props: TableLProps) {
               key={row.name}
               sx={{
                 "&:last-child td, &:last-child th": { border: 0 },
+                "&:hover": {
+                  cursor: "pointer",
+                  backgroundColor: theme.palette.grey[100],
+                },
               }}
+              onClick={() => onCellClick && onCellClick(row)}
             >
               {columns.map((column, index) => (
                 <StyledTableCell
@@ -80,19 +85,6 @@ export default function TableL(props: TableLProps) {
                       ? "right"
                       : "center"
                   }
-                  sx={{
-                    ...(index === 0 && {
-                      "&:hover": {
-                        cursor: "pointer",
-                        color: theme.palette.primary.main,
-                      },
-                    }),
-                  }}
-                  {...(index === 0 && {
-                    onClick: () => {
-                      onCellClick && row && onCellClick(row);
-                    },
-                  })}
                 >
                   {row[column.field]}
                 </StyledTableCell>

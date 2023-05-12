@@ -1,4 +1,4 @@
-import { Paper, Stack, Typography } from "@mui/material";
+import { Paper, Stack } from "@mui/material";
 import theme from "../../../../../theme/theme";
 import useQuery from "./useQuery";
 import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
@@ -21,9 +21,7 @@ export default function Query(props: queryType) {
   const { data, interviewTranscript } = props;
   const {
     conversation,
-    handleSummaryItemClick,
     citationsCount,
-    selectedIndex,
     transcriptRef,
     scrollToNextHighlightedText,
     activeCitationIndex,
@@ -84,7 +82,6 @@ export default function Query(props: queryType) {
       <Paper
         sx={{
           padding: "1rem",
-          height: "100%",
           minWidth: "49%",
           maxWidth: "49%",
           position: "relative",

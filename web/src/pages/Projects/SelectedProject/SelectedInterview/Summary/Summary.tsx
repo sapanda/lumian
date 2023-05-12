@@ -92,7 +92,6 @@ export default function Summary(props: SummaryType) {
       <Paper
         sx={{
           padding: "1rem",
-          height: "100%",
           minWidth: "49%",
           maxWidth: "49%",
           position: "relative",

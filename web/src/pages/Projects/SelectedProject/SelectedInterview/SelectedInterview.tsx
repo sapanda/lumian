@@ -13,6 +13,8 @@ export default function SelectedInterview() {
     query,
     setActiveTab,
     interviewTitle,
+    projectTitle,
+    projectId,
   } = useInterview();
   return (
     <PrivateContainer
@@ -21,8 +23,8 @@ export default function SelectedInterview() {
           title={interviewTitle}
           icon={profile_icon}
           breadcrumb={{
-            title: "Current Project Name",
-            path: "/project/1",
+            title: projectTitle,
+            path: `/project/${projectId}`,
           }}
         />
       }

@@ -8,13 +8,13 @@ import { PrivateAppbar } from "../../../../layout";
 import { Button, Stack, Typography } from "@mui/material";
 
 export default function InterviewsList() {
-  const { rows, columns } = useInterviewsList();
+  const { rows, columns, projectTitle } = useInterviewsList();
 
   return (
     <PrivateContainer
       appBar={
         <PrivateAppbar
-          title="Projects"
+          title={projectTitle}
           icon={projects_icon}
           breadcrumb={{
             title: "All projects",

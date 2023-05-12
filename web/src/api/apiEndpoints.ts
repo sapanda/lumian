@@ -9,11 +9,22 @@ const userEndPoints = {
   me: "api/user/me/",
 };
 
-const interviewEndPoints = {
-  interviewTranscipt: "api/transcript/transcripts/:interviewId/",
-  interviewList: "api/transcript/transcripts/",
-  interviewSummary: "api/transcript/transcripts/:interviewId/summary/",
-  interviewConcise: "api/transcript/transcripts/:interviewId/concise/",
-  interviewQuery: "api/transcript/transcripts/:interviewId/query/",
+const projectEndpoints = {
+  projectList: "api/projects/",
+  projectDetail: "api/projects/:projectId/",
 };
-export { baseApiUrl, authEndPoints, userEndPoints, interviewEndPoints };
+
+const interviewEndPoints = {
+  interviewTranscipt: "api/transcripts/:interviewId/",
+  interviewList: "api/transcripts/?project=:projectId",
+  interviewSummary: "api/transcripts/:interviewId/summary/",
+  interviewConcise: "api/transcripts/:interviewId/concise/",
+  interviewQuery: "api/transcripts/:interviewId/query/",
+};
+export {
+  baseApiUrl,
+  authEndPoints,
+  userEndPoints,
+  interviewEndPoints,
+  projectEndpoints,
+};

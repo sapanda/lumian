@@ -98,7 +98,6 @@ export default function Concise(props: conciseType) {
       <Paper
         sx={{
           padding: "1rem",
-          height: "100%",
           minWidth: "49%",
           maxWidth: "49%",
           position: "relative",
