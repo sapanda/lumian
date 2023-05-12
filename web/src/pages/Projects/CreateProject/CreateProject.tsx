@@ -4,9 +4,13 @@ import { projects_icon } from "../../../assets/icons/svg";
 import { LabelInputCombo } from "../../../components/molecules";
 import useCreateProject from "./useCreateProject";
 import { PrivateAppbar } from "../../../layout";
+import { PROJECTS } from "../../../router/routes.constant";
+import { useNavigate } from "react-router-dom";
 
 export default function CreateProject() {
-  const { errors, handleChange, handleSave, state } = useCreateProject();
+  const { errors, handleChange, handleSave, state, projectId } =
+    useCreateProject();
+  const navigate = useNavigate();
   return (
     <PrivateContainer
       appBar={<PrivateAppbar title="Projects" icon={projects_icon} />}
@@ -26,7 +30,9 @@ export default function CreateProject() {
             gap: "16px",
           }}
         >
-          <Typography variant="h1">Create a New Project</Typography>
+          <Typography variant="h1">
+            {projectId ? "Manage Project" : "Create a New Project"}
+          </Typography>
 
           <LabelInputCombo
             label="Name"
@@ -87,6 +93,7 @@ export default function CreateProject() {
               sx={{
                 width: "100px",
               }}
+              onClick={() => navigate(PROJECTS.default)}
             >
               Cancel
             </Button>

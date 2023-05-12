@@ -1,4 +1,4 @@
-import { Stack } from "@mui/material";
+import { Button, Stack } from "@mui/material";
 import { projects_icon } from "../../../assets/icons/svg";
 import { PrivateContainer } from "../../../components/Containers";
 import { TableL } from "../../../components/molecules";
@@ -50,7 +50,27 @@ export default function AllProjects() {
   }
   return (
     <PrivateContainer
-      appBar={<PrivateAppbar title="Projects" icon={projects_icon} />}
+      appBar={
+        <PrivateAppbar title="Projects" icon={projects_icon}>
+          <Stack
+            direction="row"
+            gap="20px"
+            sx={{
+              width: "100%",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              padding: "20px 40px",
+            }}
+          >
+            <Button
+              variant="contained"
+              onClick={() => navigate(PROJECTS.CREATE_PROJECT)}
+            >
+              New Project
+            </Button>
+          </Stack>
+        </PrivateAppbar>
+      }
     >
       {allProjects.length === 0 && <GetStarted />}
       {allProjects.length > 0 && (
@@ -63,6 +83,12 @@ export default function AllProjects() {
             rows={allProjects}
             columns={columns}
             onCellClick={onCellClick}
+            onEditClick={(row) => {
+              const projectId = row.id;
+              navigate(
+                PROJECTS.MANAGE_PROJECT.replace(":projectId", `${projectId}`)
+              );
+            }}
           />
         </Stack>
       )}

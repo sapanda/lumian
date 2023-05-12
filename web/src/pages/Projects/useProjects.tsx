@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { baseApiUrl, projectEndpoints } from "../../api/apiEndpoints";
 
 interface projectType {

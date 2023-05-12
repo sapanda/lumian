@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { baseApiUrl, userEndPoints } from "../../../api/apiEndpoints";
+import { useCallback, useEffect, useState } from "react";
+import { baseApiUrl, projectEndpoints } from "../../../api/apiEndpoints";
+import { useNavigate, useParams } from "react-router-dom";
+import { PROJECTS } from "../../../router/routes.constant";
 
 const initialState = {
   projectName: "",
@@ -25,6 +27,9 @@ interface IState {
 export default function useCreateProject() {
   const [state, setState] = useState<IState>(initialState);
   const [errors, setErrors] = useState<IState>(initialErrors);
+  const navigate = useNavigate();
+
+  const { projectId } = useParams();
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
@@ -48,9 +53,7 @@ export default function useCreateProject() {
     }
 
     setErrors(errors);
-    return (
-      errors.projectName || errors.goal || errors.members || errors.questions
-    );
+    return errors.projectName || errors.goal || errors.questions;
   }
   async function handleSave() {
     if (isValidated()) {
@@ -58,13 +61,25 @@ export default function useCreateProject() {
     }
 
     const payload = {
-      name: state.projectName,
+      title: state.projectName,
       goal: state.goal,
-      questions: state.questions,
-      members: state.members,
+      questions: state.questions.split("\n").filter((q) => q.length > 0),
     };
-    const res = await fetch(baseApiUrl + userEndPoints.me, {
-      method: "PUT",
+
+    let url = baseApiUrl + projectEndpoints.projectList;
+    let method = "POST";
+    let updateType = "Added";
+
+    if (projectId) {
+      url =
+        baseApiUrl +
+        projectEndpoints.projectDetail.replace(":projectId", `${projectId}`);
+      method = "PATCH";
+      updateType = "Updated";
+    }
+
+    const res = await fetch(url, {
+      method,
       headers: {
         "Content-Type": "application/json",
         Authorization: "Token " + localStorage.getItem("token"),
@@ -74,9 +89,41 @@ export default function useCreateProject() {
 
     const data = await res.json();
     if (data) {
-      alert("Account Updated Successfully");
+      alert(`Project ${updateType} Successfully`);
+      navigate(PROJECTS.default);
     }
   }
 
-  return { state, handleChange, handleSave, errors };
+  const getProjectDetail = useCallback(async () => {
+    if (!projectId) {
+      return;
+    }
+    const res = await fetch(
+      baseApiUrl +
+        projectEndpoints.projectDetail.replace(":projectId", `${projectId}`),
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Token " + localStorage.getItem("token"),
+        },
+      }
+    );
+
+    const data = await res.json();
+    if (data) {
+      setState({
+        projectName: data.title,
+        goal: data.goal,
+        questions: data.questions.join("\n"),
+        members: "",
+      });
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    getProjectDetail();
+  }, [getProjectDetail]);
+
+  return { state, handleChange, handleSave, errors, projectId };
 }
