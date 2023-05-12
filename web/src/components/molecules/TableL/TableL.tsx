@@ -93,22 +93,22 @@ export default function TableL(props: TableLProps) {
                     onMouseLeave: () => setShowEditIndex(-1),
                   })}
                 >
-                  <div className="flex gap-2 items-center">
-                    {row[column.field]}
-                    {onEditClick &&
-                      showEditIndex === rowIndex &&
-                      index === 0 && (
-                        <img
-                          src={edit_pencil__icon}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEditClick(row);
-                          }}
-                          alt="edit"
-                          style={{ cursor: "pointer" }}
-                        />
-                      )}
-                  </div>
+                  {row[column.field]}
+                  {onEditClick && showEditIndex === rowIndex && index === 0 && (
+                    <img
+                      src={edit_pencil__icon}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditClick(row);
+                      }}
+                      alt="edit"
+                      style={{
+                        cursor: "pointer",
+                        display: "inline",
+                        marginLeft: "5px",
+                      }}
+                    />
+                  )}
                 </StyledTableCell>
               ))}
             </StyledTableRow>
