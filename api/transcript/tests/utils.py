@@ -3,6 +3,7 @@ Utility functions for testing the transcript app.
 """
 from django.contrib.auth import get_user_model
 
+from project.models import Project
 from transcript.models import (
     Transcript, SynthesisType, Synthesis, Embeds
 )
@@ -16,7 +17,20 @@ def create_user(**params):
     return get_user_model().objects.create_user(**params)
 
 
-def create_transcript(user, **params):
+def create_project(user, **params):
+    """Create and return a project."""
+    defaults = {
+        'title': 'Test Project',
+        'questions': ['What is a cow?', 'Why do birds fly?'],
+    }
+    defaults.update(params)
+
+    pjt = Project.objects.create(user=user, **defaults)
+    pjt.save()
+    return pjt
+
+
+def create_transcript(project, **params):
     """Create and return a sample transcript."""
     defaults = {
         'title': 'Test Title',
@@ -26,7 +40,7 @@ def create_transcript(user, **params):
     }
     defaults.update(params)
 
-    tct = Transcript.objects.create(user=user, **defaults)
+    tct = Transcript.objects.create(project=project, **defaults)
     tct.save()
 
     Synthesis.objects.create(
