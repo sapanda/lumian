@@ -1,6 +1,8 @@
-import { Button, Stack, TextField, Typography } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import { PublicContainer } from "../../components/Containers";
 import useLogin from "./useLogin";
+import { TextInputL } from "../../components/atoms";
+import { email_icon, lock_icon } from "../../assets/icons/svg";
 
 export default function Login() {
   const { email, password, setEmail, setPassword, handleLogin } = useLogin();
@@ -30,19 +32,36 @@ export default function Login() {
             Synthesize your expert calls to make the most of your time.
           </Typography>
           <Stack sx={{ marginTop: "32px", gap: "10px" }}>
-            <TextField
-              label="Email"
-              variant="outlined"
+            <TextInputL
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              startIcon={{
+                position: "start",
+                content: (
+                  <img
+                    src={email_icon}
+                    style={{ width: "20px", height: "20px" }}
+                  />
+                ),
+              }}
+              placeholder="Email"
             />
-            <TextField
-              type="password"
-              label="Password"
-              variant="outlined"
+            <TextInputL
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              startIcon={{
+                position: "start",
+                content: (
+                  <img
+                    src={lock_icon}
+                    style={{ width: "20px", height: "20px" }}
+                  />
+                ),
+              }}
+              type="password"
+              placeholder="Password"
             />
+
             <Button variant="contained" onClick={() => handleLogin()}>
               Continue
             </Button>
@@ -53,7 +72,7 @@ export default function Login() {
               minHeight: "70px",
             }}
           >
-            <Typography variant="body1">
+            <Typography variant="body2">
               By using MetaNext you agree to the{" "}
               <span style={{ color: "#0268C6", cursor: "pointer" }}>
                 Terms of Service

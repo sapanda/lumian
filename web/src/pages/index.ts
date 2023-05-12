@@ -1,18 +1,19 @@
-import Login from "./Login";
-import PrivacyPolicy from "./PrivacyPolicy";
-import TermsOfServices from "./TermsOfServices";
+import AccountSettings from "./AccountSettings";
 import ForgotPassword from "./ForgotPassword";
-import ResetPassword from "./ResetPassword";
+import Login from "./Login";
 import Notfound from "./NotFound";
-
+import PrivacyPolicy from "./PrivacyPolicy";
 import Projects from "./Projects";
+import ResetPassword from "./ResetPassword";
+import TermsOfServices from "./TermsOfServices";
 
 export {
-  Login,
-  PrivacyPolicy,
-  TermsOfServices,
+  AccountSettings,
   ForgotPassword,
-  ResetPassword,
+  Login,
   Notfound,
+  PrivacyPolicy,
   Projects,
+  ResetPassword,
+  TermsOfServices,
 };

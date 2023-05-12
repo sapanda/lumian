@@ -46,6 +46,18 @@ CSRF_TRUSTED_ORIGINS.extend(
     )
 )
 
+if os.environ.get('DJANGO_ALLOWED_ORIGINS'):
+    CORS_ALLOWED_ORIGINS = []
+    CORS_ALLOWED_ORIGINS.extend(
+        filter(
+            None,
+            os.environ.get('DJANGO_ALLOWED_ORIGINS', '').split(',')
+        )
+    )
+else:
+    CORS_ALLOW_ALL_ORIGINS = True
+
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -88,6 +100,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'core',
     'user',
+    'project',
     'transcript',
     'meetingbot'
 ]
@@ -122,20 +135,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'app.wsgi.application'
-
-
-# CORS Settings
-
-if os.environ.get('DJANGO_ALLOWED_ORIGINS'):
-    CORS_ALLOWED_ORIGINS = []
-    CORS_ALLOWED_ORIGINS.extend(
-        filter(
-            None,
-            os.environ.get('DJANGO_ALLOWED_ORIGINS', '').split(',')
-        )
-    )
-else:
-    CORS_ALLOW_ALL_ORIGINS = True
 
 
 # Database

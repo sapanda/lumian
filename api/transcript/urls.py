@@ -8,16 +8,16 @@ from transcript import views
 app_name = 'transcript'
 
 router = DefaultRouter()
-router.register('transcripts', views.TranscriptView)
+router.register('', views.TranscriptView)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('transcripts/<int:pk>/generate-synthesis/',
+    path('<int:pk>/generate-synthesis/',
          views.SynthesizerView.as_view(), name='generate-synthesis'),
-    path('transcripts/<int:pk>/summary/',
+    path('<int:pk>/summary/',
          views.SummaryView.as_view(), name='summary-detail'),
-    path('transcripts/<int:pk>/concise/',
+    path('<int:pk>/concise/',
          views.ConciseView.as_view(), name='concise-detail'),
-    path('transcripts/<int:pk>/query/',
+    path('<int:pk>/query/',
          views.QueryView.as_view(), name='query-detail'),
 ]

@@ -8,6 +8,20 @@ from django.utils.translation import gettext_lazy as _
 from core import models
 
 
+class ReadOnlyInline(admin.StackedInline):
+    show_change_link = True
+    extra = 0
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return True
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 class UserAdmin(BaseUserAdmin):
     """Define the admin pages for users."""
     ordering = ['id']

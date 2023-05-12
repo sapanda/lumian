@@ -1,3 +1,4 @@
+import AccountMenu from "./AccountMenu";
 import SidebarBtn from "./SidebarBtn";
 
-export { SidebarBtn };
+export { AccountMenu, SidebarBtn };

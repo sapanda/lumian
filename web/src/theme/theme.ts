@@ -44,43 +44,56 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: "Roboto, sans-serif",
+
     h1: {
       fontSize: "24px",
       fontWeight: 700,
       lineHeight: "28px",
       letterSpacing: "0.25px",
+      color: "#212121",
     },
     h2: {
       fontSize: "20px",
       fontWeight: 700,
       lineHeight: "24px",
       letterSpacing: "0.25px",
+      color: "#212121",
     },
     h3: {
       fontSize: "18px",
       fontWeight: 700,
       lineHeight: "22px",
       letterSpacing: "0.25px",
+      color: "#212121",
     },
     h4: {
       fontSize: "16px",
       fontWeight: 700,
       lineHeight: "20px",
       letterSpacing: "0.25px",
+      color: "#212121",
     },
     h5: {
       fontSize: "14px",
       fontWeight: 700,
       lineHeight: "18px",
       letterSpacing: "0.25px",
+      color: "#212121",
     },
     h6: {
       fontSize: "12px",
       fontWeight: 700,
       lineHeight: "16px",
       letterSpacing: "0.25px",
+      color: "#212121",
     },
     body1: {
+      fontSize: "14px",
+      fontWeight: 400,
+      lineHeight: "18px",
+      color: "#5B5B5B",
+    },
+    body2: {
       fontSize: "12px",
       fontWeight: 400,
       lineHeight: "16px",
