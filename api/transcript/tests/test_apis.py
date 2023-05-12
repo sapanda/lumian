@@ -3,7 +3,7 @@ Tests for the creation and upload of transcripts via the API.
 """
 from django.test import TestCase
 from django.urls import reverse
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase
 from rest_framework import status
 from unittest import skip
 from unittest.mock import patch
@@ -42,11 +42,8 @@ def query_url(transcript_id):
     return reverse('transcript:query-detail', args=[transcript_id])
 
 
-class PublicAPITests(TestCase):
+class PublicAPITests(APITestCase):
     """Test unauthenticated API requests."""
-
-    def setUp(self):
-        self.client = APIClient()
 
     def test_auth_required(self):
         """Test auth is required to call API."""
@@ -55,7 +52,7 @@ class PublicAPITests(TestCase):
 
 
 @patch('transcript.signals._run_generate_synthesis')
-class MockAPITests(TestCase):
+class MockAPITests(APITestCase):
     """Test the API with mocked synthesis service."""
 
     def setUp(self):
@@ -64,7 +61,6 @@ class MockAPITests(TestCase):
             password='testpass123',
             name='Test Name',
         )
-        self.client = APIClient()
         self.client.force_authenticate(user=self.user)
         self.project = create_project(user=self.user)
 

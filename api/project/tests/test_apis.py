@@ -4,7 +4,7 @@ Tests for project management via the API.
 from django.test import TestCase
 from django.urls import reverse
 
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase
 from rest_framework import status
 
 from project.models import Project
@@ -22,11 +22,8 @@ def detail_url(project_id):
     return reverse('project:project-detail', args=[project_id])
 
 
-class PublicAPITests(TestCase):
+class PublicAPITests(APITestCase):
     """Test unauthenticated API requests."""
-
-    def setUp(self):
-        self.client = APIClient()
 
     def test_auth_required(self):
         """Test auth is required to call API."""
@@ -34,7 +31,7 @@ class PublicAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
-class PrivateAPITests(TestCase):
+class PrivateAPITests(APITestCase):
     """Test authenticated API requests."""
 
     def setUp(self):
@@ -43,7 +40,6 @@ class PrivateAPITests(TestCase):
             password='testpass123',
             name='Test Name',
         )
-        self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
     def test_create_project_success(self):
