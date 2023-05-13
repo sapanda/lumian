@@ -12,7 +12,7 @@ class AddBotSerializer(serializers.Serializer):
 
 
 class MeetingDetailsSerializer(serializers.Serializer):
-    user_email = serializers.EmailField()
+    meeting_email = serializers.EmailField()
     meeting_app = serializers.CharField()
 
 

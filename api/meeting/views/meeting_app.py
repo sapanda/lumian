@@ -44,10 +44,10 @@ class OAuthCallbackView(APIView):
 
             access_token = token.get('access_token')
             refresh_token = token.get('refresh_token')
-            user_email = ZoomAPI(access_token).get_user().get('email')
+            meeting_email = ZoomAPI(access_token).get_user().get('email')
 
             MeetingApp.objects.create(
-                user_email=user_email,
+                meeting_email=meeting_email,
                 access_token=access_token,
                 refresh_token=refresh_token,
                 meeting_app=MeetingApp.MeetingAppChoices.ZOOM
@@ -65,15 +65,15 @@ class MeetingDetailView(APIView):
 
     def get(self, request):
         try:
-            serializer = self.serializer_class(request.query_params)
+            serializer = self.serializer_class(data=request.query_params)
             if (not serializer.is_valid()):
                 logger.error(f"-- Serialization Error -- {serializer.errors}")
                 raise ValidationError(serializer.errors)
- 
+
             meeting_app = serializer.validated_data['meeting_app']
-            user_email = serializer.validated_data['user_email']
+            meeting_email = serializer.validated_data['meeting_email']
             meeting_app_details = MeetingApp.objects.get(
-                user_email=user_email,
+                meeting_email=meeting_email,
                 meeting_app=meeting_app
             )
 

@@ -16,5 +16,6 @@ urlpatterns = [
           BotStatusChangeView.as_view(), name='webhook-bot-status-change'),
      path('meetings',
           MeetingDetailView.as_view(), name='get-meeting-details'),
-     path('access-token', OAuthCallbackView.as_view(), name='access-token')
+     path('access-token',
+          OAuthCallbackView.as_view(), name='callback-access-token')
 ]

@@ -167,6 +167,3 @@ class BotStatusChangeViewTestCase(APITestCase):
         self.bot.delete()
         self.project.delete()
         self.user.delete()
-
-
-# TODO : Transcript Synthesis error fix, transcript delete bug fix
