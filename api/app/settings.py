@@ -102,7 +102,7 @@ INSTALLED_APPS = [
     'user',
     'project',
     'transcript',
-    'meetingbot'
+    'meeting'
 ]
 
 MIDDLEWARE = [
@@ -222,6 +222,11 @@ GCLOUD_EMULATOR_SERVICE_URL = os.environ.get('GCLOUD_EMULATOR_SERVICE_URL')
 # Recall AI settings
 RECALL_API_KEY = os.environ.get("RECALL_API_KEY")
 RECALL_TRANSCRIPT_PROVIDER = os.environ.get("RECALL_TRANSCRIPT_PROVIDER")
+
+# Zoom settings
+ZOOM_CLIENT_ID = os.environ.get("ZOOM_CLIENT_ID")
+ZOOM_CLIENT_SECRET = os.environ.get("ZOOM_CLIENT_SECRET")
+ZOOM_REDIRECT_URL = os.environ.get("ZOOM_REDIRECT_URL")
 
 
 # Static files (CSS, JavaScript, Images)

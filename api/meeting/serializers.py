@@ -1,13 +1,23 @@
 from rest_framework import serializers
-from meetingbot.models import MeetingBot
+from meeting.models import MeetingBot
 
 
-class CreateBotAPISerializer(serializers.Serializer):
+class AddBotSerializer(serializers.Serializer):
+    project_id = serializers.IntegerField()
     bot_name = serializers.CharField()
     meeting_url = serializers.CharField()
 
     class Meta:
         model = MeetingBot
+
+
+class MeetingDetailsSerializer(serializers.Serializer):
+    meeting_email = serializers.EmailField()
+    meeting_app = serializers.CharField()
+
+
+class OauthCallbackSerializer(serializers.Serializer):
+    code = serializers.CharField()
 
 
 class BotStatusSerializer(serializers.Serializer):
