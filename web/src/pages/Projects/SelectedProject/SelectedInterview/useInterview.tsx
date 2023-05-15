@@ -12,22 +12,12 @@ interface summaryProps {
   [key: string]: string | number | Array<Array<number>>;
 }
 
-interface answerType {
-  text: string;
-  references: [number, number][];
-}
-interface queryProps {
-  query: string;
-  output: answerType[];
-}
-
 export default function useInterview() {
   const [activeTab, setActiveTab] = useState(0);
 
   const [interviewTranscript, setInterviewTranscript] = useState<string>("");
   const [summary, setSummary] = useState<summaryProps[]>([]);
   const [concise, setConcise] = useState<summaryProps[]>([]);
-  const [query, setQuery] = useState<queryProps[]>([]);
   const [projectTitle, setProjectTitle] = useState<string>("");
   const [interviewTitle, setInterviewTitle] = useState<string>("");
 
@@ -94,25 +84,6 @@ export default function useInterview() {
     if (data.output) setConcise(data.output);
   }, [interviewId]);
 
-  const getInterviewQuery = useCallback(async () => {
-    const res = await fetch(
-      baseApiUrl +
-        interviewEndPoints.interviewQuery.replace(
-          ":interviewId",
-          `${interviewId}`
-        ),
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Token " + localStorage.getItem("token"),
-        },
-      }
-    );
-
-    const data = await res.json();
-    if (data) setQuery(data);
-  }, [interviewId]);
 
   const getProjectDetail = useCallback(async () => {
     const res = await fetch(
@@ -136,8 +107,8 @@ export default function useInterview() {
   useEffect(() => {
     if (activeTab === 0) getInterviewSummary();
     else if (activeTab === 1) getInterviewConcise();
-    else if (activeTab === 2) getInterviewQuery();
-  }, [getInterviewSummary, getInterviewConcise, getInterviewQuery, activeTab]);
+    
+  }, [getInterviewSummary, getInterviewConcise, activeTab]);
 
   useEffect(() => {
     getInterviewTranscript();
@@ -151,7 +122,6 @@ export default function useInterview() {
     interviewTranscript,
     summary,
     concise,
-    query,
     setActiveTab,
     interviewTitle,
     projectTitle,

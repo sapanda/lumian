@@ -1,12 +1,12 @@
 import { Paper, Stack } from "@mui/material";
 import theme from "../../../../../theme/theme";
-import useQuery from "./useQuery";
+import useInterviewQuery from "./useInterviewQuery";
 import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import QuestionBox from "./QuestionBox/QuestionBox";
 import AnswerBox from "./AnswerBox/AnswerBox";
+import { QueryInput } from "../../../../../components/atoms";
 
 interface queryType {
-  data: queryProps[];
   interviewTranscript: string;
 }
 interface answerType {
@@ -18,14 +18,18 @@ interface queryProps {
   output: answerType[];
 }
 export default function Query(props: queryType) {
-  const { data, interviewTranscript } = props;
+  const { interviewTranscript } = props;
   const {
     conversation,
     citationsCount,
     transcriptRef,
     scrollToNextHighlightedText,
     activeCitationIndex,
-  } = useQuery(interviewTranscript);
+    userQueryText,
+    setUserQueryText,
+    askQuery,
+    query,
+  } = useInterviewQuery(interviewTranscript);
 
   return (
     <Stack
@@ -52,9 +56,10 @@ export default function Query(props: queryType) {
             minHeight: "63vh",
             maxHeight: "63vh",
             overflowY: "auto",
-            padding: "2rem",
             gap: "15px",
+            flex: "1",
           }}
+          className="w-full p-2"
         >
           <AnswerBox
             answer={[
@@ -64,7 +69,7 @@ export default function Query(props: queryType) {
               },
             ]}
           />
-          {data.map((item: queryProps) => {
+          {query.map((item: queryProps) => {
             return (
               <Stack
                 sx={{
@@ -76,6 +81,16 @@ export default function Query(props: queryType) {
               </Stack>
             );
           })}
+        </div>
+        <div className="w-full p-2 flex flex-col">
+          <QueryInput
+            placeholder="Enter your query"
+            onChange={(e) => {
+              setUserQueryText(e.target.value);
+            }}
+            value={userQueryText}
+            onSend={askQuery}
+          />
         </div>
       </Paper>
 
