@@ -11,8 +11,6 @@ from rest_framework import (
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from meeting.views.meeting_app import MeetingDetailView
-from meeting.views.meeting_bot import AddBotView
 from meeting.serializers import InitiateTranscriptionSerializer
 
 import logging
@@ -63,9 +61,8 @@ class InitiateTranscription(APIView):
             project_id = serializer.validated_data['project_id']
 
             meetings = self._get_meeting_list(request)
-            self._add_bot_to_meetings(request, meetings, project_id, "DEFAULT")
+            self._add_bot_to_meetings(request, meetings, project_id, "BOT")
             return Response("Bot added to the Meeting", HTTP_200_OK)
-        
+
         except Exception as e:
             return Response(str(e))
-

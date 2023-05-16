@@ -52,7 +52,7 @@ class OAuthCallbackView(APIView):
             if (not serializer.is_valid()):
                 logger.error(f"-- Serialization Error -- {serializer.errors}")
                 return Response({}, HTTP_202_ACCEPTED)
-            
+
             state = json.loads(serializer.validated_data['state'])
             user = self._get_user(state['user_id'])
 
@@ -60,7 +60,7 @@ class OAuthCallbackView(APIView):
             token = oauth.get_access_token(serializer.validated_data['code'])
             access_token = token.get('access_token')
             refresh_token = token.get('refresh_token')
-            
+
             meeting_email = ZoomAPI(access_token).get_user().get('email')
 
             MeetingApp.objects.create(

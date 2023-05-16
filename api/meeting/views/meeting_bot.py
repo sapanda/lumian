@@ -106,8 +106,8 @@ class BotStatusChangeView(APIView):
             project=meetingbot.project,
             transcript=transcript_text,
             title=f"Meeting transcript - {meetingbot.id}",
-            interviewee_names=["Ashutosh"],
-            interviewer_names=["Saswat"]
+            interviewee_names=["Unknown"],
+            interviewer_names=["Unknown"]
         )
 
     def post(self, request):

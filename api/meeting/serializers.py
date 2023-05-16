@@ -4,7 +4,7 @@ from meeting.models import MeetingBot
 
 class InitiateTranscriptionSerializer(serializers.Serializer):
     project_id = serializers.IntegerField()
-    
+
 
 class AddBotSerializer(serializers.Serializer):
     project_id = serializers.IntegerField()
