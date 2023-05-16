@@ -67,7 +67,7 @@ export default function CreateProject() {
             size="small"
             multiline
           />
-
+{/* 
           <LabelInputCombo
             label="Members"
             inputDescription="Comma-separated list of emails of people you would like to include in this project."
@@ -77,7 +77,7 @@ export default function CreateProject() {
             name="members"
             error={errors.members}
             size="small"
-          />
+          /> */}
 
           <Stack sx={{ flexDirection: "row", gap: "12px" }}>
             <Button
