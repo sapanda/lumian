@@ -1,3 +1,5 @@
+import json
+from django.contrib.auth import get_user_model
 from rest_framework.status import (
     HTTP_202_ACCEPTED,
     HTTP_400_BAD_REQUEST,
@@ -7,13 +9,18 @@ from rest_framework.status import (
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
-
+from rest_framework.exceptions import (
+    ValidationError,
+    NotFound,
+)
+from rest_framework import (
+    authentication,
+    permissions
+)
 from meeting.errors import (
     ZoomOauthException,
     ZoomAPIException
 )
-
 from meeting.models import MeetingApp
 from meeting.external_clients.zoom import (
     ZoomOAuth,
@@ -26,27 +33,38 @@ from meeting.serializers import (
 
 import logging
 logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 class OAuthCallbackView(APIView):
 
     serializer_class = OauthCallbackSerializer
 
+    def _get_user(self, user_id):
+        try:
+            return User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise NotFound(f"User Not Found with user id {user_id}")
+
     def get(self, request):
         try:
             serializer = self.serializer_class(data=request.GET)
             if (not serializer.is_valid()):
                 logger.error(f"-- Serialization Error -- {serializer.errors}")
-                return Response({}, HTTP_202_ACCEPTED
-                                )
+                return Response({}, HTTP_202_ACCEPTED)
+            
+            state = json.loads(serializer.validated_data['state'])
+            user = self._get_user(state['user_id'])
+
             oauth = ZoomOAuth()
             token = oauth.get_access_token(serializer.validated_data['code'])
-
             access_token = token.get('access_token')
             refresh_token = token.get('refresh_token')
+            
             meeting_email = ZoomAPI(access_token).get_user().get('email')
 
             MeetingApp.objects.create(
+                user=user,
                 meeting_email=meeting_email,
                 access_token=access_token,
                 refresh_token=refresh_token,
@@ -62,19 +80,13 @@ class OAuthCallbackView(APIView):
 class MeetingDetailView(APIView):
 
     serializer_class = MeetingDetailsSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         try:
-            serializer = self.serializer_class(data=request.query_params)
-            if (not serializer.is_valid()):
-                logger.error(f"-- Serialization Error -- {serializer.errors}")
-                raise ValidationError(serializer.errors)
-
-            meeting_app = serializer.validated_data['meeting_app']
-            meeting_email = serializer.validated_data['meeting_email']
             meeting_app_details = MeetingApp.objects.get(
-                meeting_email=meeting_email,
-                meeting_app=meeting_app
+                user=request.user
             )
 
             # TODO : Add check for meeting app type and initialize accordingly

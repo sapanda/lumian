@@ -8,6 +8,9 @@ from meeting.views.meeting_app import (
     OAuthCallbackView,
     MeetingDetailView
 )
+from meeting.views.meeting_transcript import (
+    InitiateTranscription
+)
 
 urlpatterns = [
      path('add-bot',
@@ -17,5 +20,7 @@ urlpatterns = [
      path('meetings',
           MeetingDetailView.as_view(), name='get-meeting-details'),
      path('access-token',
-          OAuthCallbackView.as_view(), name='callback-access-token')
+          OAuthCallbackView.as_view(), name='callback-access-token'),
+     path('initiate_transcription',
+          InitiateTranscription.as_view(), name='initiate-transcription')
 ]

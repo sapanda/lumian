@@ -31,7 +31,6 @@ from project.models import Project
 from transcript.models import Transcript
 
 import logging
-
 logger = logging.getLogger(__name__)
 
 

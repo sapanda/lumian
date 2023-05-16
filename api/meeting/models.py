@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext as _
+from django.conf import settings
 
 
 class MeetingBot(models.Model):
@@ -33,6 +34,10 @@ class MeetingApp(models.Model):
         ZOOM = 'zoom', _('Zoom meeting app')
         # TODO : add other meeting choices
 
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
     meeting_email = models.EmailField(max_length=1024)
     access_token = models.CharField(max_length=1024)
     refresh_token = models.CharField(max_length=1024)
@@ -45,3 +50,6 @@ class MeetingApp(models.Model):
             models.UniqueConstraint(fields=['meeting_email', 'meeting_app'],
                                     name='unique_meeting_details')
         ]
+
+    def __str__(self):
+        return f'{self.user.id}: {self.meeting_email}'

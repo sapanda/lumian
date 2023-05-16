@@ -102,7 +102,7 @@ class ZoomAPI:
 
     def get_meetings(self):
         logger.debug("-- Get MEETINGS --")
-        url = GET_MEETINGS_URL
+        url = f"{GET_MEETINGS_URL}?type=live"
         headers = {
             'Authorization': f'Bearer {self.access_token}',
             'Content-Type': 'application/json'
