@@ -10,6 +10,8 @@ interface LabelInputPairProps {
   placeholder: string;
   inputDescription?: string;
   type?: "text" | "password" | "email" | "number" | "tel" | "url";
+  size?: "small" | "default";
+  multiline?: boolean;
 }
 
 const LabelInputCombo = (props: LabelInputPairProps) => {
@@ -22,6 +24,8 @@ const LabelInputCombo = (props: LabelInputPairProps) => {
     error,
     inputDescription,
     type,
+    size = "default",
+    multiline = false,
   } = props;
   return (
     <Stack spacing={2}>
@@ -43,6 +47,8 @@ const LabelInputCombo = (props: LabelInputPairProps) => {
         placeholder={placeholder}
         name={name}
         type={type}
+        size={size}
+        multiline={multiline}
       />
       <FormHelperText error={!!error}>{error}</FormHelperText>
     </Stack>

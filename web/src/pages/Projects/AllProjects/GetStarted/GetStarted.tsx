@@ -1,6 +1,9 @@
 import { Button, Stack, Typography } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { PROJECTS } from "../../../../router/routes.constant";
 
 export default function GetStarted() {
+  const navigate = useNavigate();
   return (
     <Stack
       sx={{
@@ -38,7 +41,12 @@ export default function GetStarted() {
                 interviews
               </i>
             </Typography>
-            <div style={{ marginTop: "8px" }}>
+            <div
+              style={{ marginTop: "8px" }}
+              onClick={() => {
+                navigate(PROJECTS.CREATE_PROJECT);
+              }}
+            >
               <Button variant="contained">New Project</Button>
             </div>
           </Stack>
