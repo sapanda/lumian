@@ -1,5 +1,3 @@
-import { Stack } from "@mui/material";
-
 interface answerType {
   text: string;
   references: [number, number][];
@@ -7,15 +5,19 @@ interface answerType {
 
 interface AnswerBoxProps {
   answer: answerType[];
+  handleSummaryItemClick?: (
+    references: [number, number][],
+    index: number
+  ) => void;
+  selectedIndex?: number | null | undefined;
+  queryIndex?: number;
 }
 
 export default function AnswerBox(props: AnswerBoxProps) {
-  const { answer } = props;
+  const { answer, handleSummaryItemClick, selectedIndex,queryIndex } = props;
   return (
-    <Stack
-      sx={{
-        flexDirection: "row",
-        gap: "20px",
+    <div
+      style={{
         padding: "10px 15px",
         boxShadow: "0px 0px 6px rgba(0, 0, 0, 0.25)",
         borderRadius: "10px",
@@ -23,9 +25,46 @@ export default function AnswerBox(props: AnswerBoxProps) {
         height: "100%",
       }}
     >
-      {answer.map((item) => {
-        return item.text;
+      {answer.map((item, index) => {
+        const regex = /^[a-zA-Z0-9]/;
+        let selectedBgColor = "";
+
+        const answerIndex= queryIndex ? queryIndex + index : index;
+        if (selectedIndex === answerIndex && item.references.length > 0) {
+          selectedBgColor = "bg-blue-200";
+        }
+        if (item.text[0] === " " || !regex.test(item.text[0])) {
+          return (
+            <>
+              {item.text[0]}
+              <span
+                key={index}
+                className={`hover:bg-blue-100 cursor-pointer ${selectedBgColor}`}
+                onClick={() =>
+                  handleSummaryItemClick &&
+                  handleSummaryItemClick(item.references, answerIndex)
+                }
+              >
+                {item.text.slice(1)}
+              </span>
+            </>
+          );
+        }
+
+        return (
+          <span
+            key={index}
+            className={`hover:bg-blue-100 cursor-pointer ${selectedBgColor}`}
+            onClick={() =>
+              item.references.length > 0 &&
+              handleSummaryItemClick &&
+              handleSummaryItemClick(item.references, index)
+            }
+          >
+            {item.text}
+          </span>
+        );
       })}
-    </Stack>
+    </div>
   );
 }

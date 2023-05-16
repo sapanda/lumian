@@ -41,6 +41,8 @@ export default function Concise(props: conciseType) {
           height: "100%",
           minWidth: "45%",
           gap: "8px",
+          minHeight: "75vh",
+          maxHeight: "75vh",
         }}
       >
         <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
@@ -48,18 +50,17 @@ export default function Concise(props: conciseType) {
         </Typography>
         <div
           style={{
-            minHeight: "63vh",
-            maxHeight: "63vh",
             overflowY: "auto",
           }}
         >
           {data.map((item, index) => {
             const regex = /^[a-zA-Z0-9]/;
+            let selectedBgColor = "";
+            if (selectedIndex === index) {
+              selectedBgColor = "bg-blue-200";
+            }
             if (item.text[0] === " " || !regex.test(item.text[0])) {
-              let selectedBgColor = "";
-              if (selectedIndex === index) {
-                selectedBgColor = "bg-blue-200";
-              }
+         
               return (
                 <>
                   {item.text[0]}
@@ -82,7 +83,7 @@ export default function Concise(props: conciseType) {
               <>
                 <span
                   key={index}
-                  className="hover:bg-blue-100 cursor-pointer"
+                  className={`hover:bg-blue-100 cursor-pointer ${selectedBgColor}`}
                   onClick={() => handleSummaryItemClick(item.references, index)}
                 >
                   {item.text}
@@ -102,6 +103,8 @@ export default function Concise(props: conciseType) {
           maxWidth: "49%",
           position: "relative",
           ...(citationsCount > 0 && { paddingTop: "3.5rem" }),
+          minHeight: "75vh",
+          maxHeight: "75vh",
         }}
       >
         {citationsCount > 0 && (
@@ -132,8 +135,7 @@ export default function Concise(props: conciseType) {
           ref={transcriptRef}
           dangerouslySetInnerHTML={{ __html: conversation }}
           style={{
-            minHeight: "63vh",
-            maxHeight: "63vh",
+            height: "100%",
             overflowY: "auto",
           }}
         />

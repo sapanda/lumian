@@ -29,6 +29,8 @@ export default function Query(props: queryType) {
     setUserQueryText,
     askQuery,
     query,
+    handleSummaryItemClick,
+    selectedIndex,
   } = useInterviewQuery(interviewTranscript);
 
   return (
@@ -47,14 +49,14 @@ export default function Query(props: queryType) {
           height: "100%",
           minWidth: "45%",
           gap: "8px",
+          minHeight: "75vh",
+          maxHeight: "75vh",
         }}
       >
         <div
           style={{
             display: "flex",
             flexDirection: "column",
-            minHeight: "63vh",
-            maxHeight: "63vh",
             overflowY: "auto",
             gap: "15px",
             flex: "1",
@@ -69,7 +71,7 @@ export default function Query(props: queryType) {
               },
             ]}
           />
-          {query.map((item: queryProps) => {
+          {query.map((item: queryProps, index: number) => {
             return (
               <Stack
                 sx={{
@@ -77,7 +79,12 @@ export default function Query(props: queryType) {
                 }}
               >
                 <QuestionBox question={item.query} />
-                <AnswerBox answer={item.output} />
+                <AnswerBox
+                  answer={item.output}
+                  handleSummaryItemClick={handleSummaryItemClick}
+                  selectedIndex={selectedIndex}
+                  queryIndex={index}
+                />
               </Stack>
             );
           })}
@@ -101,6 +108,8 @@ export default function Query(props: queryType) {
           maxWidth: "49%",
           position: "relative",
           ...(citationsCount > 0 && { paddingTop: "3.5rem" }),
+          minHeight: "75vh",
+          maxHeight: "75vh",
         }}
       >
         {citationsCount > 0 && (
@@ -131,8 +140,7 @@ export default function Query(props: queryType) {
           ref={transcriptRef}
           dangerouslySetInnerHTML={{ __html: conversation }}
           style={{
-            minHeight: "63vh",
-            maxHeight: "63vh",
+            height: "100%",
             overflowY: "auto",
           }}
         />
