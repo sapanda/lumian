@@ -32,11 +32,12 @@ class InitiateTranscription(APIView):
             message = response.text
             logger.error(f'Request failed {status}: {message}')
             response.raise_for_status()
-        return response.json()
+        return response.json()['meeting_urls']
 
     def _add_bot_to_meetings(self, request, meetings, project_id, bot_name):
         url = reverse('add-bot-to-meeting', request=request)
         headers = {'Authorization': f'Token {self.request.auth}'}
+        response_list = []
         for meeting in meetings:
             data = {
                 'meeting_url': meeting,
@@ -45,11 +46,17 @@ class InitiateTranscription(APIView):
             }
             response = requests.post(url, headers=headers, data=data)
             if response.status_code // 100 != 2:
-                status = response.status_code
-                message = response.text
-                logger.error(f'Request failed {status}: {message}')
-                response.raise_for_status()
-            logger.debug(response.json())
+                meeting_details = {
+                    'bot_added': False,
+                    'message': response.text
+                }
+            else:
+                meeting_details = {
+                    'bot_added': True,
+                    'bot_id': response.json()['bot_id']
+                }
+            response_list.append(meeting_details)
+        return response_list
 
     def post(self, request):
 
@@ -61,8 +68,13 @@ class InitiateTranscription(APIView):
             project_id = serializer.validated_data['project_id']
 
             meetings = self._get_meeting_list(request)
-            self._add_bot_to_meetings(request, meetings, project_id, "BOT")
-            return Response("Bot added to the Meeting", HTTP_200_OK)
+            message = self._add_bot_to_meetings(
+                    request,
+                    meetings,
+                    project_id,
+                    "LumianBot"
+                )
+            return Response(message, HTTP_200_OK)
 
         except Exception as e:
             return Response(str(e))

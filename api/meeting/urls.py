@@ -24,3 +24,7 @@ urlpatterns = [
      path('initiate_transcription',
           InitiateTranscription.as_view(), name='initiate-transcription')
 ]
+
+# TODO : Add following URLS :
+# 1. Initiate authorization with custom url for zoom
+# 2. Add URL to get bot status

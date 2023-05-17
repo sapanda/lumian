@@ -106,7 +106,7 @@ class MeetingDetailView(APIView):
             meetings = meeting_api.get_meetings().get('meetings')
             meeting_urls = [meet.get('join_url') for meet in meetings]
 
-            return Response(meeting_urls)
+            return Response({"meeting_urls": meeting_urls})
 
         except MeetingApp.DoesNotExist:
             message = "Meeting details not found"
