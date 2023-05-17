@@ -23,9 +23,9 @@ export default function Login() {
             minWidth: "60%",
           }}
         >
-          <span className="text-24700">Hello Again</span>
+          <span className="text-24-700">Hello Again</span>
 
-          <span className="text-14400 text-gray-600">
+          <span className="text-14-400 text-gray-600">
             Synthesize your expert calls to make the most of your time.
           </span>
 
@@ -71,7 +71,7 @@ export default function Login() {
               minHeight: "70px",
             }}
           >
-            <p className="text-12400">
+            <p className="text-12-400">
               By using MetaNext you agree to the{" "}
               <span className="cursor-pointer text-blue-500">
                 Terms of Service
@@ -93,7 +93,7 @@ export default function Login() {
               maxWidth: "170px",
             }}
           >
-            <p className="text-16500">Some Promotion Message or Testimonial</p>
+            <p className="text-16-500">Some Promotion Message or Testimonial</p>
           </div>
         </div>
       </div>
