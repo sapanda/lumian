@@ -1,4 +1,4 @@
-import { Button, Stack, Typography } from "@mui/material";
+import { Button} from "@mui/material";
 import { PublicContainer } from "../../components/Containers";
 import useLogin from "./useLogin";
 import { TextInputL } from "../../components/atoms";
@@ -8,30 +8,28 @@ export default function Login() {
   const { email, password, setEmail, setPassword, handleLogin } = useLogin();
   return (
     <PublicContainer align="center">
-      <Stack
-        sx={{
-          flexDirection: "row",
-          boxShadow: "0px 4px 40px rgba(0, 0, 0, 0.2)",
-          borderRadius: "32px",
+      <div
+        className="flex flex-row shadow-card rounded-2xl text-left overflow-hidden"
+        style={{
           minWidth: "700px",
           minHeight: "400px",
           maxWidth: "700px",
           maxHeight: "400px",
-          textAlign: "left",
-          overflow: "hidden",
         }}
       >
-        <Stack
-          sx={{
+        <div
+          className="flex flex-col p-8"
+          style={{
             minWidth: "60%",
-            padding: "32px",
           }}
         >
-          <Typography variant="h1">Hello Again</Typography>
-          <Typography variant="body1">
+          <span className="text-24700">Hello Again</span>
+
+          <span className="text-14400 text-gray-600">
             Synthesize your expert calls to make the most of your time.
-          </Typography>
-          <Stack sx={{ marginTop: "32px", gap: "10px" }}>
+          </span>
+
+          <div className="flex flex-col mt-5 gap-3">
             <TextInputL
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -65,53 +63,40 @@ export default function Login() {
             <Button variant="contained" onClick={() => handleLogin()}>
               Continue
             </Button>
-          </Stack>
-          <Stack
-            sx={{
-              justifyContent: "center",
+          </div>
+
+          <div
+            className="flex flex-col justify-center"
+            style={{
               minHeight: "70px",
             }}
           >
-            <Typography variant="body2">
+            <p className="text-12400">
               By using MetaNext you agree to the{" "}
-              <span style={{ color: "#0268C6", cursor: "pointer" }}>
+              <span className="cursor-pointer text-blue-500">
                 Terms of Service
               </span>{" "}
               and{" "}
-              <span style={{ color: "#0268C6", cursor: "pointer" }}>
+              <span className="cursor-pointer text-blue-500">
                 Privacy Policy
               </span>
-            </Typography>
-          </Stack>
-        </Stack>
-        <Stack
-          sx={{
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "#58A0E2",
-            minWidth: "40%",
-          }}
-        >
-          <Stack
-            sx={{
-              boxShadow: "0px 4px 40px rgba(0, 0, 0, 0.1)",
-              borderRadius: "10px",
-              padding: "8px",
-              backgroundColor: "#FAFAFA",
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col justify-center items-center bg-blue-300 w-1/2">
+          <div
+            className="flex justify-center items-center bg-white rounded-2xl shadow-2xl flex-col text-center"
+            style={{
               minHeight: "160px",
               minWidth: "170px",
               maxWidth: "170px",
-              justifyContent: "center",
-              alignItems: "center",
-              textAlign: "center",
             }}
           >
-            <Typography variant="h4">
-              Some Promotion Message or Testimonial
-            </Typography>
-          </Stack>
-        </Stack>
-      </Stack>
+            <p className="text-16500">Some Promotion Message or Testimonial</p>
+          </div>
+        </div>
+      </div>
     </PublicContainer>
   );
 }
