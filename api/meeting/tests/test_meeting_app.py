@@ -31,7 +31,7 @@ class OAuthCallbackViewTest(APITestCase):
 
         params = {
             "code": "valid",
-            "state": '{"user_id": 4}'
+            "state": '{"user_id": ' + str(self.user.id) + '}'
         }
         query_string = urllib.parse.urlencode(params)
         url = f'{self.url}?{query_string}'
@@ -53,7 +53,7 @@ class OAuthCallbackViewTest(APITestCase):
 
         params = {
             "code": "invalid",
-            "state": '{"user_id": 3}'
+            "state": '{"user_id": ' + str(self.user.id) + '}'
         }
         query_string = urllib.parse.urlencode(params)
         url = f'{self.url}?{query_string}'
