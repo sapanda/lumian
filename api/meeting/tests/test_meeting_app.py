@@ -1,51 +1,62 @@
 from unittest import mock
+import urllib.parse
 from rest_framework.test import APITestCase
 from rest_framework import status
 from meeting.models import MeetingApp
 from django.urls import reverse
+from meeting.tests.utils import create_user
 
 
 class OAuthCallbackViewTest(APITestCase):
 
     def setUp(self):
         self.url = reverse('callback-access-token')
-        self.valid_code = 'valid_code'
-        self.invalid_code = 'invalid_code'
+        self.user = create_user()
+
+    def tearDown(self):
+        self.user.delete()
 
     @mock.patch('meeting.views.meeting_app.ZoomOAuth')
     @mock.patch('meeting.views.meeting_app.ZoomAPI')
     def test_valid_oauth_callback(self, mock_zoom_api, mock_zoom_oauth):
-        access_token = 'access_token'
-        refresh_token = 'refresh_token'
-        meeting_email = 'user@example.com'
-
         mock_token = {
-            'access_token': access_token,
-            'refresh_token': refresh_token
+            'access_token': 'access_token',
+            'refresh_token': 'refresh_token'
             }
         mock_user = {
-            'email': meeting_email
+            'email': 'user@example.com'
         }
         mock_zoom_oauth.return_value.get_access_token.return_value = mock_token
         mock_zoom_api.return_value.get_user.return_value = mock_user
 
-        url = f'{self.url}?code={self.valid_code}'
+        params = {
+            "code": "valid",
+            "state": '{"user_id": ' + str(self.user.id) + '}'
+        }
+        query_string = urllib.parse.urlencode(params)
+        url = f'{self.url}?{query_string}'
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         meeting_app = MeetingApp.MeetingAppChoices.ZOOM
         self.assertTrue(MeetingApp.objects.filter(
-                            meeting_email=meeting_email,
-                            access_token=access_token,
-                            refresh_token=refresh_token,
+                            user=self.user,
+                            meeting_email='user@example.com',
+                            access_token='access_token',
+                            refresh_token='refresh_token',
                             meeting_app=meeting_app).exists())
 
     @mock.patch('meeting.views.meeting_app.ZoomOAuth')
     def test_invalid_oauth_callback(self, mock_zoom_oauth):
         mock_zoom_oauth.return_value.get_access_token.side_effect = \
-                                                Exception('Invalid code')
+            Exception('Invalid code')
 
-        url = f'{self.url}?code={self.invalid_code}'
+        params = {
+            "code": "invalid",
+            "state": '{"user_id": ' + str(self.user.id) + '}'
+        }
+        query_string = urllib.parse.urlencode(params)
+        url = f'{self.url}?{query_string}'
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -55,7 +66,9 @@ class OAuthCallbackViewTest(APITestCase):
 class MeetingDetailViewTest(APITestCase):
     def setUp(self):
         self.url = reverse('get-meeting-details')
+        self.user = create_user()
         self.meeting_app = MeetingApp.objects.create(
+            user=self.user,
             access_token="access_token",
             refresh_token="refresh_token",
             meeting_app=MeetingApp.MeetingAppChoices.ZOOM,
@@ -68,32 +81,14 @@ class MeetingDetailViewTest(APITestCase):
     @mock.patch('meeting.views.meeting_app.ZoomOAuth')
     @mock.patch('meeting.views.meeting_app.ZoomAPI')
     def test_get_meeting_details(self, mock_zoom_api, mock_zoom_oauth):
+        self.client.force_authenticate(self.user)
         meetings = {'meetings': [{'join_url': self.join_url}]}
         mock_zoom_api.return_value.get_meetings.return_value = meetings
         mock_zoom_oauth.return_value.is_access_token_expired.return_value \
             = False
-        data = {
-            'meeting_app': self.meeting_app_choice,
-            'meeting_email': self.meeting_email
-        }
-        response = self.client.get(self.url, data=data)
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json(), [self.join_url])
-
-    def test_meeting_details_not_found(self):
-        data = {
-            'meeting_app': self.meeting_app_choice,
-            'meeting_email': "random@example.com"
-        }
-        response = self.client.get(self.url, data=data)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-    def test_invalid_serializer(self):
-        data = {
-            'meeting_email': self.meeting_email
-        }
-        response = self.client.get(self.url, data=data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.json()['meeting_urls'], [self.join_url])
 
     @mock.patch('meeting.views.meeting_app.ZoomOAuth')
     @mock.patch('meeting.views.meeting_app.ZoomAPI')
@@ -102,6 +97,7 @@ class MeetingDetailViewTest(APITestCase):
         mock_zoom_api,
         mock_zoom_oauth
     ):
+        self.client.force_authenticate(self.user)
         meetings = {'meetings': [{'join_url': self.join_url}]}
         mock_zoom_api.return_value.get_meetings.return_value = meetings
         mock_zoom_oauth.return_value.is_access_token_expired.return_value \
@@ -110,12 +106,9 @@ class MeetingDetailViewTest(APITestCase):
             'access_token': 'new_access_token',
             'refresh_token': 'new_refresh_token'
         }
-        data = {
-            'meeting_app': self.meeting_app_choice,
-            'meeting_email': self.meeting_email
-        }
-        response = self.client.get(self.url, data=data)
+        response = self.client.get(self.url)
         self.meeting_app.refresh_from_db()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(self.meeting_app.access_token, 'new_access_token')
         self.assertEqual(self.meeting_app.refresh_token, 'new_refresh_token')
+        self.assertEqual(response.json()['meeting_urls'], [self.join_url])

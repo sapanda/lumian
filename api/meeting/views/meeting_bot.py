@@ -31,7 +31,6 @@ from project.models import Project
 from transcript.models import Transcript
 
 import logging
-
 logger = logging.getLogger(__name__)
 
 
@@ -52,6 +51,8 @@ class AddBotView(APIView):
             meeting_url = serializer.validated_data['meeting_url']
             project_id = serializer.validated_data['project_id']
 
+            # TODO : Check if a bot is already present for that meeting
+
             bot = add_bot_to_meeting(bot_name, meeting_url)
             project = Project.objects.get(id=project_id)
             MeetingBot.objects.create(
@@ -62,7 +63,7 @@ class AddBotView(APIView):
                 project=project
             )
 
-            response_data = bot
+            response_data = {"bot_id": bot['id']}
             response_status = HTTP_201_CREATED
 
         except Project.DoesNotExist:
@@ -107,8 +108,8 @@ class BotStatusChangeView(APIView):
             project=meetingbot.project,
             transcript=transcript_text,
             title=f"Meeting transcript - {meetingbot.id}",
-            interviewee_names=["Ashutosh"],
-            interviewer_names=["Saswat"]
+            interviewee_names=["Unknown"],
+            interviewer_names=["Unknown"]
         )
 
     def post(self, request):

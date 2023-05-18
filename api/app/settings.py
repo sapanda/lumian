@@ -76,7 +76,7 @@ LOGGING = {
             "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
             "propagate": False,
         },
-        "meetingbot": {
+        "meeting": {
             "handlers": ["console"],
             "level": "DEBUG",
             "propagate": False,
