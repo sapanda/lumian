@@ -2,10 +2,6 @@ from rest_framework import serializers
 from meeting.models import MeetingBot
 
 
-class InitiateOAuthSerializer(serializers.Serializer):
-    pass
-
-
 class OauthCallbackSerializer(serializers.Serializer):
     code = serializers.CharField()
     state = serializers.CharField()
@@ -37,7 +33,15 @@ class BotStatusChangeSerializer(serializers.Serializer):
 
 
 class MeetingDetailsSerializer(serializers.Serializer):
-    pass
+
+    def validate(self, attrs):
+        """
+        Verify that the incoming request belongs to the current user.
+        """
+        request = self.context.get('request')
+        if request.user != attrs.get('user'):
+            raise serializers.ValidationError("Invalid user.")
+        return attrs
 
 
 class InitiateTranscriptionSerializer(serializers.Serializer):

@@ -26,28 +26,11 @@ from meeting.external_clients.zoom import (
 from meeting.serializers import (
     OauthCallbackSerializer,
     MeetingDetailsSerializer,
-    InitiateOAuthSerializer
-
 )
 
 import logging
 logger = logging.getLogger(__name__)
 User = get_user_model()
-
-
-class OAuthView(APIView):
-
-    serializer_class = InitiateOAuthSerializer
-
-    def get(self, request):
-        try:
-            zoom_api.initiate_authorisation(request.user.id)
-            return Response('User Authorized')
-        except ZoomException as e:
-            logger.error(f"---Exception -- {str(e)")
-            return Response(str(e), HTTP_401_UNAUTHORIZED)
-        except Exception as e:
-            return Response(str(e), HTTP_400_BAD_REQUEST)
 
 
 class OAuthCallbackView(APIView):
