@@ -5,6 +5,7 @@ from meeting.views.meeting_bot import (
     BotStatusChangeView
 )
 from meeting.views.meeting_app import (
+    OAuthView,
     OAuthCallbackView,
     MeetingDetailView
 )
@@ -19,9 +20,11 @@ urlpatterns = [
           BotStatusChangeView.as_view(), name='webhook-bot-status-change'),
      path('meetings',
           MeetingDetailView.as_view(), name='get-meeting-details'),
+     path('initiate-oauth',
+          OAuthView.as_view(), name='initiate-oauth'),
      path('access-token',
           OAuthCallbackView.as_view(), name='callback-access-token'),
-     path('initiate_transcription',
+     path('initiate-transcription',
           InitiateTranscription.as_view(), name='initiate-transcription')
 ]
 
