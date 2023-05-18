@@ -1,10 +1,6 @@
 import requests
-from django.shortcuts import redirect
-from urllib.parse import urlencode
-
 
 from app.settings import (
-    ZOOM_CLIENT_ID,
     ZOOM_SECRETS_BASE64,
     ZOOM_REDIRECT_URL
 )
