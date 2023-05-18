@@ -58,7 +58,6 @@ class OAuthCallbackView(APIView):
                 )
             access_token = token.get('access_token')
             refresh_token = token.get('refresh_token')
-
             meeting_email = zoom_api.get_user(access_token).get('email')
 
             MeetingApp.objects.create(

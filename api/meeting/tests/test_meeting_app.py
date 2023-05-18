@@ -16,9 +16,8 @@ class OAuthCallbackViewTest(APITestCase):
     def tearDown(self):
         self.user.delete()
 
-    @mock.patch('meeting.views.meeting_app.ZoomOAuth')
-    @mock.patch('meeting.views.meeting_app.ZoomAPI')
-    def test_valid_oauth_callback(self, mock_zoom_api, mock_zoom_oauth):
+    @mock.patch('meeting.views.meeting_app.zoom_api')
+    def test_valid_oauth_callback(self, mock_zoom_api):
         mock_token = {
             'access_token': 'access_token',
             'refresh_token': 'refresh_token'
@@ -26,8 +25,8 @@ class OAuthCallbackViewTest(APITestCase):
         mock_user = {
             'email': 'user@example.com'
         }
-        mock_zoom_oauth.return_value.get_access_token.return_value = mock_token
-        mock_zoom_api.return_value.get_user.return_value = mock_user
+        mock_zoom_api.get_access_token.return_value = mock_token
+        mock_zoom_api.get_user.return_value = mock_user
 
         params = {
             "code": "valid",
@@ -46,9 +45,9 @@ class OAuthCallbackViewTest(APITestCase):
                             refresh_token='refresh_token',
                             meeting_app=meeting_app).exists())
 
-    @mock.patch('meeting.views.meeting_app.ZoomOAuth')
-    def test_invalid_oauth_callback(self, mock_zoom_oauth):
-        mock_zoom_oauth.return_value.get_access_token.side_effect = \
+    @mock.patch('meeting.views.meeting_app.zoom_api')
+    def test_invalid_oauth_callback(self, mock_zoom_api):
+        mock_zoom_api.get_access_token.side_effect = \
             Exception('Invalid code')
 
         params = {
@@ -78,31 +77,27 @@ class MeetingDetailViewTest(APITestCase):
         self.meeting_app_choice = MeetingApp.MeetingAppChoices.ZOOM
         self.meeting_email = 'test@example.com'
 
-    @mock.patch('meeting.views.meeting_app.ZoomOAuth')
-    @mock.patch('meeting.views.meeting_app.ZoomAPI')
-    def test_get_meeting_details(self, mock_zoom_api, mock_zoom_oauth):
+    @mock.patch('meeting.views.meeting_app.zoom_api')
+    def test_get_meeting_details(self, mock_zoom_api):
         self.client.force_authenticate(self.user)
         meetings = {'meetings': [{'join_url': self.join_url}]}
-        mock_zoom_api.return_value.get_meetings.return_value = meetings
-        mock_zoom_oauth.return_value.is_access_token_expired.return_value \
-            = False
+        mock_zoom_api.get_meetings.return_value = meetings
+        mock_zoom_api.is_access_token_expired.return_value = False
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['meeting_urls'], [self.join_url])
 
-    @mock.patch('meeting.views.meeting_app.ZoomOAuth')
-    @mock.patch('meeting.views.meeting_app.ZoomAPI')
+    @mock.patch('meeting.views.meeting_app.zoom_api')
     def test_access_token_expired(
         self,
         mock_zoom_api,
-        mock_zoom_oauth
     ):
         self.client.force_authenticate(self.user)
         meetings = {'meetings': [{'join_url': self.join_url}]}
-        mock_zoom_api.return_value.get_meetings.return_value = meetings
-        mock_zoom_oauth.return_value.is_access_token_expired.return_value \
+        mock_zoom_api.get_meetings.return_value = meetings
+        mock_zoom_api.is_access_token_expired.return_value \
             = True
-        mock_zoom_oauth.return_value.refresh_access_token.return_value = {
+        mock_zoom_api.refresh_access_token.return_value = {
             'access_token': 'new_access_token',
             'refresh_token': 'new_refresh_token'
         }
