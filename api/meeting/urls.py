@@ -28,9 +28,5 @@ urlpatterns = [
      path('initiate-transcription',
           InitiateTranscription.as_view(), name='initiate-transcription'),
      path('oauth-url',
-          OAuthView.as_view(), name='oauth-url')
+          OAuthView.as_view(), name='get-oauth-url')
 ]
-
-# TODO : Add following URLS :
-# 1. Initiate authorization with custom url for zoom
-# 2. Add URL to get bot status

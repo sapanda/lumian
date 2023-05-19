@@ -1,10 +1,14 @@
 from unittest import mock
 import urllib.parse
+from meeting.errors import ZoomException
 from rest_framework.test import APITestCase
 from rest_framework import status
 from meeting.models import MeetingApp
 from django.urls import reverse
 from meeting.tests.utils import create_user
+from rest_framework.status import (
+    HTTP_401_UNAUTHORIZED
+)
 
 
 class OAuthCallbackViewTest(APITestCase):
@@ -107,3 +111,34 @@ class MeetingDetailViewTest(APITestCase):
         self.assertEqual(self.meeting_app.access_token, 'new_access_token')
         self.assertEqual(self.meeting_app.refresh_token, 'new_refresh_token')
         self.assertEqual(response.json(), [self.join_url])
+
+
+class OAuthViewTest(APITestCase):
+
+    def setUp(self):
+        self.url = reverse('get-oauth-url')
+        self.user = create_user()
+
+    def tearDown(self):
+        self.user.delete()
+
+    @mock.patch('meeting.views.meeting_app.zoom_api.get_oauth_url')
+    def test_get_oauth_url(self, mock_get_oauth_url):
+        mock_get_oauth_url.return_value = 'https://example.com'
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, 'https://example.com')
+
+    @mock.patch('meeting.views.meeting_app.zoom_api.get_oauth_url')
+    def test_zoom_exception_handling(self, mock_get_oauth_url):
+        mock_get_oauth_url.side_effect = ZoomException(
+                'Zoom API exception',
+                HTTP_401_UNAUTHORIZED
+            )
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data, 'Zoom API exception')

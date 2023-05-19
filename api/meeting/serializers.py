@@ -2,6 +2,10 @@ from rest_framework import serializers
 from meeting.models import MeetingBot
 
 
+class OAuthSerializer(serializers.Serializer):
+    pass
+
+
 class OauthCallbackSerializer(serializers.Serializer):
     code = serializers.CharField()
     state = serializers.CharField()
@@ -42,10 +46,6 @@ class MeetingDetailsSerializer(serializers.Serializer):
 
 class InitiateTranscriptionSerializer(serializers.Serializer):
     project_id = serializers.IntegerField()
-
-
-class OAuthSerializer(serializers.Serializer):
-    pass
 
 
 # TODO : Cleanup Nested serialization
