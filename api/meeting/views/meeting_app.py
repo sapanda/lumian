@@ -1,10 +1,10 @@
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 import json
 from django.contrib.auth import get_user_model
 from rest_framework.status import (
     HTTP_202_ACCEPTED,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
-    HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
 )
 from rest_framework.views import APIView
@@ -18,22 +18,38 @@ from rest_framework import (
     permissions
 )
 from meeting.errors import (
-    ZoomOauthException,
-    ZoomAPIException
+    ZoomException
 )
 from meeting.models import MeetingApp
 from meeting.external_clients.zoom import (
-    ZoomOAuth,
-    ZoomAPI
+    zoom_api
 )
 from meeting.serializers import (
+    OAuthSerializer,
     OauthCallbackSerializer,
-    MeetingDetailsSerializer
+    MeetingDetailsSerializer,
 )
 
 import logging
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+
+class OAuthView(APIView):
+    serializer_class = OAuthSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+
+        try:
+            url = zoom_api.get_oauth_url(request.user.id)
+            return Response(url)
+        except ZoomException as e:
+            logger.error(f"---Exception -- {str(e)}")
+            return Response(str(e), HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            return Response(str(e), HTTP_400_BAD_REQUEST)
 
 
 class OAuthCallbackView(APIView):
@@ -46,9 +62,23 @@ class OAuthCallbackView(APIView):
         except User.DoesNotExist:
             raise NotFound(f"User Not Found with user id {user_id}")
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='code',
+                description='Authorisation code',
+                required=True,
+                type=str),
+            OpenApiParameter(
+                name='state',
+                description='State consisting user id',
+                required=True,
+                type=str),
+        ]
+    )
     def get(self, request):
         try:
-            serializer = self.serializer_class(data=request.GET)
+            serializer = self.serializer_class(data=request.query_params)
             if (not serializer.is_valid()):
                 logger.error(f"-- Serialization Error -- {serializer.errors}")
                 return Response({}, HTTP_202_ACCEPTED)
@@ -56,12 +86,12 @@ class OAuthCallbackView(APIView):
             state = json.loads(serializer.validated_data['state'])
             user = self._get_user(state['user_id'])
 
-            oauth = ZoomOAuth()
-            token = oauth.get_access_token(serializer.validated_data['code'])
+            token = zoom_api.get_access_token(
+                    serializer.validated_data['code']
+                )
             access_token = token.get('access_token')
             refresh_token = token.get('refresh_token')
-
-            meeting_email = ZoomAPI(access_token).get_user().get('email')
+            meeting_email = zoom_api.get_user(access_token).get('email')
 
             MeetingApp.objects.create(
                 user=user,
@@ -88,25 +118,22 @@ class MeetingDetailView(APIView):
             meeting_app_details = MeetingApp.objects.get(
                 user=request.user
             )
-
             # TODO : Add check for meeting app type and initialize accordingly
-            oauth = ZoomOAuth()
             access_token = meeting_app_details.access_token
             refresh_token = meeting_app_details.refresh_token
 
-            if (oauth.is_access_token_expired(access_token)):
-                new_token = oauth.refresh_access_token(refresh_token)
+            if (zoom_api.is_access_token_expired(access_token)):
+                new_token = zoom_api.refresh_access_token(refresh_token)
                 access_token = new_token['access_token']
                 refresh_token = new_token['refresh_token']
                 meeting_app_details.access_token = access_token
                 meeting_app_details.refresh_token = refresh_token
                 meeting_app_details.save()
 
-            meeting_api = ZoomAPI(access_token)
-            meetings = meeting_api.get_meetings().get('meetings')
+            meetings = zoom_api.get_meetings(access_token).get('meetings')
             meeting_urls = [meet.get('join_url') for meet in meetings]
 
-            return Response({"meeting_urls": meeting_urls})
+            return Response(meeting_urls)
 
         except MeetingApp.DoesNotExist:
             message = "Meeting details not found"
@@ -114,12 +141,9 @@ class MeetingDetailView(APIView):
         except ValidationError as e:
             message = str(e)
             status_code = HTTP_400_BAD_REQUEST
-        except ZoomOauthException as e:
+        except ZoomException as e:
             message = str(e)
             status_code = HTTP_401_UNAUTHORIZED
-        except ZoomAPIException as e:
-            message = str(e)
-            status_code = HTTP_403_FORBIDDEN
         except Exception as e:
             message = f" Error occurred: {str(e)}"
             status_code = HTTP_400_BAD_REQUEST

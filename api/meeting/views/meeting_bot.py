@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.db import IntegrityError
 from rest_framework.status import (
     HTTP_201_CREATED,
@@ -21,7 +22,8 @@ from meeting.external_clients.recallai import (
 )
 from meeting.serializers import (
     AddBotSerializer,
-    BotStatusChangeSerializer
+    BotStatusChangeSerializer,
+    GetBotStatusSerializer
 )
 from meeting.utils import generate_transcript_text
 from meeting.models import MeetingBot
@@ -63,7 +65,7 @@ class AddBotView(APIView):
                 project=project
             )
 
-            response_data = {"bot_id": bot['id']}
+            response_data = bot['id']
             response_status = HTTP_201_CREATED
 
         except Project.DoesNotExist:
@@ -137,3 +139,36 @@ class BotStatusChangeView(APIView):
             logger.error(f"-- Exception -- {str(e)}")
 
         return Response({}, HTTP_202_ACCEPTED)
+
+
+class GetBotStatusView(APIView):
+
+    serializer_class = GetBotStatusSerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='bot_id',
+                description='bot id for the bot in the meeting',
+                required=True,
+                type=str),
+        ]
+    )
+    def get(self, request):
+
+        try:
+            serializer = self.serializer_class(data=request.query_params)
+            if not serializer.is_valid():
+                logger.error(f"-- Serialization Error -- {serializer.errors}")
+                return Response(serializer.errors, HTTP_400_BAD_REQUEST)
+            bot_id = serializer.validated_data['bot_id']
+            bot = MeetingBot.objects.get(id=bot_id)
+            return Response(bot.status)
+        except MeetingBot.DoesNotExist:
+            response_data = {"error": "Bot does not exist"}
+            response_status = HTTP_404_NOT_FOUND
+        except Exception as e:
+            response_data = str(e)
+            response_status = HTTP_400_BAD_REQUEST
+
+        return Response(response_data, response_status)

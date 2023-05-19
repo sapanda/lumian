@@ -15,9 +15,5 @@ class RecallAITimeoutException(BaseException):
     pass
 
 
-class ZoomOauthException(BaseException):
-    pass
-
-
-class ZoomAPIException(BaseException):
+class ZoomException(BaseException):
     pass

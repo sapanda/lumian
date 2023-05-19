@@ -2,8 +2,13 @@ from rest_framework import serializers
 from meeting.models import MeetingBot
 
 
-class InitiateTranscriptionSerializer(serializers.Serializer):
-    project_id = serializers.IntegerField()
+class OAuthSerializer(serializers.Serializer):
+    pass
+
+
+class OauthCallbackSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    state = serializers.CharField()
 
 
 class AddBotSerializer(serializers.Serializer):
@@ -13,23 +18,6 @@ class AddBotSerializer(serializers.Serializer):
 
     class Meta:
         model = MeetingBot
-
-
-class MeetingDetailsSerializer(serializers.Serializer):
-
-    def validate(self, attrs):
-        """
-        Verify that the incoming request belongs to the current user.
-        """
-        request = self.context.get('request')
-        if request.user != attrs.get('user'):
-            raise serializers.ValidationError("Invalid user.")
-        return attrs
-
-
-class OauthCallbackSerializer(serializers.Serializer):
-    code = serializers.CharField()
-    state = serializers.CharField()
 
 
 class BotStatusSerializer(serializers.Serializer):
@@ -48,10 +36,16 @@ class BotStatusChangeSerializer(serializers.Serializer):
     event = serializers.CharField()
 
 
-class MeetingBotSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MeetingBot
-        fields = ['id', 'status', 'transcript', 'message']
+class GetBotStatusSerializer(serializers.Serializer):
+    bot_id = serializers.CharField()
+
+
+class MeetingDetailsSerializer(serializers.Serializer):
+    pass
+
+
+class InitiateTranscriptionSerializer(serializers.Serializer):
+    project_id = serializers.IntegerField()
 
 
 # TODO : Cleanup Nested serialization

@@ -167,3 +167,31 @@ class BotStatusChangeViewTestCase(APITestCase):
         self.bot.delete()
         self.project.delete()
         self.user.delete()
+
+
+class GetBotStatusViewTest(APITestCase):
+
+    def setUp(self):
+        self.url = reverse('get-bot-status')
+        self.user = create_user()
+        self.project = create_project(self.user)
+        self.bot = create_bot(self.project)
+
+    def tearDown(self):
+        self.bot.delete()
+        self.project.delete()
+        self.user.delete()
+
+    def test_valid_get_request(self):
+        bot_id = self.bot.id
+        response = self.client.get(f"{self.url}?bot_id={bot_id}")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, self.bot.status)
+
+    def test_invalid_bot_id(self):
+        invalid_bot_id = 'invalid_bot_id'
+        response = self.client.get(f"{self.url}?bot_id={invalid_bot_id}")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'error': 'Bot does not exist'})
