@@ -1,8 +1,9 @@
 import requests
-
+from urllib.parse import urlencode
 from app.settings import (
     ZOOM_SECRETS_BASE64,
-    ZOOM_REDIRECT_URL
+    ZOOM_REDIRECT_URL,
+    ZOOM_CLIENT_ID
 )
 
 from meeting.errors import (
@@ -48,6 +49,21 @@ class ZoomAPI:
             error_msg = f"An error occurred: {e}"
             status_code = None
             raise ZoomException(error_msg, status_code)
+
+    def get_oauth_url(self, user_id):
+
+        try:
+            params = {
+                "response_type": "code",
+                "client_id": ZOOM_CLIENT_ID,
+                "redirect_uri": ZOOM_REDIRECT_URL,
+                "state": f'{{"user_id": {user_id}}}'
+            }
+
+            authorization_url = f"{AUTHORISATION_URL}?{urlencode(params)}"
+            return authorization_url
+        except Exception as e:
+            raise ZoomException(str(e))
 
     def get_access_token(self, code):
         logger.debug("-- GET ACCESS TOKEN --")

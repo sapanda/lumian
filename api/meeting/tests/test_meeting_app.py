@@ -85,7 +85,7 @@ class MeetingDetailViewTest(APITestCase):
         mock_zoom_api.is_access_token_expired.return_value = False
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()['meeting_urls'], [self.join_url])
+        self.assertEqual(response.json(), [self.join_url])
 
     @mock.patch('meeting.views.meeting_app.zoom_api')
     def test_access_token_expired(
@@ -106,4 +106,4 @@ class MeetingDetailViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(self.meeting_app.access_token, 'new_access_token')
         self.assertEqual(self.meeting_app.refresh_token, 'new_refresh_token')
-        self.assertEqual(response.json()['meeting_urls'], [self.join_url])
+        self.assertEqual(response.json(), [self.join_url])

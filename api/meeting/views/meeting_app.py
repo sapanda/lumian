@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 import json
 from django.contrib.auth import get_user_model
 from rest_framework.status import (
@@ -24,6 +25,7 @@ from meeting.external_clients.zoom import (
     zoom_api
 )
 from meeting.serializers import (
+    OAuthSerializer,
     OauthCallbackSerializer,
     MeetingDetailsSerializer,
 )
@@ -31,6 +33,23 @@ from meeting.serializers import (
 import logging
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+
+class OAuthView(APIView):
+    serializer_class = OAuthSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+
+        try:
+            url = zoom_api.get_oauth_url(request.user.id)
+            return Response(url)
+        except ZoomException as e:
+            logger.error(f"---Exception -- {str(e)}")
+            return Response(str(e), HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            return Response(str(e), HTTP_400_BAD_REQUEST)
 
 
 class OAuthCallbackView(APIView):
@@ -43,9 +62,23 @@ class OAuthCallbackView(APIView):
         except User.DoesNotExist:
             raise NotFound(f"User Not Found with user id {user_id}")
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='code',
+                description='Authorisation code',
+                required=True,
+                type=str),
+            OpenApiParameter(
+                name='state',
+                description='State consisting user id',
+                required=True,
+                type=str),
+        ]
+    )
     def get(self, request):
         try:
-            serializer = self.serializer_class(data=request.GET)
+            serializer = self.serializer_class(data=request.query_params)
             if (not serializer.is_valid()):
                 logger.error(f"-- Serialization Error -- {serializer.errors}")
                 return Response({}, HTTP_202_ACCEPTED)
@@ -100,7 +133,7 @@ class MeetingDetailView(APIView):
             meetings = zoom_api.get_meetings(access_token).get('meetings')
             meeting_urls = [meet.get('join_url') for meet in meetings]
 
-            return Response({"meeting_urls": meeting_urls})
+            return Response(meeting_urls)
 
         except MeetingApp.DoesNotExist:
             message = "Meeting details not found"

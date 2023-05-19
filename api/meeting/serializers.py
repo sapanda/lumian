@@ -32,20 +32,20 @@ class BotStatusChangeSerializer(serializers.Serializer):
     event = serializers.CharField()
 
 
-class MeetingDetailsSerializer(serializers.Serializer):
+class GetBotStatusSerializer(serializers.Serializer):
+    bot_id = serializers.CharField()
 
-    def validate(self, attrs):
-        """
-        Verify that the incoming request belongs to the current user.
-        """
-        request = self.context.get('request')
-        if request.user != attrs.get('user'):
-            raise serializers.ValidationError("Invalid user.")
-        return attrs
+
+class MeetingDetailsSerializer(serializers.Serializer):
+    pass
 
 
 class InitiateTranscriptionSerializer(serializers.Serializer):
     project_id = serializers.IntegerField()
+
+
+class OAuthSerializer(serializers.Serializer):
+    pass
 
 
 # TODO : Cleanup Nested serialization
