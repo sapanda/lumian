@@ -22,9 +22,7 @@ class ZoomAPI:
 
     def _get_response(self, url, headers, params=None):
         try:
-            logger.info('Request came')
             response = requests.get(url, headers=headers, params=params)
-            logger.info(response.text)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as e:
@@ -51,7 +49,7 @@ class ZoomAPI:
             raise ZoomException(error_msg, status_code)
 
     def get_oauth_url(self, user_id):
-
+        logger.debug("-- GET AUTH URL --")
         try:
             params = {
                 "response_type": "code",
@@ -113,7 +111,7 @@ class ZoomAPI:
         return self._get_response(url, headers)
 
     def get_meetings(self, access_token):
-        logger.debug("-- Get MEETINGS --")
+        logger.debug("-- GET MEETINGS --")
         url = f"{GET_MEETINGS_URL}?type=live"
         headers = {
             'Authorization': f'Bearer {access_token}',
