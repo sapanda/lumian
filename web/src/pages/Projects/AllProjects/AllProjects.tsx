@@ -52,33 +52,20 @@ export default function AllProjects() {
     <PrivateContainer
       appBar={
         <PrivateAppbar title="Projects" icon={projects_icon}>
-          <Stack
-            direction="row"
-            gap="20px"
-            sx={{
-              width: "100%",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              padding: "20px 40px",
-            }}
-          >
+          <div className="flex items-center justify-end w-full gap-5 px-10 py-5">
             <Button
               variant="contained"
               onClick={() => navigate(PROJECTS.CREATE_PROJECT)}
             >
               New Project
             </Button>
-          </Stack>
+          </div>
         </PrivateAppbar>
       }
     >
       {allProjects.length === 0 && <GetStarted />}
       {allProjects.length > 0 && (
-        <Stack
-          sx={{
-            padding: "40px 132px",
-          }}
-        >
+        <div className="flex flex-col py-10 px-[132px]">
           <TableL
             rows={allProjects}
             columns={columns}
@@ -90,7 +77,7 @@ export default function AllProjects() {
               );
             }}
           />
-        </Stack>
+        </div>
       )}
     </PrivateContainer>
   );
