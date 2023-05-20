@@ -15,21 +15,8 @@ export default function CreateProject() {
     <PrivateContainer
       appBar={<PrivateAppbar title="Projects" icon={projects_icon} />}
     >
-      <Stack
-        sx={{
-          width: "100%",
-          justifyContent: "center",
-          alignItems: "center",
-          marginTop: "5%",
-        }}
-      >
-        <Stack
-          sx={{
-            minWidth: "600px",
-            maxWidth: "600px",
-            gap: "16px",
-          }}
-        >
+      <div className="flex flex-col w-full items-center justify-center mt-[5%]">
+        <div className="flex flex-col min-w-[600px] max-w-[600px] gap-4">
           <Typography variant="h1">
             {projectId ? "Manage Project" : "Create a New Project"}
           </Typography>
@@ -67,17 +54,6 @@ export default function CreateProject() {
             size="small"
             multiline
           />
-{/* 
-          <LabelInputCombo
-            label="Members"
-            inputDescription="Comma-separated list of emails of people you would like to include in this project."
-            onChange={handleChange}
-            value={state.members}
-            placeholder="example1@corp.com,example2@corp.com"
-            name="members"
-            error={errors.members}
-            size="small"
-          /> */}
 
           <Stack sx={{ flexDirection: "row", gap: "12px" }}>
             <Button
@@ -99,8 +75,8 @@ export default function CreateProject() {
               Cancel
             </Button>
           </Stack>
-        </Stack>
-      </Stack>
+        </div>
+      </div>
     </PrivateContainer>
   );
 }

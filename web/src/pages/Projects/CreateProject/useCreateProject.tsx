@@ -7,21 +7,18 @@ const initialState = {
   projectName: "",
   goal: "",
   questions: "",
-  members: "",
 };
 
 const initialErrors = {
   projectName: "",
   goal: "",
   questions: "",
-  members: "",
 };
 
 interface IState {
   projectName: string;
   goal: string;
   questions: string;
-  members: string;
 }
 
 export default function useCreateProject() {
@@ -45,9 +42,7 @@ export default function useCreateProject() {
     if (!state.goal) {
       errors.goal = "Goal is required";
     }
-    if (!state.members) {
-      errors.members = "Members are required";
-    }
+
     if (!state.questions) {
       errors.questions = "Questions are required";
     }
@@ -116,7 +111,6 @@ export default function useCreateProject() {
         projectName: data.title,
         goal: data.goal,
         questions: data.questions.join("\n"),
-        members: "",
       });
     }
   }, [projectId]);
