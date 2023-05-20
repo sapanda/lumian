@@ -1,4 +1,4 @@
-import { Button} from "@mui/material";
+import { Button } from "@mui/material";
 import { PublicContainer } from "../../components/Containers";
 import useLogin from "./useLogin";
 import { TextInputL } from "../../components/atoms";
@@ -8,39 +8,21 @@ export default function Login() {
   const { email, password, setEmail, setPassword, handleLogin } = useLogin();
   return (
     <PublicContainer align="center">
-      <div
-        className="flex flex-row shadow-card rounded-2xl text-left overflow-hidden"
-        style={{
-          minWidth: "700px",
-          minHeight: "400px",
-          maxWidth: "700px",
-          maxHeight: "400px",
-        }}
-      >
-        <div
-          className="flex flex-col p-8"
-          style={{
-            minWidth: "60%",
-          }}
-        >
+      <div className="flex flex-row shadow-card rounded-2xl text-left overflow-hidden min-w-[700px] min-h-[400px] max-w-[700px] max-h-[400px]">
+        <div className="flex flex-col p-8 min-w[60%]">
           <span className="text-24-700">Hello Again</span>
 
-          <span className="text-14-400 text-gray-600">
+          <span className="text-gray-600 text-14-400">
             Synthesize your expert calls to make the most of your time.
           </span>
 
-          <div className="flex flex-col mt-5 gap-3">
+          <div className="flex flex-col gap-3 mt-5">
             <TextInputL
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               startIcon={{
                 position: "start",
-                content: (
-                  <img
-                    src={email_icon}
-                    style={{ width: "20px", height: "20px" }}
-                  />
-                ),
+                content: <img className="w-5 h-5" src={email_icon} />,
               }}
               placeholder="Email"
             />
@@ -65,34 +47,22 @@ export default function Login() {
             </Button>
           </div>
 
-          <div
-            className="flex flex-col justify-center"
-            style={{
-              minHeight: "70px",
-            }}
-          >
+          <div className="flex flex-col justify-center min-h-[70px]">
             <p className="text-12-400">
               By using MetaNext you agree to the{" "}
-              <span className="cursor-pointer text-blue-500">
+              <span className="text-blue-500 cursor-pointer">
                 Terms of Service
               </span>{" "}
               and{" "}
-              <span className="cursor-pointer text-blue-500">
+              <span className="text-blue-500 cursor-pointer">
                 Privacy Policy
               </span>
             </p>
           </div>
         </div>
 
-        <div className="flex flex-col justify-center items-center bg-blue-300 w-1/2">
-          <div
-            className="flex justify-center items-center bg-white rounded-2xl shadow-2xl flex-col text-center"
-            style={{
-              minHeight: "160px",
-              minWidth: "170px",
-              maxWidth: "170px",
-            }}
-          >
+        <div className="flex flex-col items-center justify-center w-1/2 bg-blue-300">
+          <div className="flex flex-col items-center justify-center text-center bg-white shadow-2xl rounded-2xl min-w-[170px] min-h-[160px] max-w-[170px]">
             <p className="text-16-500">Some Promotion Message or Testimonial</p>
           </div>
         </div>
