@@ -48,13 +48,8 @@ export default function Summary(props: SummaryType) {
         <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
           Summary
         </Typography>
-        <div
-          style={{
-            minHeight: "63vh",
-            maxHeight: "63vh",
-            overflowY: "auto",
-          }}
-        >
+        
+        <div className="min-h-[63vh] max-h-[63vh] overflow-y-auto">
           {data.map((item, index) => {
             const regex = /^[a-zA-Z0-9]/;
             let selectedBgColor = "";
@@ -128,10 +123,7 @@ export default function Summary(props: SummaryType) {
         <div
           ref={transcriptRef}
           dangerouslySetInnerHTML={{ __html: conversation }}
-          style={{
-            height: "100%",
-            overflowY: "auto",
-          }}
+          className="h-full overflow-y-auto"
         />
       </Paper>
     </Stack>

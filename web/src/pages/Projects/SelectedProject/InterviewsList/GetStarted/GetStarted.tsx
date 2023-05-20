@@ -1,4 +1,4 @@
-import { Button, Stack, Typography } from "@mui/material";
+import { Button,  Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { PROJECTS } from "../../../../../router/routes.constant";
 import { DescriptionText } from "../../../../../components/atoms";
@@ -6,41 +6,29 @@ import line from "./line.svg";
 export default function GetStarted() {
   const navigate = useNavigate();
   return (
-    <Stack
-      sx={{
-        flex: 1,
-        height: "100%",
-        alignItems: "center",
-      }}
-    >
-      <Stack sx={{ maxWidth: "360px", marginTop: "10%" }}>
-        <Stack gap="20px">
+    <div className="flex flex-col items-center flex-1 h-full">
+      <div className="flex flex-col max-w-[360px] mt-[10%]">
+        <div className="flex flex-col gap-5">
           <Typography variant="h4">Create an Interview</Typography>
-          <Stack>
+          <div className="flex flex-col">
             <Typography variant="body1" fontWeight="bold">
               Upload a transcript
             </Typography>
 
             <DescriptionText>You can upload multiple files</DescriptionText>
 
-            <div style={{ marginTop: "8px" }}>
+            <div className="mt-2">
               <Button variant="contained">Upload Transcript</Button>
             </div>
-          </Stack>
+          </div>
 
-          <Stack
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              gap: "20px",
-            }}
-          >
+          <div className="flex gap-5">
             <img src={line} alt="line" />
             OR
             <img src={line} alt="line" />
-          </Stack>
+          </div>
 
-          <Stack>
+          <div className="flex flex-col">
             <Typography variant="body1" fontWeight="bold">
               Initiate transcription for a live interview
             </Typography>
@@ -50,16 +38,16 @@ export default function GetStarted() {
             </DescriptionText>
 
             <div
-              style={{ marginTop: "8px" }}
+              className="mt-2"
               onClick={() => {
                 navigate(PROJECTS.CREATE_PROJECT);
               }}
             >
               <Button variant="contained">Initiate Transcription</Button>
             </div>
-          </Stack>
-        </Stack>
-      </Stack>
-    </Stack>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

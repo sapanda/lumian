@@ -53,16 +53,7 @@ export default function Query(props: queryType) {
           maxHeight: "75vh",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            overflowY: "auto",
-            gap: "15px",
-            flex: "1",
-          }}
-          className="w-full p-2"
-        >
+        <div className="flex flex-col flex-1 w-full gap-4 p-2 overflow-y-auto">
           <AnswerBox
             answer={[
               {
@@ -89,7 +80,7 @@ export default function Query(props: queryType) {
             );
           })}
         </div>
-        <div className="w-full p-2 flex flex-col">
+        <div className="flex flex-col w-full p-2">
           <QueryInput
             placeholder="Enter your query"
             onChange={(e) => {
