@@ -1,8 +1,18 @@
 from rest_framework import serializers
-from meetingbot.models import MeetingBot
+from meeting.models import MeetingBot
 
 
-class CreateBotAPISerializer(serializers.Serializer):
+class OAuthSerializer(serializers.Serializer):
+    pass
+
+
+class OauthCallbackSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    state = serializers.CharField()
+
+
+class AddBotSerializer(serializers.Serializer):
+    project_id = serializers.IntegerField()
     bot_name = serializers.CharField()
     meeting_url = serializers.CharField()
 
@@ -26,10 +36,16 @@ class BotStatusChangeSerializer(serializers.Serializer):
     event = serializers.CharField()
 
 
-class MeetingBotSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MeetingBot
-        fields = ['id', 'status', 'transcript', 'message']
+class GetBotStatusSerializer(serializers.Serializer):
+    bot_id = serializers.CharField()
+
+
+class MeetingDetailsSerializer(serializers.Serializer):
+    pass
+
+
+class InitiateTranscriptionSerializer(serializers.Serializer):
+    project_id = serializers.IntegerField()
 
 
 # TODO : Cleanup Nested serialization

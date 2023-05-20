@@ -34,7 +34,7 @@ urlpatterns = [
     path('api/user/', include('user.urls')),
     path('api/projects/', include('project.urls')),
     path('api/transcripts/', include('transcript.urls')),
-    path('api/meetingbot/', include('meetingbot.urls'))
+    path('api/meeting/', include('meeting.urls'))
 ]
 
 if settings.DEBUG:

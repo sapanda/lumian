@@ -3,15 +3,17 @@ from django.db import IntegrityError
 
 from rest_framework import status
 from rest_framework.test import APITestCase
-from unittest import skip
 from unittest.mock import patch
+from meeting.errors import RecallAITimeoutException
+from meeting.models import MeetingBot
+from meeting.tests.utils import (
+    create_user,
+    create_bot,
+    create_project
+)
 
-from meetingbot.errors import RecallAITimeoutException
-from meetingbot.models import MeetingBot
-from meetingbot.tests.utils import create_user, create_bot
 
-
-class CreateBotViewTest(APITestCase):
+class AddBotViewTest(APITestCase):
 
     def setUp(self):
         self.url = reverse('add-bot-to-meeting')
@@ -20,12 +22,14 @@ class CreateBotViewTest(APITestCase):
     def tearDown(self):
         self.user.delete()
 
-    @patch('meetingbot.views.add_bot_to_meeting')
-    def test_create_bot_success(self, mock_add_bot_to_meeting):
+    @patch('meeting.views.meeting_bot.add_bot_to_meeting')
+    def test_add_bot_success(self, mock_add_bot_to_meeting):
         mock_add_bot_to_meeting.return_value = {'id': 1, 'name': 'bot1'}
+        self.project = create_project(self.user)
         data = {
                 'bot_name': 'bot1',
-                'meeting_url': 'http://example.com/meeting'
+                'meeting_url': 'http://example.com/meeting',
+                'project_id': 1
                }
         self.client.force_authenticate(self.user)
 
@@ -37,14 +41,15 @@ class CreateBotViewTest(APITestCase):
         self.assertEqual(bot.id, str(1))
         self.assertEqual(bot.status, MeetingBot.StatusChoices.READY)
         self.assertIsNone(bot.transcript)
-        self.assertEqual(bot.user, self.user)
+        self.project.delete()
 
-    @patch('meetingbot.views.add_bot_to_meeting')
-    def test_create_bot_already_exists(self, mock_add_bot_to_meeting):
+    @patch('meeting.views.meeting_bot.add_bot_to_meeting')
+    def test_add_bot_already_exists(self, mock_add_bot_to_meeting):
         mock_add_bot_to_meeting.side_effect = IntegrityError
         data = {
                 'bot_name': 'bot1',
-                'meeting_url': 'http://example.com/meeting'
+                'meeting_url': 'http://example.com/meeting',
+                'project_id': 1
                }
         self.client.force_authenticate(self.user)
 
@@ -52,8 +57,8 @@ class CreateBotViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(MeetingBot.objects.count(), 0)
 
-    @patch('meetingbot.views.add_bot_to_meeting')
-    def test_create_bot_timeout(self, mock_add_bot_to_meeting):
+    @patch('meeting.views.meeting_bot.add_bot_to_meeting')
+    def test_add_bot_timeout(self, mock_add_bot_to_meeting):
         mock_add_bot_to_meeting.side_effect = \
             RecallAITimeoutException(
                 'Timeout',
@@ -61,7 +66,8 @@ class CreateBotViewTest(APITestCase):
                 )
         data = {
                 'bot_name': 'bot1',
-                'meeting_url': 'http://example.com/meeting'
+                'meeting_url': 'http://example.com/meeting',
+                'project_id': 1
                }
         self.client.force_authenticate(self.user)
 
@@ -69,12 +75,13 @@ class CreateBotViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_408_REQUEST_TIMEOUT)
         self.assertEqual(MeetingBot.objects.count(), 0)
 
-    @patch('meetingbot.views.add_bot_to_meeting')
-    def test_create_bot_exception(self, mock_add_bot_to_meeting):
+    @patch('meeting.views.meeting_bot.add_bot_to_meeting')
+    def test_add_bot_exception(self, mock_add_bot_to_meeting):
         mock_add_bot_to_meeting.side_effect = ValueError('Invalid input')
         data = {
                 'bot_name': 'bot1',
-                'meeting_url': 'http://example.com/meeting'
+                'meeting_url': 'http://example.com/meeting',
+                'project_id': 1
                }
         self.client.force_authenticate(self.user)
 
@@ -83,21 +90,21 @@ class CreateBotViewTest(APITestCase):
         self.assertEqual(MeetingBot.objects.count(), 0)
 
 
-@skip("Transcript creation broken with Project API changes")
 class BotStatusChangeViewTestCase(APITestCase):
 
     def setUp(self):
         self.url = reverse('webhook-bot-status-change')
 
-    @patch('meetingbot.views.get_meeting_transcript')
-    @patch('meetingbot.views.generate_transcript_text')
+    @patch('meeting.views.meeting_bot.get_meeting_transcript')
+    @patch('meeting.views.meeting_bot.generate_transcript_text')
     def test_successful_bot_status_update(
             self,
             mock_generate_transcript_text,
             mock_get_meeting_transcript
     ):
         self.user = create_user()
-        self.bot = create_bot(self.user)
+        self.project = create_project(self.user)
+        self.bot = create_bot(self.project)
         data = {
             "event": "bot.status_change",
             "data": {
@@ -121,12 +128,13 @@ class BotStatusChangeViewTestCase(APITestCase):
         mock_get_meeting_transcript.assert_not_called()
         mock_generate_transcript_text.assert_not_called()
         self.bot.delete()
+        self.project.delete()
         self.user.delete()
 
     @patch('transcript.signals._run_generate_synthesis')
     @patch('transcript.signals._delete_transcript_on_synthesis_service')
-    @patch('meetingbot.views.get_meeting_transcript')
-    @patch('meetingbot.views.generate_transcript_text')
+    @patch('meeting.views.meeting_bot.get_meeting_transcript')
+    @patch('meeting.views.meeting_bot.generate_transcript_text')
     def test_successful_creation_of_transcript(
             self,
             mock_generate_transcript_text,
@@ -135,7 +143,8 @@ class BotStatusChangeViewTestCase(APITestCase):
             mock_generate_synthesis
     ):
         self.user = create_user()
-        self.bot = create_bot(self.user)
+        self.project = create_project(self.user)
+        self.bot = create_bot(self.project)
         mock_generate_transcript_text.return_value = "Test"
         data = {
             "event": "bot.status_change",
@@ -154,9 +163,35 @@ class BotStatusChangeViewTestCase(APITestCase):
         self.assertEqual(self.bot.status, MeetingBot.StatusChoices.DONE)
         self.assertEqual(self.bot.message, "Bot is done")
         self.assertNotEqual(self.bot.transcript, None)
-        self.assertEqual(self.bot.transcript.user, self.user)
+        self.assertEqual(self.bot.transcript.project, self.project)
         self.bot.delete()
+        self.project.delete()
         self.user.delete()
 
 
-# TODO : Transcript Synthesis error fix, transcript delete bug fix
+class GetBotStatusViewTest(APITestCase):
+
+    def setUp(self):
+        self.url = reverse('get-bot-status')
+        self.user = create_user()
+        self.project = create_project(self.user)
+        self.bot = create_bot(self.project)
+
+    def tearDown(self):
+        self.bot.delete()
+        self.project.delete()
+        self.user.delete()
+
+    def test_valid_get_request(self):
+        bot_id = self.bot.id
+        response = self.client.get(f"{self.url}?bot_id={bot_id}")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, self.bot.status)
+
+    def test_invalid_bot_id(self):
+        invalid_bot_id = 'invalid_bot_id'
+        response = self.client.get(f"{self.url}?bot_id={invalid_bot_id}")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'error': 'Bot does not exist'})
