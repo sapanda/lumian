@@ -1,5 +1,3 @@
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-import json
 from django.contrib.auth import get_user_model
 from rest_framework.status import (
     HTTP_202_ACCEPTED,
@@ -55,37 +53,17 @@ class OAuthView(APIView):
 class OAuthCallbackView(APIView):
 
     serializer_class = OauthCallbackSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
-    def _get_user(self, user_id):
+    def post(self, request):
         try:
-            return User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            raise NotFound(f"User Not Found with user id {user_id}")
-
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name='code',
-                description='Authorisation code',
-                required=True,
-                type=str),
-            OpenApiParameter(
-                name='state',
-                description='State consisting user id',
-                required=True,
-                type=str),
-        ]
-    )
-    def get(self, request):
-        try:
-            serializer = self.serializer_class(data=request.query_params)
+            serializer = self.serializer_class(data=request.data)
             if (not serializer.is_valid()):
                 logger.error(f"-- Serialization Error -- {serializer.errors}")
                 return Response({}, HTTP_202_ACCEPTED)
 
-            state = json.loads(serializer.validated_data['state'])
-            user = self._get_user(state['user_id'])
-
+            user = request.user
             token = zoom_api.get_access_token(
                     serializer.validated_data['code']
                 )
@@ -103,6 +81,7 @@ class OAuthCallbackView(APIView):
 
         except Exception as e:
             logger.error(f"-- Exception : {str(e)} --")
+            return Response({}, HTTP_400_BAD_REQUEST)
 
         return Response({}, HTTP_202_ACCEPTED)
 
