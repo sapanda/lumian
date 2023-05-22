@@ -32,7 +32,7 @@ class InitiateTranscription(APIView):
             message = response.text
             logger.error(f'Request failed {status}: {message}')
             response.raise_for_status()
-        return response.json()['meeting_urls']
+        return response.json()
 
     def _add_bot_to_meetings(self, request, meetings, project_id, bot_name):
         url = reverse('add-bot-to-meeting', request=request)
@@ -53,7 +53,7 @@ class InitiateTranscription(APIView):
             else:
                 meeting_details = {
                     'bot_added': True,
-                    'bot_id': response.json()['bot_id']
+                    'bot_id': response.json()
                 }
             response_list.append(meeting_details)
         return response_list
