@@ -48,8 +48,6 @@ export default function useSummary(interviewTranscipt: string) {
       // set the citations count
       setCitationsCount(mergedRanges.length);
 
-      console.log(ranges, mergedRanges);
-
       mergedRanges.forEach((range, index) => {
         const [start, end] = range;
         const selectedText = originalTranscriptRef?.current

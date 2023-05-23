@@ -43,7 +43,7 @@ export default function useConcise(interviewTranscipt: string) {
       }
 
       mergedRanges.push(currentRange);
-      console.log({ ranges, mergedRanges });
+
       // set the citations count
       setCitationsCount(mergedRanges.length);
       mergedRanges.forEach((range, index) => {
@@ -60,8 +60,6 @@ export default function useConcise(interviewTranscipt: string) {
             `
             )
             ?.replaceAll('"\n\n', '"<br/> <br/>');
-
-          console.log(transcript.includes(selectedText));
         }
       });
 
