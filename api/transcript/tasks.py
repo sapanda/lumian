@@ -11,9 +11,12 @@ def _generate_metadata_and_update_transcript(tct: Transcript):
     if (result['status_code'] < 300):
         print("------- Result from metadata generation : " + str(result))
         # update the transcript
-        tct.title = result["title"]
-        tct.interviewee_names = result["interviewees"]
-        tct.interviewer_names = result["interviewers"]
+        if result["title"]:
+            tct.title = result["title"]
+        if result["interviewees"]:
+            tct.interviewee_names = result["interviewees"]
+        if result["interviewers"]:
+            tct.interviewer_names = result["interviewers"]
         tct.cost = result["cost"]
         tct.save()
 

@@ -2,7 +2,8 @@
 Utility functions for testing the meetingbot app.
 """
 from django.contrib.auth import get_user_model
-from meetingbot.models import MeetingBot
+from meeting.models import MeetingBot
+from project.models import Project
 
 
 def create_user():
@@ -14,12 +15,21 @@ def create_user():
     )
 
 
-def create_bot(user):
+def create_project(user):
+    return Project.objects.create(
+        user=user,
+        title='Test Project',
+        goal='Test',
+        questions=['Test']
+    )
+
+
+def create_bot(project):
     """Create and return a new meeting bot."""
     return MeetingBot.objects.create(
         id='testbot',
         status=MeetingBot.StatusChoices.READY,
         message="",
         transcript=None,
-        user=user
+        project=project
     )

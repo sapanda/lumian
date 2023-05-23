@@ -1,10 +1,12 @@
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.db import IntegrityError
 from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_202_ACCEPTED,
     HTTP_400_BAD_REQUEST,
     HTTP_408_REQUEST_TIMEOUT,
-    HTTP_409_CONFLICT
+    HTTP_409_CONFLICT,
+    HTTP_404_NOT_FOUND
 )
 from rest_framework import (
     authentication,
@@ -14,29 +16,30 @@ from rest_framework import (
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from meetingbot.recallai_client import (
+from meeting.external_clients.recallai import (
     add_bot_to_meeting,
     get_meeting_transcript
 )
-from meetingbot.serializers import (
-    CreateBotAPISerializer,
-    BotStatusChangeSerializer
+from meeting.serializers import (
+    AddBotSerializer,
+    BotStatusChangeSerializer,
+    GetBotStatusSerializer
 )
-from meetingbot.utils import generate_transcript_text
-from meetingbot.models import MeetingBot
-from meetingbot.errors import RecallAITimeoutException
+from meeting.utils import generate_transcript_text
+from meeting.models import MeetingBot
+from meeting.errors import RecallAITimeoutException
+from project.models import Project
 
 from transcript.models import Transcript
 
 import logging
-
 logger = logging.getLogger(__name__)
 
 
 # View for adding bot to a meeting
-class CreatBotView(APIView):
+class AddBotView(APIView):
 
-    serializer_class = CreateBotAPISerializer
+    serializer_class = AddBotSerializer
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
@@ -48,19 +51,26 @@ class CreatBotView(APIView):
 
             bot_name = serializer.validated_data['bot_name']
             meeting_url = serializer.validated_data['meeting_url']
+            project_id = serializer.validated_data['project_id']
+
+            # TODO : Check if a bot is already present for that meeting
 
             bot = add_bot_to_meeting(bot_name, meeting_url)
+            project = Project.objects.get(id=project_id)
             MeetingBot.objects.create(
                 id=bot['id'],
                 status=MeetingBot.StatusChoices.READY,
                 message="Bot is created and ready to join the call",
                 transcript=None,
-                user=request.user
+                project=project
             )
 
-            response_data = bot
+            response_data = bot['id']
             response_status = HTTP_201_CREATED
 
+        except Project.DoesNotExist:
+            response_data = {"error": "Project does not exist"}
+            response_status = HTTP_404_NOT_FOUND
         except RecallAITimeoutException as e:
             response_data = {"error": str(e)}
             response_status = HTTP_408_REQUEST_TIMEOUT
@@ -68,6 +78,7 @@ class CreatBotView(APIView):
             response_data = {"error": "Meeting bot already exists"}
             response_status = HTTP_409_CONFLICT
         except Exception as e:
+            logger.error(e)
             response_data = {"error": str(e)}
             response_status = HTTP_400_BAD_REQUEST
 
@@ -96,11 +107,11 @@ class BotStatusChangeView(APIView):
         transcript_text = generate_transcript_text(transcript_list)
 
         return Transcript.objects.create(
-            user=meetingbot.user,
+            project=meetingbot.project,
             transcript=transcript_text,
             title=f"Meeting transcript - {meetingbot.id}",
-            interviewee_names=["Ashutosh"],
-            interviewer_names=["Saswat"]
+            interviewee_names=["Unknown"],
+            interviewer_names=["Unknown"]
         )
 
     def post(self, request):
@@ -129,6 +140,35 @@ class BotStatusChangeView(APIView):
 
         return Response({}, HTTP_202_ACCEPTED)
 
-# TODO :
-#  Unit testing
-#  AI Generated intervieww, interviewer and title
+
+class GetBotStatusView(APIView):
+
+    serializer_class = GetBotStatusSerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='bot_id',
+                description='bot id for the bot in the meeting',
+                required=True,
+                type=str),
+        ]
+    )
+    def get(self, request):
+
+        try:
+            serializer = self.serializer_class(data=request.query_params)
+            if not serializer.is_valid():
+                logger.error(f"-- Serialization Error -- {serializer.errors}")
+                return Response(serializer.errors, HTTP_400_BAD_REQUEST)
+            bot_id = serializer.validated_data['bot_id']
+            bot = MeetingBot.objects.get(id=bot_id)
+            return Response(bot.status)
+        except MeetingBot.DoesNotExist:
+            response_data = {"error": "Bot does not exist"}
+            response_status = HTTP_404_NOT_FOUND
+        except Exception as e:
+            response_data = str(e)
+            response_status = HTTP_400_BAD_REQUEST
+
+        return Response(response_data, response_status)

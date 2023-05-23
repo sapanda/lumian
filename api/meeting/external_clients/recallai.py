@@ -1,7 +1,7 @@
 import requests
 from retry import retry
 
-from meetingbot.errors import RecallAITimeoutException
+from meeting.errors import RecallAITimeoutException
 from app.settings import (
     RECALL_API_KEY,
     RECALL_TRANSCRIPT_PROVIDER

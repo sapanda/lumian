@@ -6,5 +6,4 @@ def generate_transcript_text(transcript):
         speaker_words = [word['text'] for word in speaker_turn['words']]
         speaker_turn_text = ' '.join(speaker_words)
         output.append(f'{speaker_name}: "{speaker_turn_text}"')
-    print(output)
     return '\n\n'.join(output)
