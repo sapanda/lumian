@@ -37,7 +37,7 @@ interface rowType {
 
 export default function AllProjects() {
   const navigate = useNavigate();
-  const { allProjects } = useProjects();
+  const { allProjects, connectApp } = useProjects();
 
   function onCellClick(row: rowType) {
     const projectId = row.id;
@@ -48,11 +48,15 @@ export default function AllProjects() {
       PROJECTS.SELECTED_PROJECT.default.replace(":projectId", `${projectId}`)
     );
   }
+
   return (
     <PrivateContainer
       appBar={
         <PrivateAppbar title="Projects" icon={projects_icon}>
           <div className="flex items-center justify-end w-full gap-5 px-10 py-5">
+            <Button variant="contained" onClick={() => connectApp()}>
+              Connect App
+            </Button>
             <Button
               variant="contained"
               onClick={() => navigate(PROJECTS.CREATE_PROJECT)}

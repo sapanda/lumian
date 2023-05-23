@@ -21,10 +21,18 @@ const interviewEndPoints = {
   interviewConcise: "api/transcripts/:interviewId/concise/",
   interviewQuery: "api/transcripts/:interviewId/query/",
 };
+
+const meetingEndPoints = {
+  oauthUrl: "/api/meeting/oauth-url",
+  initiateTranscription: "api/meeting/initiate-transcription",
+  accessToken: "api/meeting/access-token",
+};
+
 export {
   baseApiUrl,
   authEndPoints,
   userEndPoints,
   interviewEndPoints,
   projectEndpoints,
+  meetingEndPoints,
 };

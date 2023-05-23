@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import {
   baseApiUrl,
   interviewEndPoints,
+  meetingEndPoints,
   projectEndpoints,
 } from "../../../../api/apiEndpoints";
 import { useParams } from "react-router-dom";
@@ -73,6 +74,28 @@ export default function useInterviewsList() {
     }
   }, [projectId]);
 
+  const startTranscribe = useCallback(async () => {
+    if (!projectId) return;
+    const project_id = +projectId;
+    const res = await fetch(
+      baseApiUrl + meetingEndPoints.initiateTranscription,
+
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Token " + localStorage.getItem("token"),
+        },
+        body: JSON.stringify({
+          project_id,
+        }),
+      }
+    );
+
+    const data = await res.json();
+    console.log(data);
+  }, [projectId]);
+
   useEffect(() => {
     getInterviewsList();
     getProjectDetail();
@@ -82,5 +105,6 @@ export default function useInterviewsList() {
     rows,
     columns,
     projectTitle,
+    startTranscribe,
   };
 }
