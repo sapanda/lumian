@@ -37,7 +37,6 @@ class ZoomAPI:
     def _post_response(self, url, headers, data=None):
         try:
             response = requests.post(url, headers=headers, data=data)
-            logger.debug(response.json())
             response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as e:
