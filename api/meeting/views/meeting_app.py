@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework.status import (
-    HTTP_202_ACCEPTED,
+    HTTP_201_CREATED,
+    HTTP_406_NOT_ACCEPTABLE,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
@@ -8,8 +9,7 @@ from rest_framework.status import (
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import (
-    ValidationError,
-    NotFound,
+    ValidationError
 )
 from rest_framework import (
     authentication,
@@ -41,7 +41,7 @@ class OAuthView(APIView):
     def get(self, request):
 
         try:
-            url = zoom_api.get_oauth_url(request.user.id)
+            url = zoom_api.get_oauth_url()
             return Response(url)
         except ZoomException as e:
             logger.error(f"---Exception -- {str(e)}")
@@ -61,7 +61,7 @@ class OAuthCallbackView(APIView):
             serializer = self.serializer_class(data=request.data)
             if (not serializer.is_valid()):
                 logger.error(f"-- Serialization Error -- {serializer.errors}")
-                return Response({}, HTTP_202_ACCEPTED)
+                return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
 
             user = request.user
             token = zoom_api.get_access_token(
@@ -71,19 +71,26 @@ class OAuthCallbackView(APIView):
             refresh_token = token.get('refresh_token')
             meeting_email = zoom_api.get_user(access_token).get('email')
 
-            MeetingApp.objects.create(
-                user=user,
+            defaults = {
+                'user': user,
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+            }
+            MeetingApp.objects.update_or_create(
                 meeting_email=meeting_email,
-                access_token=access_token,
-                refresh_token=refresh_token,
-                meeting_app=MeetingApp.MeetingAppChoices.ZOOM
+                meeting_app=MeetingApp.MeetingAppChoices.ZOOM,
+                defaults=defaults
             )
+            return Response(HTTP_201_CREATED)
 
+        except ZoomException as e:
+            message = str(e)
+            status_code = HTTP_401_UNAUTHORIZED
         except Exception as e:
-            logger.error(f"-- Exception : {str(e)} --")
-            return Response({}, HTTP_400_BAD_REQUEST)
+            message = str(e)
+            status_code = HTTP_400_BAD_REQUEST
 
-        return Response({}, HTTP_202_ACCEPTED)
+        return Response(message, status_code)
 
 
 class MeetingDetailView(APIView):
@@ -119,7 +126,7 @@ class MeetingDetailView(APIView):
             status_code = HTTP_404_NOT_FOUND
         except ValidationError as e:
             message = str(e)
-            status_code = HTTP_400_BAD_REQUEST
+            status_code = HTTP_406_NOT_ACCEPTABLE
         except ZoomException as e:
             message = str(e)
             status_code = HTTP_401_UNAUTHORIZED

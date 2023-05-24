@@ -37,6 +37,7 @@ class ZoomAPI:
     def _post_response(self, url, headers, data=None):
         try:
             response = requests.post(url, headers=headers, data=data)
+            logger.debug(response.json())
             response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as e:
@@ -48,14 +49,13 @@ class ZoomAPI:
             status_code = None
             raise ZoomException(error_msg, status_code)
 
-    def get_oauth_url(self, user_id):
+    def get_oauth_url(self):
         logger.debug("-- GET AUTH URL --")
         try:
             params = {
                 "response_type": "code",
                 "client_id": ZOOM_CLIENT_ID,
-                "redirect_uri": ZOOM_REDIRECT_URL,
-                "state": f'{{"user_id": {user_id}}}'
+                "redirect_uri": ZOOM_REDIRECT_URL
             }
 
             authorization_url = f"{AUTHORISATION_URL}?{urlencode(params)}"
