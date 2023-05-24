@@ -2,17 +2,16 @@ import { useEffect } from "react";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 
-import { PrivateAppbar, Sidebar } from "../../../layout";
+import { Sidebar } from "../../../layout";
 import { Toolbar } from "@mui/material";
 import useAuth from "../../../hooks/useAuth";
 
 interface PrivateContainerProps {
   children: React.ReactNode;
-  title: string;
-  icon: string;
+  appBar: React.ReactNode;
 }
 export default function PrivateContainer(props: PrivateContainerProps) {
-  const { children, title, icon } = props;
+  const { children, appBar } = props;
   const { isAuthenticated, handleLogout } = useAuth();
 
   useEffect(() => {
@@ -26,7 +25,7 @@ export default function PrivateContainer(props: PrivateContainerProps) {
       sx={{ display: "flex", height: "100%", minHeight: "calc(100vh - 65px)" }}
     >
       <CssBaseline />
-      <PrivateAppbar title={title} icon={icon} />
+      {appBar}
       <Sidebar />
       <Box
         component="main"

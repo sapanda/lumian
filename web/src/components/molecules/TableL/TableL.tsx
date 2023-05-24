@@ -5,6 +5,7 @@ import TableCell, { tableCellClasses } from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import theme from "../../../theme/theme";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -24,7 +25,9 @@ const StyledTableRow = styled(TableRow)(() => ({
     border: 0,
   },
 }));
-
+interface rowType {
+  [key: string]: string | number;
+}
 interface TableLProps {
   columns: {
     headerName: string;
@@ -33,10 +36,13 @@ interface TableLProps {
   rows: {
     [key: string]: string | number;
   }[];
+
+  onCellClick?: (row: rowType) => void;
 }
 
 export default function TableL(props: TableLProps) {
-  const { columns, rows } = props;
+  const { columns, rows, onCellClick } = props;
+
   return (
     <TableContainer>
       <Table sx={{ minWidth: 700 }} aria-label="customized table">
@@ -61,7 +67,14 @@ export default function TableL(props: TableLProps) {
           {rows.map((row) => (
             <StyledTableRow
               key={row.name}
-              sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+              sx={{
+                "&:last-child td, &:last-child th": { border: 0 },
+                "&:hover": {
+                  cursor: "pointer",
+                  backgroundColor: theme.palette.grey[100],
+                },
+              }}
+              onClick={() => onCellClick && onCellClick(row)}
             >
               {columns.map((column, index) => (
                 <StyledTableCell

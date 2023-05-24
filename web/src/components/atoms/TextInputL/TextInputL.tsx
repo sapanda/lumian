@@ -30,6 +30,7 @@ export default function TextInputL(props: TextInputLProps) {
     size = "default",
     multiline = false,
   } = props;
+
   return (
     <TextField
       sx={{
@@ -74,8 +75,8 @@ export default function TextInputL(props: TextInputLProps) {
       onChange={onChange}
       type={type ?? "text"}
       name={name}
-      multiline={true}
       {...(multiline && {
+        multiline: true,
         rows: 4,
       })}
     />

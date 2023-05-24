@@ -3,11 +3,14 @@ import { PrivateContainer } from "../../../components/Containers";
 import { projects_icon } from "../../../assets/icons/svg";
 import { LabelInputCombo } from "../../../components/molecules";
 import useCreateProject from "./useCreateProject";
+import { PrivateAppbar } from "../../../layout";
 
 export default function CreateProject() {
   const { errors, handleChange, handleSave, state } = useCreateProject();
   return (
-    <PrivateContainer title="Projects" icon={projects_icon}>
+    <PrivateContainer
+      appBar={<PrivateAppbar title="Projects" icon={projects_icon} />}
+    >
       <Stack
         sx={{
           width: "100%",

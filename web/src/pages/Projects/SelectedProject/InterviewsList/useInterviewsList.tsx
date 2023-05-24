@@ -1,5 +1,10 @@
-import { useEffect, useState } from "react";
-import { baseApiUrl, interviewEndPoints } from "../../../../api/apiEndpoints";
+import { useEffect, useState, useCallback } from "react";
+import {
+  baseApiUrl,
+  interviewEndPoints,
+  projectEndpoints,
+} from "../../../../api/apiEndpoints";
+import { useParams } from "react-router-dom";
 
 interface rowProps {
   [key: string]: string | number;
@@ -21,15 +26,21 @@ const columns = [
 ];
 export default function useInterviewsList() {
   const [rows, setRows] = useState<rowProps[]>([]);
+  const { projectId } = useParams();
+  const [projectTitle, setProjectTitle] = useState("");
 
-  async function getInterviewsList() {
-    const res = await fetch(baseApiUrl + interviewEndPoints.interviewList, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Token " + localStorage.getItem("token"),
-      },
-    });
+  const getInterviewsList = useCallback(async () => {
+    const res = await fetch(
+      baseApiUrl +
+        interviewEndPoints.interviewList.replace(":projectId", `${projectId}`),
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Token " + localStorage.getItem("token"),
+        },
+      }
+    );
 
     const data = await res.json();
     const rows = data.map((row: rowProps, index: number) => {
@@ -41,14 +52,35 @@ export default function useInterviewsList() {
       };
     });
     setRows(rows);
-  }
+  }, [projectId]);
+
+  const getProjectDetail = useCallback(async () => {
+    const res = await fetch(
+      baseApiUrl +
+        projectEndpoints.projectDetail.replace(":projectId", `${projectId}`),
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Token " + localStorage.getItem("token"),
+        },
+      }
+    );
+
+    const data = await res.json();
+    if (data.title) {
+      setProjectTitle(data.title);
+    }
+  }, [projectId]);
 
   useEffect(() => {
     getInterviewsList();
-  }, []);
+    getProjectDetail();
+  }, [getInterviewsList, getProjectDetail]);
 
   return {
     rows,
     columns,
+    projectTitle,
   };
 }
