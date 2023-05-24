@@ -1,8 +1,7 @@
 import requests
 from rest_framework.reverse import reverse
 from rest_framework.status import (
-    HTTP_200_OK,
-    HTTP_400_BAD_REQUEST,
+    HTTP_406_NOT_ACCEPTABLE
 )
 from rest_framework import (
     authentication,
@@ -32,7 +31,7 @@ class InitiateTranscription(APIView):
             message = response.text
             logger.error(f'Request failed {status}: {message}')
             response.raise_for_status()
-        return response.json()['meeting_urls']
+        return response.json()
 
     def _add_bot_to_meetings(self, request, meetings, project_id, bot_name):
         url = reverse('add-bot-to-meeting', request=request)
@@ -53,7 +52,7 @@ class InitiateTranscription(APIView):
             else:
                 meeting_details = {
                     'bot_added': True,
-                    'bot_id': response.json()['bot_id']
+                    'bot_id': response.json()
                 }
             response_list.append(meeting_details)
         return response_list
@@ -63,7 +62,7 @@ class InitiateTranscription(APIView):
         try:
             serializer = self.serializer_class(data=request.data)
             if not serializer.is_valid():
-                return Response(serializer.errors, HTTP_400_BAD_REQUEST)
+                return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
 
             project_id = serializer.validated_data['project_id']
 
@@ -74,7 +73,7 @@ class InitiateTranscription(APIView):
                     project_id,
                     "LumianBot"
                 )
-            return Response(message, HTTP_200_OK)
+            return Response(message)
 
         except Exception as e:
             return Response(str(e))

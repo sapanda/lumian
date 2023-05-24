@@ -1,5 +1,4 @@
 from unittest import mock
-import urllib.parse
 from meeting.errors import ZoomException
 from rest_framework.test import APITestCase
 from rest_framework import status
@@ -14,7 +13,7 @@ from rest_framework.status import (
 class OAuthCallbackViewTest(APITestCase):
 
     def setUp(self):
-        self.url = reverse('callback-access-token')
+        self.url = reverse('save-access-token')
         self.user = create_user()
 
     def tearDown(self):
@@ -22,6 +21,7 @@ class OAuthCallbackViewTest(APITestCase):
 
     @mock.patch('meeting.views.meeting_app.zoom_api')
     def test_valid_oauth_callback(self, mock_zoom_api):
+        self.client.force_authenticate(user=self.user)
         mock_token = {
             'access_token': 'access_token',
             'refresh_token': 'refresh_token'
@@ -32,15 +32,12 @@ class OAuthCallbackViewTest(APITestCase):
         mock_zoom_api.get_access_token.return_value = mock_token
         mock_zoom_api.get_user.return_value = mock_user
 
-        params = {
-            "code": "valid",
-            "state": '{"user_id": ' + str(self.user.id) + '}'
+        data = {
+            "code": "valid"
         }
-        query_string = urllib.parse.urlencode(params)
-        url = f'{self.url}?{query_string}'
-        response = self.client.get(url)
+        response = self.client.post(self.url, data=data)
 
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         meeting_app = MeetingApp.MeetingAppChoices.ZOOM
         self.assertTrue(MeetingApp.objects.filter(
                             user=self.user,
@@ -51,18 +48,16 @@ class OAuthCallbackViewTest(APITestCase):
 
     @mock.patch('meeting.views.meeting_app.zoom_api')
     def test_invalid_oauth_callback(self, mock_zoom_api):
+        self.client.force_authenticate(user=self.user)
         mock_zoom_api.get_access_token.side_effect = \
             Exception('Invalid code')
 
-        params = {
-            "code": "invalid",
-            "state": '{"user_id": ' + str(self.user.id) + '}'
+        data = {
+            "code": "invalid"
         }
-        query_string = urllib.parse.urlencode(params)
-        url = f'{self.url}?{query_string}'
-        response = self.client.get(url)
+        response = self.client.post(self.url, data=data)
 
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(MeetingApp.objects.exists())
 
 

@@ -1,8 +1,7 @@
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-import json
 from django.contrib.auth import get_user_model
 from rest_framework.status import (
-    HTTP_202_ACCEPTED,
+    HTTP_201_CREATED,
+    HTTP_406_NOT_ACCEPTABLE,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
@@ -10,8 +9,7 @@ from rest_framework.status import (
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import (
-    ValidationError,
-    NotFound,
+    ValidationError
 )
 from rest_framework import (
     authentication,
@@ -43,7 +41,7 @@ class OAuthView(APIView):
     def get(self, request):
 
         try:
-            url = zoom_api.get_oauth_url(request.user.id)
+            url = zoom_api.get_oauth_url()
             return Response(url)
         except ZoomException as e:
             logger.error(f"---Exception -- {str(e)}")
@@ -55,37 +53,17 @@ class OAuthView(APIView):
 class OAuthCallbackView(APIView):
 
     serializer_class = OauthCallbackSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
-    def _get_user(self, user_id):
+    def post(self, request):
         try:
-            return User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            raise NotFound(f"User Not Found with user id {user_id}")
-
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name='code',
-                description='Authorisation code',
-                required=True,
-                type=str),
-            OpenApiParameter(
-                name='state',
-                description='State consisting user id',
-                required=True,
-                type=str),
-        ]
-    )
-    def get(self, request):
-        try:
-            serializer = self.serializer_class(data=request.query_params)
+            serializer = self.serializer_class(data=request.data)
             if (not serializer.is_valid()):
                 logger.error(f"-- Serialization Error -- {serializer.errors}")
-                return Response({}, HTTP_202_ACCEPTED)
+                return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
 
-            state = json.loads(serializer.validated_data['state'])
-            user = self._get_user(state['user_id'])
-
+            user = request.user
             token = zoom_api.get_access_token(
                     serializer.validated_data['code']
                 )
@@ -93,18 +71,26 @@ class OAuthCallbackView(APIView):
             refresh_token = token.get('refresh_token')
             meeting_email = zoom_api.get_user(access_token).get('email')
 
-            MeetingApp.objects.create(
-                user=user,
+            defaults = {
+                'user': user,
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+            }
+            MeetingApp.objects.update_or_create(
                 meeting_email=meeting_email,
-                access_token=access_token,
-                refresh_token=refresh_token,
-                meeting_app=MeetingApp.MeetingAppChoices.ZOOM
+                meeting_app=MeetingApp.MeetingAppChoices.ZOOM,
+                defaults=defaults
             )
+            return Response(HTTP_201_CREATED)
 
+        except ZoomException as e:
+            message = str(e)
+            status_code = HTTP_401_UNAUTHORIZED
         except Exception as e:
-            logger.error(f"-- Exception : {str(e)} --")
+            message = str(e)
+            status_code = HTTP_400_BAD_REQUEST
 
-        return Response({}, HTTP_202_ACCEPTED)
+        return Response(message, status_code)
 
 
 class MeetingDetailView(APIView):
@@ -140,7 +126,7 @@ class MeetingDetailView(APIView):
             status_code = HTTP_404_NOT_FOUND
         except ValidationError as e:
             message = str(e)
-            status_code = HTTP_400_BAD_REQUEST
+            status_code = HTTP_406_NOT_ACCEPTABLE
         except ZoomException as e:
             message = str(e)
             status_code = HTTP_401_UNAUTHORIZED

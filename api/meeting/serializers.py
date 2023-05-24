@@ -8,7 +8,6 @@ class OAuthSerializer(serializers.Serializer):
 
 class OauthCallbackSerializer(serializers.Serializer):
     code = serializers.CharField()
-    state = serializers.CharField()
 
 
 class AddBotSerializer(serializers.Serializer):
