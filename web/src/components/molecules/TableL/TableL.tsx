@@ -53,6 +53,7 @@ export default function TableL(props: TableLProps) {
           <TableRow>
             {columns.map((column, index) => (
               <StyledTableCell
+                key={column.headerName}
                 align={
                   index === 0
                     ? "left"
@@ -81,6 +82,7 @@ export default function TableL(props: TableLProps) {
             >
               {columns.map((column, index) => (
                 <StyledTableCell
+                  key={column.field}
                   align={
                     index === 0
                       ? "left"
