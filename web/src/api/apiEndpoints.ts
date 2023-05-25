@@ -1,6 +1,5 @@
 const baseApiUrl = import.meta.env.VITE_API_URL as string;
 
-console.log("baseApiUrl", baseApiUrl);
 const authEndPoints = {
   login: "api/user/token/",
 };

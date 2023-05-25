@@ -1,4 +1,12 @@
-import { AppBar, Backdrop, CircularProgress, IconButton, Stack, Toolbar, Typography } from "@mui/material";
+import {
+  AppBar,
+  Backdrop,
+  CircularProgress,
+  IconButton,
+  Stack,
+  Toolbar,
+  Typography,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 const drawerWidth = 240;

@@ -1,4 +1,4 @@
-import { Button,  Typography } from "@mui/material";
+import { Button, Typography } from "@mui/material";
 import { settings_icon } from "../../assets/icons/svg";
 import { PrivateContainer } from "../../components/Containers";
 import useAccountSettings from "./useAccountSettings";

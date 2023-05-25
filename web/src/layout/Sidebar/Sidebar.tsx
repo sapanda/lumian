@@ -13,6 +13,7 @@ const drawerWidth = 240;
 
 export default function Sidebar() {
   const navigate = useNavigate();
+
   return (
     <Drawer
       sx={{
