@@ -4,6 +4,7 @@ from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_202_ACCEPTED,
     HTTP_400_BAD_REQUEST,
+    HTTP_406_NOT_ACCEPTABLE,
     HTTP_408_REQUEST_TIMEOUT,
     HTTP_409_CONFLICT,
     HTTP_404_NOT_FOUND
@@ -47,7 +48,7 @@ class AddBotView(APIView):
         try:
             serializer = self.serializer_class(data=request.data)
             if not serializer.is_valid():
-                return Response(serializer.errors, HTTP_400_BAD_REQUEST)
+                return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
 
             bot_name = serializer.validated_data['bot_name']
             meeting_url = serializer.validated_data['meeting_url']
@@ -160,7 +161,8 @@ class GetBotStatusView(APIView):
             serializer = self.serializer_class(data=request.query_params)
             if not serializer.is_valid():
                 logger.error(f"-- Serialization Error -- {serializer.errors}")
-                return Response(serializer.errors, HTTP_400_BAD_REQUEST)
+                return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
+
             bot_id = serializer.validated_data['bot_id']
             bot = MeetingBot.objects.get(id=bot_id)
             return Response(bot.status)

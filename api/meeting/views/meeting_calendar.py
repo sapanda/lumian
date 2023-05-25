@@ -16,11 +16,11 @@ from rest_framework import (
     permissions
 )
 from meeting.errors import (
-    ZoomException
+    GoogleAPIException
 )
 from meeting.models import MeetingApp
-from meeting.external_clients.zoom import (
-    zoom_api
+from meeting.external_clients.google import (
+    google_api
 )
 from meeting.serializers import (
     OAuthSerializer,
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
-class OAuthView(APIView):
+class OAuthRequestView(APIView):
     serializer_class = OAuthSerializer
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
@@ -41,16 +41,17 @@ class OAuthView(APIView):
     def get(self, request):
 
         try:
-            url = zoom_api.get_oauth_url()
+            url = google_api.get_oauth_url()
             return Response(url)
-        except ZoomException as e:
-            logger.error(f"---Exception -- {str(e)}")
+        except GoogleAPIException as e:
+            logger.error(f"---Exception : {str(e)} --")
             return Response(str(e), HTTP_401_UNAUTHORIZED)
         except Exception as e:
+            logger.error(f"-- Exception : {str(e)} --")
             return Response(str(e), HTTP_400_BAD_REQUEST)
 
 
-class OAuthCallbackView(APIView):
+class OAuthResponseView(APIView):
 
     serializer_class = OauthCallbackSerializer
     authentication_classes = [authentication.TokenAuthentication]
@@ -64,12 +65,12 @@ class OAuthCallbackView(APIView):
                 return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
 
             user = request.user
-            token = zoom_api.get_access_token(
-                    serializer.validated_data['code']
-                )
-            access_token = token.get('access_token')
-            refresh_token = token.get('refresh_token')
-            meeting_email = zoom_api.get_user(access_token).get('email')
+            code = serializer.validated_data['code']
+            creds = google_api.get_access_token(code)
+
+            access_token = creds.token
+            refresh_token = creds.refresh_token
+            meeting_email = "placeholder@gmail.com"  # TODO : Get meeting email
 
             defaults = {
                 'user': user,
@@ -78,22 +79,23 @@ class OAuthCallbackView(APIView):
             }
             MeetingApp.objects.update_or_create(
                 meeting_email=meeting_email,
-                meeting_app=MeetingApp.MeetingAppChoices.ZOOM,
+                meeting_app=MeetingApp.MeetingAppChoices.GOOGLE,
                 defaults=defaults
             )
             return Response(HTTP_201_CREATED)
 
-        except ZoomException as e:
+        except GoogleAPIException as e:
             message = str(e)
             status_code = HTTP_401_UNAUTHORIZED
         except Exception as e:
             message = str(e)
             status_code = HTTP_400_BAD_REQUEST
 
+        logger.error(f"-- Exception : {message} --")
         return Response(message, status_code)
 
 
-class MeetingDetailView(APIView):
+class EventDetailsView(APIView):
 
     serializer_class = MeetingDetailsSerializer
     authentication_classes = [authentication.TokenAuthentication]
@@ -102,23 +104,21 @@ class MeetingDetailView(APIView):
     def get(self, request):
         try:
             meeting_app_details = MeetingApp.objects.get(
-                user=request.user
+                user=request.user,
+                meeting_app=MeetingApp.MeetingAppChoices.GOOGLE
             )
             # TODO : Add check for meeting app type and initialize accordingly
             access_token = meeting_app_details.access_token
             refresh_token = meeting_app_details.refresh_token
 
-            if (zoom_api.is_access_token_expired(access_token)):
-                new_token = zoom_api.refresh_access_token(refresh_token)
-                access_token = new_token['access_token']
-                refresh_token = new_token['refresh_token']
-                meeting_app_details.access_token = access_token
-                meeting_app_details.refresh_token = refresh_token
+            token_expired, new_creds = google_api.is_access_token_expired(
+                                                access_token, refresh_token)
+            if token_expired and new_creds:
+                meeting_app_details.access_token = new_creds.token
+                meeting_app_details.refresh_token = new_creds.refresh_token
                 meeting_app_details.save()
 
-            meetings = zoom_api.get_meetings(access_token).get('meetings')
-            meeting_urls = [meet.get('join_url') for meet in meetings]
-
+            meeting_urls = google_api.get_meeting_urls()
             return Response(meeting_urls)
 
         except MeetingApp.DoesNotExist:
@@ -127,7 +127,7 @@ class MeetingDetailView(APIView):
         except ValidationError as e:
             message = str(e)
             status_code = HTTP_406_NOT_ACCEPTABLE
-        except ZoomException as e:
+        except GoogleAPIException as e:
             message = str(e)
             status_code = HTTP_401_UNAUTHORIZED
         except Exception as e:

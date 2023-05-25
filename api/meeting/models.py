@@ -32,6 +32,7 @@ class MeetingApp(models.Model):
 
     class MeetingAppChoices(models.TextChoices):
         ZOOM = 'zoom', _('Zoom meeting app')
+        GOOGLE = 'google', _('Google Calendar')
         # TODO : add other meeting choices
 
     user = models.ForeignKey(

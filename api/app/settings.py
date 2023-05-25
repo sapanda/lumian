@@ -228,6 +228,9 @@ ZOOM_SECRETS_BASE64 = os.environ.get("ZOOM_SECRETS_BASE64")
 ZOOM_REDIRECT_URL = os.environ.get("ZOOM_REDIRECT_URL")
 ZOOM_CLIENT_ID = os.environ.get("ZOOM_CLIENT_ID")
 
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URL = os.environ.get("GOOGLE_REDIRECT_URL")
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
