@@ -23,7 +23,7 @@ class InitiateTranscription(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def _get_meeting_list(self, request):
-        url = reverse('get-meeting-details', request=request)
+        url = reverse('calendar-meeting-details', request=request)
         headers = {'Authorization': f'Token {request.auth}'}
         response = requests.get(url, headers=headers)
         if response.status_code // 100 != 2:
