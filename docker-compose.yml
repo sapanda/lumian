@@ -16,9 +16,9 @@ services:
       - VITE_ZOOM_CLIENT_ID=mTdoPcOmQAm54Fz1ZxL0oQ
       - VITE_ZOOM_REDIRECT_URL=http://localhost:8002/all-projects
       - VITE_ZOOM_SECRETS_BASE64=bVRkb1BjT21RQW01NEZ6MVp4TDBvUTpDUkJZeTJldzlqTllyN2Zybm52U1hLS2hET1hvcTlwOQ==
-      - VITE_GOOGLE_CLIENT_ID = 1059206380136-aieu7ujj247n2lk4b8o4ju59sq14uvte.apps.googleusercontent.com
-      - VITE_GOOGLE_CLIENT_SECRET = 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
-      - VITE_GOOGLE_REDIRECT_URL = http://localhost
+      - VITE_GOOGLE_CLIENT_ID=1059206380136-aieu7ujj247n2lk4b8o4ju59sq14uvte.apps.googleusercontent.com
+      - VITE_GOOGLE_CLIENT_SECRET=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
+      - VITE_GOOGLE_REDIRECT_URL=http://localhost
     env_file:
       - ./.env
     depends_on:
