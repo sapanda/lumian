@@ -39,7 +39,7 @@ class MeetingApp(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
-    meeting_email = models.EmailField(max_length=1024)
+    meeting_email = models.EmailField(max_length=512)
     access_token = models.CharField(max_length=1024)
     refresh_token = models.CharField(max_length=1024)
     meeting_app = models.CharField(

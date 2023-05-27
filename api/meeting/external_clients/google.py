@@ -1,5 +1,7 @@
 import app.settings as settings
+
 import datetime
+
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
@@ -67,7 +69,8 @@ class GoogleAPI:
     def _fetch_meeting_urls(self, events):
 
         meeting_urls = []
-        for event in events:
+        for i, event in enumerate(events):
+            logger.debug(f"Events {i} :  {event}")
             if 'location' in event:
                 meeting_url = event['location']
                 meeting_urls.append(meeting_url)

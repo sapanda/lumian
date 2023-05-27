@@ -70,7 +70,7 @@ class OAuthResponseView(APIView):
 
             access_token = creds.token
             refresh_token = creds.refresh_token
-            meeting_email = "placeholder@gmail.com"  # TODO : Get meeting email
+            meeting_email = "placeholder@gmail.com"
 
             defaults = {
                 'user': user,
@@ -136,3 +136,7 @@ class EventDetailsView(APIView):
 
         logger.error(f"-- Exception : {message} --")
         return Response(message, status_code)
+
+
+# TODO :
+# 1. Get meeting email attached to the calendar account
