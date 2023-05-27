@@ -1,59 +1,25 @@
-import { useEffect, useState } from "react";
-import {
-  baseApiUrl,
-  meetingEndPoints,
-  projectEndpoints,
-} from "../../api/apiEndpoints";
-import { Code } from "@mui/icons-material";
+import { useEffect } from "react";
+import { baseApiUrl, meetingEndPoints } from "../../api/apiEndpoints";
+import { useGetProjectsQuery } from "../../api/projectApi";
+import { axiosInstance } from "../../api/api";
 
-interface projectType {
-  id: number;
-  goal: string;
-  questions: string[];
-  title: string;
-}
 export default function useProjects() {
-  const [allProjects, setAllProjects] = useState([]);
-  const clientID = import.meta.env.VITE_ZOOM_CLIENT_ID as string;
+  // const clientID = import.meta.env.VITE_ZOOM_CLIENT_ID as string;
+  // const scopes = "user:read";
+  // const zoomRedirectURL = import.meta.env.VITE_ZOOM_REDIRECT_URL as string;
 
-  // const clientSecret = import.meta.env.VITE_ZOOM_SECRETS_BASE64 as string;
-  const scopes = "user:read";
-  const zoomRedirectURL = import.meta.env.VITE_ZOOM_REDIRECT_URL as string;
-  // const zoomRedirectURL = "http://localhost:8002/all-projects";
-
-  const responseType = "code";
-  const zoomAuthorizeURL = `https://zoom.us/oauth/authorize?response_type=${responseType}&client_id=${clientID}&redirect_uri=${zoomRedirectURL}&scope=${scopes}`;
-
-  const getProjectsList = async () => {
-    const res = await fetch(baseApiUrl + projectEndpoints.projectList, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Token " + localStorage.getItem("token"),
-      },
-    });
-
-    const data = await res.json();
-    if (data) {
-      const _data = data.map((project: projectType) => {
-        return {
-          id: project.id,
-          name: project.title,
-          date: "Feb 2 to Feb 10",
-          participants: "10",
-          owner: "John Doe",
-        };
-      });
-      setAllProjects(_data);
-    }
-  };
+  // const responseType = "code";
+  // const zoomAuthorizeURL = `https://zoom.us/oauth/authorize?response_type=${responseType}&client_id=${clientID}&redirect_uri=${zoomRedirectURL}&scope=${scopes}`;
+  const { data: allProjects, isLoading, isFetching } = useGetProjectsQuery();
 
   const connectApp = async () => {
-    window.location.href = zoomAuthorizeURL;
+    const res = await axiosInstance.get(meetingEndPoints.oauthUrl);
+    const redirectUrl = res.data;
+    window.location.href = redirectUrl;
   };
 
   const sendAccessToken = async (code: string) => {
-    const res = await fetch(baseApiUrl + meetingEndPoints.accessToken, {
+    await fetch(baseApiUrl + meetingEndPoints.accessToken, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -63,33 +29,16 @@ export default function useProjects() {
         code: code,
       }),
     });
-
-    const data = await res.json();
-    if (data) {
-      const _data = data.map((project: projectType) => {
-        return {
-          id: project.id,
-          name: project.title,
-          date: "Feb 2 to Feb 10",
-          participants: "10",
-          owner: "John Doe",
-        };
-      });
-      setAllProjects(_data);
-    }
   };
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get("code");
+    console.log(code);
     if (code) {
       sendAccessToken(code);
     }
   }, []);
 
-  useEffect(() => {
-    getProjectsList();
-  }, []);
-
-  return { allProjects, connectApp };
+  return { allProjects, connectApp, isLoading, isFetching };
 }

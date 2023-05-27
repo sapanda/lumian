@@ -22,9 +22,9 @@ const interviewEndPoints = {
 };
 
 const meetingEndPoints = {
-  oauthUrl: "/api/meeting/oauth-url",
+  oauthUrl: "/api/meeting/calendar/oauth-request",
   initiateTranscription: "api/meeting/initiate-transcription",
-  accessToken: "api/meeting/access-token",
+  accessToken: "api/meeting/calendar/oauth-response",
 };
 
 export {

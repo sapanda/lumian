@@ -37,7 +37,7 @@ interface rowType {
 
 export default function AllProjects() {
   const navigate = useNavigate();
-  const { allProjects, connectApp } = useProjects();
+  const { allProjects, connectApp, isFetching, isLoading } = useProjects();
 
   function onCellClick(row: rowType) {
     const projectId = row.id;
@@ -67,8 +67,9 @@ export default function AllProjects() {
         </PrivateAppbar>
       }
     >
-      {allProjects.length === 0 && <GetStarted />}
-      {allProjects.length > 0 && (
+      {(isFetching || isLoading) && <div>Loading...</div>}
+      {allProjects?.length === 0 && <GetStarted />}
+      {allProjects?.length > 0 && (
         <div className="flex flex-col py-10 px-[132px]">
           <TableL
             rows={allProjects}

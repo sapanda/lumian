@@ -2,14 +2,13 @@ import { Button, Typography } from "@mui/material";
 import { settings_icon } from "../../assets/icons/svg";
 import { PrivateContainer } from "../../components/Containers";
 import useAccountSettings from "./useAccountSettings";
-import useUser from "../../hooks/useUser";
 import { LabelInputCombo } from "../../components/molecules";
 import { PrivateAppbar } from "../../layout";
 
 export default function AccountSettings() {
-  const user = useUser();
   const { errors, handleChange, handleSave, state } = useAccountSettings({
-    ...user,
+    name: "",
+    email: "",
     oldPassword: "",
     newPassword: "",
   });
