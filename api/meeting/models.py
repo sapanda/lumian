@@ -32,13 +32,14 @@ class MeetingApp(models.Model):
 
     class MeetingAppChoices(models.TextChoices):
         ZOOM = 'zoom', _('Zoom meeting app')
+        GOOGLE = 'google', _('Google Calendar')
         # TODO : add other meeting choices
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
-    meeting_email = models.EmailField(max_length=1024)
+    meeting_email = models.EmailField(max_length=512)
     access_token = models.CharField(max_length=1024)
     refresh_token = models.CharField(max_length=1024)
     meeting_app = models.CharField(

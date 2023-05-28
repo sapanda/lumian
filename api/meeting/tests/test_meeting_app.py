@@ -13,7 +13,7 @@ from rest_framework.status import (
 class OAuthCallbackViewTest(APITestCase):
 
     def setUp(self):
-        self.url = reverse('save-access-token')
+        self.url = reverse('app-oauth-response-token')
         self.user = create_user()
 
     def tearDown(self):
@@ -63,7 +63,7 @@ class OAuthCallbackViewTest(APITestCase):
 
 class MeetingDetailViewTest(APITestCase):
     def setUp(self):
-        self.url = reverse('get-meeting-details')
+        self.url = reverse('app-meeting-details')
         self.user = create_user()
         self.meeting_app = MeetingApp.objects.create(
             user=self.user,
@@ -111,7 +111,7 @@ class MeetingDetailViewTest(APITestCase):
 class OAuthViewTest(APITestCase):
 
     def setUp(self):
-        self.url = reverse('get-oauth-url')
+        self.url = reverse('app-oauth-request-url')
         self.user = create_user()
 
     def tearDown(self):
