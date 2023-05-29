@@ -159,3 +159,4 @@ dist-ssr
 
 # Linux temp files
 *~
+**/#*#
