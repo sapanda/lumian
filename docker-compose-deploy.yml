@@ -41,5 +41,17 @@ services:
     environment:
       - DEBUG=1
 
+  proxy:
+    build:
+      context: ./proxy
+    restart: always
+    ports:
+      - 80:8000
+    volumes:
+      - static-data:/vol/static
+    depends_on:
+      - api
+
 volumes:
   node-modules:
+  static-data:
