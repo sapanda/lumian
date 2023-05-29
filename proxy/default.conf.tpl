@@ -1,13 +1,13 @@
 server {
     listen ${LISTEN_PORT};
-    server_name api-dev.lumian.ai;
+    server_name api-dev.*;
 
     location /static {
         alias /vol/static;
     }
 
     location / {
-        uwsgi_pass ${APP_HOST}:${APP_PORT};
+        uwsgi_pass ${API_HOST}:${API_PORT};
         include /etc/nginx/uwsgi_params;
         client_max_body_size 10M;
     }
@@ -15,9 +15,9 @@ server {
 
 server {
     listen ${LISTEN_PORT};
-    server_name app-dev.lumian.ai;
+    server_name app-dev.*;
 
     location / {
-        proxy_pass ${SERVER_ADDRESS}:8002;
+        proxy_pass http://${WEB_HOST}:${WEB_PORT};
     }
 }

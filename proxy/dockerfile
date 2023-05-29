@@ -5,10 +5,11 @@ COPY ./default.conf.tpl /etc/nginx/default.conf.tpl
 COPY ./uwsgi_params /etc/nginx/uwsgi_params
 COPY ./run.sh /run.sh
 
-ENV LISTEN_PORT=8000
-ENV APP_HOST=api
-ENV APP_PORT=9000
-ENV SERVER_ADDRESS=http://35.209.225.105
+ENV LISTEN_PORT=9000
+ENV API_HOST=api
+ENV API_PORT=8000
+ENV WEB_HOST=web
+ENV WEB_PORT=8002
 
 USER root
 
