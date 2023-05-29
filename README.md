@@ -1,4 +1,4 @@
-# Lumion Interview Synthesizer
+# Lumian Interview Synthesizer
 
 Website, REST APIs and Admin interfaces to synthesize interview transcripts
 
