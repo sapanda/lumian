@@ -81,10 +81,13 @@ class GoogleAPI:
     def get_meeting_urls(self):
         logger.debug("-- Calendar Get Meetings --")
         service = build('calendar', 'v3', credentials=self.creds)
-        now = datetime.datetime.utcnow().isoformat() + 'Z'
+        now = datetime.datetime.utcnow()
+        time_min = now.isoformat() + 'Z'
+        time_max = (now + datetime.timedelta(minutes=1)).isoformat() + 'Z'
         events_result = service.events().list(
             calendarId='primary',
-            timeMin=now,
+            timeMin=time_min,
+            timeMax=time_max,
             maxResults=10,  # Maximum number of events to fetch
             singleEvents=True,
             orderBy='startTime'
