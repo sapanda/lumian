@@ -156,3 +156,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Linux temp files
+*~
