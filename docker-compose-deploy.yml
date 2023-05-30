@@ -58,11 +58,8 @@ services:
     restart: always
     ports:
       - 80:9000
-    volumes:
-      - static-data:/vol/static
     depends_on:
       - api
 
 volumes:
   node-modules:
-  static-data:
