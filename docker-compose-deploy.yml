@@ -57,7 +57,7 @@ services:
       context: ./proxy
     restart: always
     ports:
-      - 80:9000
+      - 80:80
     depends_on:
       - api
 

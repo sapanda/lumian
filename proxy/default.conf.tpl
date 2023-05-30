@@ -1,5 +1,5 @@
 server {
-    listen ${LISTEN_PORT};
+    listen 80;
     server_name api-dev.*;
 
     location / {
@@ -10,7 +10,7 @@ server {
 }
 
 server {
-    listen ${LISTEN_PORT};
+    listen 80;
     server_name app-dev.*;
 
     location / {
