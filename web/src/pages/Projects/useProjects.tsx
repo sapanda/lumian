@@ -4,7 +4,7 @@ import { useGetProjectsQuery } from "../../api/projectApi";
 import { axiosInstance } from "../../api/api";
 
 export default function useProjects() {
-  // const clientID = import.meta.env.VITE_ZOOM_CLIENT_ID as string;
+  // const clientID = import.meta.env.ZOOM_CLIENT_ID as string;
   // const scopes = "user:read";
   // const zoomRedirectURL = import.meta.env.VITE_ZOOM_REDIRECT_URL as string;
 
