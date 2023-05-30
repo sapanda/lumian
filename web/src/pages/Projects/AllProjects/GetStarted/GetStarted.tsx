@@ -1,21 +1,15 @@
-import { Button, Stack, Typography } from "@mui/material";
+import { Button, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { PROJECTS } from "../../../../router/routes.constant";
 
 export default function GetStarted() {
   const navigate = useNavigate();
   return (
-    <Stack
-      sx={{
-        flex: 1,
-        height: "100%",
-        alignItems: "center",
-      }}
-    >
-      <Stack sx={{ maxWidth: "360px", marginTop: "10%" }}>
-        <Stack gap="20px">
+    <div className="flex flex-col items-center flex-1 h-full">
+      <div className="flex flex-col max-w-[360px] mt-[10%]">
+        <div className="flex flex-col gap-5">
           <Typography variant="h4">Let's get started</Typography>
-          <Stack>
+          <div className="flex flex-col">
             <Typography variant="body1" fontWeight="bold">
               Connect your conferencing app (optional)
             </Typography>
@@ -26,11 +20,11 @@ export default function GetStarted() {
                 transcripts at the end of a call
               </i>
             </Typography>
-            <div style={{ marginTop: "8px" }}>
+            <div className="mt-2">
               <Button variant="contained">Connect App</Button>
             </div>
-          </Stack>
-          <Stack>
+          </div>
+          <div className="flex flex-col">
             <Typography variant="body1" fontWeight="bold">
               Create a new project
             </Typography>
@@ -42,16 +36,16 @@ export default function GetStarted() {
               </i>
             </Typography>
             <div
-              style={{ marginTop: "8px" }}
+              className="mt-2"
               onClick={() => {
                 navigate(PROJECTS.CREATE_PROJECT);
               }}
             >
               <Button variant="contained">New Project</Button>
             </div>
-          </Stack>
-        </Stack>
-      </Stack>
-    </Stack>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

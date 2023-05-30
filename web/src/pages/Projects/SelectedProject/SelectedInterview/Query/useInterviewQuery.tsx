@@ -1,6 +1,22 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 
-export default function useQuery(interviewTranscipt: string) {
+import {
+  baseApiUrl,
+  interviewEndPoints,
+} from "../../../../../api/apiEndpoints";
+import { useParams } from "react-router-dom";
+
+interface queryProps {
+  query: string;
+  output: answerType[];
+}
+
+interface answerType {
+  text: string;
+  references: [number, number][];
+}
+
+export default function useInterviewQuery(interviewTranscipt: string) {
   const originalTranscriptRef = useRef<string>("");
   const transcriptRef = useRef<HTMLDivElement>(null);
 
@@ -8,6 +24,55 @@ export default function useQuery(interviewTranscipt: string) {
   const [conversation, setConversation] = useState<string>("");
   const [citationsCount, setCitationsCount] = useState<number>(0);
   const [activeCitationIndex, setActiveCitationIndex] = useState<number>(0);
+  const [query, setQuery] = useState<queryProps[]>([]);
+  const [userQueryText, setUserQueryText] = useState<string>("");
+  const { interviewId } = useParams();
+
+  const askQuery = async () => {
+    const formData = new FormData();
+    formData.append("query", userQueryText);
+    console.log(userQueryText);
+    const boundary = Math.random().toString().substr(2);
+
+    const res = await fetch(
+      baseApiUrl +
+        interviewEndPoints.interviewQuery.replace(":interviewId", "1"),
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": `multipart/form-data; boundary=${boundary}`,
+          Authorization: "Token " + localStorage.getItem("token"),
+          accept: "application/json",
+        },
+        body: formData,
+      }
+    );
+    const data = await res.json();
+    if (data.output) {
+      setUserQueryText("")
+      getInterviewQuery();
+    }
+  };
+
+  const getInterviewQuery = useCallback(async () => {
+    const res = await fetch(
+      baseApiUrl +
+        interviewEndPoints.interviewQuery.replace(
+          ":interviewId",
+          `${interviewId}`
+        ),
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Token " + localStorage.getItem("token"),
+        },
+      }
+    );
+
+    const data = await res.json();
+    if (data) setQuery(data);
+  }, [interviewId]);
 
   function scrollToNextHighlightedText(index: number) {
     const nextHightlightedText = transcriptRef.current?.querySelector(
@@ -78,6 +143,10 @@ export default function useQuery(interviewTranscipt: string) {
     scrollToNextHighlightedText(0);
   }, [conversation]);
 
+  useEffect(() => {
+    getInterviewQuery();
+  }, [getInterviewQuery]);
+
   return {
     conversation,
     handleSummaryItemClick,
@@ -86,5 +155,9 @@ export default function useQuery(interviewTranscipt: string) {
     selectedIndex,
     citationsCount,
     activeCitationIndex,
+    askQuery,
+    userQueryText,
+    setUserQueryText,
+    query,
   };
 }

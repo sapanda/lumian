@@ -25,6 +25,7 @@ export const PROJECTS = {
     SELECTED_INTERVIEW: "/project/:projectId/interview/:interviewId",
   },
   CREATE_PROJECT: "/create-project",
+  MANAGE_PROJECT: "/manage-project/:projectId",
 };
 
 export const PUBLIC_ROUTES = [
@@ -69,6 +70,11 @@ export const PRIVATE_ROUTES = [
   },
   {
     path: PROJECTS.CREATE_PROJECT,
+    component: Projects.CreateProject,
+    exact: true,
+  },
+  {
+    path: PROJECTS.MANAGE_PROJECT,
     component: Projects.CreateProject,
     exact: true,
   },

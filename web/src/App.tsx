@@ -1,12 +1,15 @@
 import { ThemeProvider } from "@emotion/react";
 import theme from "./theme";
 import Router from "./router";
+import GlobalProvider from "./context/GlobalContext";
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <Router />
-    </ThemeProvider>
+    <GlobalProvider>
+      <ThemeProvider theme={theme}>
+        <Router />
+      </ThemeProvider>
+    </GlobalProvider>
   );
 }
 

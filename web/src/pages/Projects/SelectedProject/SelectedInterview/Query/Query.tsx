@@ -1,12 +1,12 @@
 import { Paper, Stack } from "@mui/material";
 import theme from "../../../../../theme/theme";
-import useQuery from "./useQuery";
+import useInterviewQuery from "./useInterviewQuery";
 import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import QuestionBox from "./QuestionBox/QuestionBox";
 import AnswerBox from "./AnswerBox/AnswerBox";
+import { QueryInput } from "../../../../../components/atoms";
 
 interface queryType {
-  data: queryProps[];
   interviewTranscript: string;
 }
 interface answerType {
@@ -18,14 +18,20 @@ interface queryProps {
   output: answerType[];
 }
 export default function Query(props: queryType) {
-  const { data, interviewTranscript } = props;
+  const { interviewTranscript } = props;
   const {
     conversation,
     citationsCount,
     transcriptRef,
     scrollToNextHighlightedText,
     activeCitationIndex,
-  } = useQuery(interviewTranscript);
+    userQueryText,
+    setUserQueryText,
+    askQuery,
+    query,
+    handleSummaryItemClick,
+    selectedIndex,
+  } = useInterviewQuery(interviewTranscript);
 
   return (
     <Stack
@@ -43,19 +49,11 @@ export default function Query(props: queryType) {
           height: "100%",
           minWidth: "45%",
           gap: "8px",
+          minHeight: "75vh",
+          maxHeight: "75vh",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            minHeight: "63vh",
-            maxHeight: "63vh",
-            overflowY: "auto",
-            padding: "2rem",
-            gap: "15px",
-          }}
-        >
+        <div className="flex flex-col flex-1 w-full gap-4 p-2 overflow-y-auto">
           <AnswerBox
             answer={[
               {
@@ -64,7 +62,7 @@ export default function Query(props: queryType) {
               },
             ]}
           />
-          {data.map((item: queryProps) => {
+          {query.map((item: queryProps, index: number) => {
             return (
               <Stack
                 sx={{
@@ -72,10 +70,25 @@ export default function Query(props: queryType) {
                 }}
               >
                 <QuestionBox question={item.query} />
-                <AnswerBox answer={item.output} />
+                <AnswerBox
+                  answer={item.output}
+                  handleSummaryItemClick={handleSummaryItemClick}
+                  selectedIndex={selectedIndex}
+                  queryIndex={index}
+                />
               </Stack>
             );
           })}
+        </div>
+        <div className="flex flex-col w-full p-2">
+          <QueryInput
+            placeholder="Enter your query"
+            onChange={(e) => {
+              setUserQueryText(e.target.value);
+            }}
+            value={userQueryText}
+            onSend={askQuery}
+          />
         </div>
       </Paper>
 
@@ -86,6 +99,8 @@ export default function Query(props: queryType) {
           maxWidth: "49%",
           position: "relative",
           ...(citationsCount > 0 && { paddingTop: "3.5rem" }),
+          minHeight: "75vh",
+          maxHeight: "75vh",
         }}
       >
         {citationsCount > 0 && (
@@ -116,8 +131,7 @@ export default function Query(props: queryType) {
           ref={transcriptRef}
           dangerouslySetInnerHTML={{ __html: conversation }}
           style={{
-            minHeight: "63vh",
-            maxHeight: "63vh",
+            height: "100%",
             overflowY: "auto",
           }}
         />

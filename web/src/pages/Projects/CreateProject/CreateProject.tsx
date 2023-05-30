@@ -4,29 +4,22 @@ import { projects_icon } from "../../../assets/icons/svg";
 import { LabelInputCombo } from "../../../components/molecules";
 import useCreateProject from "./useCreateProject";
 import { PrivateAppbar } from "../../../layout";
+import { PROJECTS } from "../../../router/routes.constant";
+import { useNavigate } from "react-router-dom";
 
 export default function CreateProject() {
-  const { errors, handleChange, handleSave, state } = useCreateProject();
+  const { errors, handleChange, handleSave, state, projectId } =
+    useCreateProject();
+  const navigate = useNavigate();
   return (
     <PrivateContainer
       appBar={<PrivateAppbar title="Projects" icon={projects_icon} />}
     >
-      <Stack
-        sx={{
-          width: "100%",
-          justifyContent: "center",
-          alignItems: "center",
-          marginTop: "5%",
-        }}
-      >
-        <Stack
-          sx={{
-            minWidth: "600px",
-            maxWidth: "600px",
-            gap: "16px",
-          }}
-        >
-          <Typography variant="h1">Create a New Project</Typography>
+      <div className="flex flex-col w-full items-center justify-center mt-[5%]">
+        <div className="flex flex-col min-w-[600px] max-w-[600px] gap-4">
+          <Typography variant="h1">
+            {projectId ? "Manage Project" : "Create a New Project"}
+          </Typography>
 
           <LabelInputCombo
             label="Name"
@@ -54,22 +47,12 @@ export default function CreateProject() {
             inputDescription="These are the questions you’d like us to answer for you. List each question on a new line."
             onChange={handleChange}
             value={state.questions}
-            placeholder="What are the main themes around financial priorities that the interviewees expect to have at retirement? Are interviewees with lower debt levels more likely to contribute to their 401(k)?"
+            placeholder="What are the main themes around financial priorities that the interviewees expect to have at retirement?
+            Are interviewees with lower debt levels more likely to contribute to their 401(k)?"
             name="questions"
             error={errors.questions}
             size="small"
             multiline
-          />
-
-          <LabelInputCombo
-            label="Members"
-            inputDescription="Comma-separated list of emails of people you would like to include in this project."
-            onChange={handleChange}
-            value={state.members}
-            placeholder="example1@corp.com,example2@corp.com"
-            name="members"
-            error={errors.members}
-            size="small"
           />
 
           <Stack sx={{ flexDirection: "row", gap: "12px" }}>
@@ -87,12 +70,13 @@ export default function CreateProject() {
               sx={{
                 width: "100px",
               }}
+              onClick={() => navigate(PROJECTS.default)}
             >
               Cancel
             </Button>
           </Stack>
-        </Stack>
-      </Stack>
+        </div>
+      </div>
     </PrivateContainer>
   );
 }

@@ -1,4 +1,4 @@
-import { Button, Stack, Typography } from "@mui/material";
+import { Button } from "@mui/material";
 import { PublicContainer } from "../../components/Containers";
 import useLogin from "./useLogin";
 import { TextInputL } from "../../components/atoms";
@@ -8,41 +8,21 @@ export default function Login() {
   const { email, password, setEmail, setPassword, handleLogin } = useLogin();
   return (
     <PublicContainer align="center">
-      <Stack
-        sx={{
-          flexDirection: "row",
-          boxShadow: "0px 4px 40px rgba(0, 0, 0, 0.2)",
-          borderRadius: "32px",
-          minWidth: "700px",
-          minHeight: "400px",
-          maxWidth: "700px",
-          maxHeight: "400px",
-          textAlign: "left",
-          overflow: "hidden",
-        }}
-      >
-        <Stack
-          sx={{
-            minWidth: "60%",
-            padding: "32px",
-          }}
-        >
-          <Typography variant="h1">Hello Again</Typography>
-          <Typography variant="body1">
+      <div className="flex flex-row shadow-card rounded-2xl text-left overflow-hidden min-w-[700px] min-h-[400px] max-w-[700px] max-h-[400px]">
+        <div className="flex flex-col p-8 min-w[60%]">
+          <span className="text-24-700">Hello Again</span>
+
+          <span className="text-gray-600 text-14-400">
             Synthesize your expert calls to make the most of your time.
-          </Typography>
-          <Stack sx={{ marginTop: "32px", gap: "10px" }}>
+          </span>
+
+          <div className="flex flex-col gap-3 mt-5">
             <TextInputL
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               startIcon={{
                 position: "start",
-                content: (
-                  <img
-                    src={email_icon}
-                    style={{ width: "20px", height: "20px" }}
-                  />
-                ),
+                content: <img className="w-5 h-5" src={email_icon} />,
               }}
               placeholder="Email"
             />
@@ -65,53 +45,28 @@ export default function Login() {
             <Button variant="contained" onClick={() => handleLogin()}>
               Continue
             </Button>
-          </Stack>
-          <Stack
-            sx={{
-              justifyContent: "center",
-              minHeight: "70px",
-            }}
-          >
-            <Typography variant="body2">
+          </div>
+
+          <div className="flex flex-col justify-center min-h-[70px]">
+            <p className="text-12-400">
               By using MetaNext you agree to the{" "}
-              <span style={{ color: "#0268C6", cursor: "pointer" }}>
+              <span className="text-blue-500 cursor-pointer">
                 Terms of Service
               </span>{" "}
               and{" "}
-              <span style={{ color: "#0268C6", cursor: "pointer" }}>
+              <span className="text-blue-500 cursor-pointer">
                 Privacy Policy
               </span>
-            </Typography>
-          </Stack>
-        </Stack>
-        <Stack
-          sx={{
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "#58A0E2",
-            minWidth: "40%",
-          }}
-        >
-          <Stack
-            sx={{
-              boxShadow: "0px 4px 40px rgba(0, 0, 0, 0.1)",
-              borderRadius: "10px",
-              padding: "8px",
-              backgroundColor: "#FAFAFA",
-              minHeight: "160px",
-              minWidth: "170px",
-              maxWidth: "170px",
-              justifyContent: "center",
-              alignItems: "center",
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="h4">
-              Some Promotion Message or Testimonial
-            </Typography>
-          </Stack>
-        </Stack>
-      </Stack>
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-center w-1/2 bg-blue-300">
+          <div className="flex flex-col items-center justify-center text-center bg-white shadow-2xl rounded-2xl min-w-[170px] min-h-[160px] max-w-[170px]">
+            <p className="text-16-500">Some Promotion Message or Testimonial</p>
+          </div>
+        </div>
+      </div>
     </PublicContainer>
   );
 }

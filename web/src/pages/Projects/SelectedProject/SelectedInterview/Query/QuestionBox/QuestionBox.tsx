@@ -1,4 +1,4 @@
-import { Stack } from "@mui/material";
+
 
 interface QuestionBoxProps {
   question: string;
@@ -7,23 +7,16 @@ interface QuestionBoxProps {
 export default function QuestionBox(props: QuestionBoxProps) {
   const { question } = props;
   return (
-    <Stack alignItems="flex-end">
-      <Stack
-        sx={{
-          flexDirection: "row",
-          gap: "20px",
-          padding: "10px 15px",
-          background: "#58A0E2",
-          color: "white",
+    <div className="flex flex-col items-end">
+      <div
+        className="flex gap-5 px-4 py-[10px] bg-blue-400 h-full text-white max-w-[80%] w-max"
+        style={{
           boxShadow: "0px 0px 6px rgba(0, 0, 0, 0.25)",
           borderRadius: "10px",
-          height: "100%",
-          width: "max-content",
-          maxWidth: "80%",
         }}
       >
         {question}
-      </Stack>
-    </Stack>
+      </div>
+    </div>
   );
 }

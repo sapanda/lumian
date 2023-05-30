@@ -10,7 +10,6 @@ export default function SelectedInterview() {
     summary,
     interviewTranscript,
     concise,
-    query,
     setActiveTab,
     interviewTitle,
     projectTitle,
@@ -52,7 +51,7 @@ export default function SelectedInterview() {
           {
             name: "Query",
             component: (
-              <Query data={query} interviewTranscript={interviewTranscript} />
+              <Query interviewTranscript={interviewTranscript} />
             ),
           },
         ]}

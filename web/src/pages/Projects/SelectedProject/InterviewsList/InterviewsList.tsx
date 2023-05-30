@@ -5,10 +5,10 @@ import { GetStarted, InterviewsTab } from ".";
 
 import useInterviewsList from "./useInterviewsList";
 import { PrivateAppbar } from "../../../../layout";
-import { Button, Stack, Typography } from "@mui/material";
+import { Button, Typography } from "@mui/material";
 
 export default function InterviewsList() {
-  const { rows, columns, projectTitle } = useInterviewsList();
+  const { rows, columns, projectTitle, startTranscribe } = useInterviewsList();
 
   return (
     <PrivateContainer
@@ -21,21 +21,14 @@ export default function InterviewsList() {
             path: "/all-projects",
           }}
         >
-          <Stack
-            direction="row"
-            gap="20px"
-            sx={{
-              width: "100%",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              padding: "20px 40px",
-            }}
-          >
+          <div className="flex items-center justify-end w-full gap-5 px-10 py-5">
             <Typography variant="body1">Feb 2 to Feb 10</Typography>
-            <Button variant="contained">Transcribe</Button>
+            <Button variant="contained" onClick={() => startTranscribe()}>
+              Transcribe
+            </Button>
             <Button variant="contained">Upload</Button>
             <Button variant="outlined">Settings</Button>
-          </Stack>
+          </div>
         </PrivateAppbar>
       }
     >
@@ -46,14 +39,6 @@ export default function InterviewsList() {
             {
               name: "Interviews",
               component: <InterviewsTab rows={rows} columns={columns} />,
-            },
-            {
-              name: "Insights",
-              component: <h1>Insights</h1>,
-            },
-            {
-              name: "Query",
-              component: <h1>Query</h1>,
             },
           ]}
           activeTabIndex={0}
