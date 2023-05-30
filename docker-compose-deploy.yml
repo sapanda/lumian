@@ -1,7 +1,15 @@
 version: "3.9"
 
+x-logging-config: &logging-config
+  logging:
+    driver: gcplogs
+    options:
+      gcp-project: ${GCLOUD_PROJECT_ID}
+
 services:
+
   web:
+    <<: *logging-config
     build:
       context: ./web
     ports:
@@ -15,6 +23,7 @@ services:
       - api
 
   api:
+    <<: *logging-config
     build:
       context: ./api
     ports:
@@ -30,6 +39,7 @@ services:
       - api_synthesis
 
   api_synthesis:
+    <<: *logging-config
     build:
       context: ./api-synthesis
     ports:
@@ -42,6 +52,7 @@ services:
       - DEBUG=1
 
   proxy:
+    <<: *logging-config
     build:
       context: ./proxy
     restart: always
