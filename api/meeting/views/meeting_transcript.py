@@ -41,7 +41,7 @@ class InitiateTranscription(APIView):
         url = url.replace('http://', 'https://')
         if 'lumian' in url:
             url = url.replace('http://', 'https://')
-            
+
         headers = {'Authorization': f'Token {self.request.auth}'}
         response_list = []
         for meeting in meetings:
