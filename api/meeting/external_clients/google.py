@@ -69,8 +69,7 @@ class GoogleAPI:
     def _fetch_meeting_urls(self, events):
 
         meeting_urls = []
-        for i, event in enumerate(events):
-            logger.debug(f"Events {i} :  {event}")
+        for event in events:
             if 'location' in event:
                 meeting_url = event['location']
                 meeting_urls.append(meeting_url)
