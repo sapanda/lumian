@@ -43,7 +43,7 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: "Roboto, sans-serif",
+    fontFamily: "Inter, sans-serif",
 
     h1: {
       fontSize: "24px",

@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useState } from "react";
 import Box from "@mui/material/Box";
 import Menu from "@mui/material/Menu";
 
@@ -8,19 +8,18 @@ import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 
 import { Stack } from "@mui/material";
-import useUser from "../../../../hooks/useUser";
 import { NavigateNext } from "@mui/icons-material";
 import useAuth from "../../../../hooks/useAuth";
 import { SidebarBtn } from "..";
 import { useNavigate } from "react-router-dom";
 import { ACCOUNT_SETTINGS } from "../../../../router/routes.constant";
 import theme from "../../../../theme/theme";
+import { useGetMeQuery } from "../../../../api/userApi";
 
-export default function AccountMenu() {
-  const user = useUser();
+export const AccountMenu = () => {
   const navigate = useNavigate();
   const { handleLogout } = useAuth();
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -28,6 +27,8 @@ export default function AccountMenu() {
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  const { data: user } = useGetMeQuery();
   return (
     <React.Fragment>
       <Box
@@ -50,7 +51,7 @@ export default function AccountMenu() {
               color: theme.palette.primary.contrastText,
             }}
           >
-            {user.name}
+            {user?.name}
           </Typography>
           <Typography
             variant="h6"
@@ -59,7 +60,7 @@ export default function AccountMenu() {
               color: theme.palette.primary.contrastText,
             }}
           >
-            {user.email}
+            {user?.email}
           </Typography>
         </Stack>
         <Tooltip title="Account settings">
@@ -149,4 +150,5 @@ export default function AccountMenu() {
       </Menu>
     </React.Fragment>
   );
-}
+};
+export default AccountMenu;

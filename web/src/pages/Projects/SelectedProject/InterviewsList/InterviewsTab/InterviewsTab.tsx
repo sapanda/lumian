@@ -1,4 +1,3 @@
-import { Stack } from "@mui/material";
 import { TableL } from "../../../../../components/molecules";
 import { useNavigate, useParams } from "react-router-dom";
 import { PROJECTS } from "../../../../../router/routes.constant";
@@ -33,12 +32,8 @@ export default function InterviewsTab(props: InterviewsTabProps) {
     );
   }
   return (
-    <Stack
-      sx={{
-        padding: "40px 132px",
-      }}
-    >
+    <div className="flex flex-col py-10 px-[132px]">
       <TableL rows={rows} columns={columns} onCellClick={onCellClick} />
-    </Stack>
+    </div>
   );
 }

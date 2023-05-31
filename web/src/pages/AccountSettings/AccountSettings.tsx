@@ -1,15 +1,14 @@
-import { Button, Stack, Typography } from "@mui/material";
+import { Button, Typography } from "@mui/material";
 import { settings_icon } from "../../assets/icons/svg";
 import { PrivateContainer } from "../../components/Containers";
 import useAccountSettings from "./useAccountSettings";
-import useUser from "../../hooks/useUser";
 import { LabelInputCombo } from "../../components/molecules";
 import { PrivateAppbar } from "../../layout";
 
 export default function AccountSettings() {
-  const user = useUser();
   const { errors, handleChange, handleSave, state } = useAccountSettings({
-    ...user,
+    name: "",
+    email: "",
     oldPassword: "",
     newPassword: "",
   });
@@ -17,21 +16,8 @@ export default function AccountSettings() {
     <PrivateContainer
       appBar={<PrivateAppbar icon={settings_icon} title="Account Settings" />}
     >
-      <Stack
-        sx={{
-          width: "100%",
-          justifyContent: "center",
-          alignItems: "center",
-          marginTop: "10%",
-        }}
-      >
-        <Stack
-          sx={{
-            minWidth: "600px",
-            maxWidth: "600px",
-            gap: "20px",
-          }}
-        >
+      <div className="w-full flex flex-col items-center justify-center mt-[10%]">
+        <div className="flex flex-col min-w-[600px] max-w-[600px] gap-[20px]">
           <Typography variant="h1">Manage Account</Typography>
 
           <LabelInputCombo
@@ -72,7 +58,7 @@ export default function AccountSettings() {
             type="password"
           />
 
-          <Stack sx={{ flexDirection: "row", gap: "12px" }}>
+          <div className="flex gap-3">
             <Button
               variant="contained"
               sx={{
@@ -90,9 +76,9 @@ export default function AccountSettings() {
             >
               Cancel
             </Button>
-          </Stack>
-        </Stack>
-      </Stack>
+          </div>
+        </div>
+      </div>
     </PrivateContainer>
   );
 }

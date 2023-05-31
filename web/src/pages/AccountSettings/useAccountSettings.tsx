@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { baseApiUrl, userEndPoints } from "../../api/apiEndpoints";
+import { useGetMeQuery, useUpdateMeMutation } from "../../api/userApi";
 
 const initialState = {
   name: "",
@@ -9,10 +9,7 @@ const initialState = {
 };
 
 const initialErrors = {
-  name: "",
-  email: "",
-  oldPassword: "",
-  newPassword: "",
+  ...initialState,
 };
 
 interface IState {
@@ -23,10 +20,15 @@ interface IState {
 }
 
 export default function useAccountSettings(defaultValues: IState) {
+  const { data: user } = useGetMeQuery();
+  const { mutate: updateMe } = useUpdateMeMutation();
+
   const [state, setState] = useState<IState>({
     ...initialState,
     ...defaultValues,
+    ...(user || {}),
   });
+
   const [errors, setErrors] = useState<IState>(initialErrors);
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -65,19 +67,7 @@ export default function useAccountSettings(defaultValues: IState) {
       name: state.name,
       password: state.newPassword,
     };
-    const res = await fetch(baseApiUrl + userEndPoints.me, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Token " + localStorage.getItem("token"),
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json();
-    if (data) {
-      alert("Account Updated Successfully");
-    }
+    updateMe(payload);
   }
 
   return { state, handleChange, handleSave, errors };

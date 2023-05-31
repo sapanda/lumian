@@ -41,25 +41,22 @@ export default function Summary(props: SummaryType) {
           padding: "1rem",
           minWidth: "49%",
           maxWidth: "49%",
+          minHeight: "75vh",
+          maxHeight: "75vh",
         }}
       >
         <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
           Summary
         </Typography>
-        <div
-          style={{
-            minHeight: "63vh",
-            maxHeight: "63vh",
-            overflowY: "auto",
-          }}
-        >
+        
+        <div className="min-h-[63vh] max-h-[63vh] overflow-y-auto">
           {data.map((item, index) => {
             const regex = /^[a-zA-Z0-9]/;
+            let selectedBgColor = "";
+            if (selectedIndex === index) {
+              selectedBgColor = "bg-blue-200";
+            }
             if (item.text[0] === " " || !regex.test(item.text[0])) {
-              let selectedBgColor = "";
-              if (selectedIndex === index) {
-                selectedBgColor = "bg-blue-200";
-              }
               return (
                 <>
                   {item.text[0]}
@@ -79,7 +76,7 @@ export default function Summary(props: SummaryType) {
             return (
               <span
                 key={index}
-                className="hover:bg-blue-100 cursor-pointer"
+                className={`hover:bg-blue-100 cursor-pointer ${selectedBgColor}`}
                 onClick={() => handleSummaryItemClick(item.references, index)}
               >
                 {item.text}
@@ -96,6 +93,8 @@ export default function Summary(props: SummaryType) {
           maxWidth: "49%",
           position: "relative",
           ...(citationsCount > 0 && { paddingTop: "3.5rem" }),
+          minHeight: "75vh",
+          maxHeight: "75vh",
         }}
       >
         {citationsCount > 0 && (
@@ -124,11 +123,7 @@ export default function Summary(props: SummaryType) {
         <div
           ref={transcriptRef}
           dangerouslySetInnerHTML={{ __html: conversation }}
-          style={{
-            minHeight: "63vh",
-            maxHeight: "63vh",
-            overflowY: "auto",
-          }}
+          className="h-full overflow-y-auto"
         />
       </Paper>
     </Stack>

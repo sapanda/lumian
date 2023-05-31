@@ -16,7 +16,7 @@ export default function PublicContainer(props: PublicContainerProps) {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(PROJECTS);
+      navigate(PROJECTS.default);
     }
   }, [isAuthenticated, navigate]);
   return (
