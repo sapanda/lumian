@@ -10,6 +10,7 @@ from rest_framework import (
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+from app.settings import DEPLOY_MODE, ModeEnum
 from meeting.serializers import InitiateTranscriptionSerializer
 
 import logging
@@ -24,7 +25,10 @@ class InitiateTranscription(APIView):
 
     def _get_meeting_list(self, request):
         url = reverse('calendar-meeting-details', request=request)
-        if 'lumian' in url:
+
+        # TODO: Remove Hack! Django app needs to figure out HTTPS another way
+        if DEPLOY_MODE == ModeEnum.development or \
+           DEPLOY_MODE == ModeEnum.production:
             url = url.replace('http://', 'https://')
 
         headers = {'Authorization': f'Token {request.auth}'}
@@ -39,7 +43,10 @@ class InitiateTranscription(APIView):
     def _add_bot_to_meetings(self, request, meetings, project_id, bot_name):
         url = reverse('add-bot-to-meeting', request=request)
         url = url.replace('http://', 'https://')
-        if 'lumian' in url:
+
+        # TODO: Remove Hack! Django app needs to figure out HTTPS another way
+        if DEPLOY_MODE == ModeEnum.development or \
+           DEPLOY_MODE == ModeEnum.production:
             url = url.replace('http://', 'https://')
 
         headers = {'Authorization': f'Token {self.request.auth}'}
@@ -74,7 +81,6 @@ class InitiateTranscription(APIView):
             project_id = serializer.validated_data['project_id']
 
             meetings = self._get_meeting_list(request)
-            return Response()
             message = self._add_bot_to_meetings(
                     request,
                     meetings,
