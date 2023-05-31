@@ -19,6 +19,9 @@ services:
       - node-modules:/web/node_modules
     env_file:
       - ./.env
+    environment:
+      - VITE_API_URL=${API_SERVICE_URL}/
+      - VITE_ZOOM_REDIRECT_URL=${WEB_SERVICE_URL}/all-projects
     depends_on:
       - api
 
