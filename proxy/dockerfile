@@ -5,11 +5,6 @@ COPY ./default.conf.tpl /etc/nginx/default.conf.tpl
 COPY ./uwsgi_params /etc/nginx/uwsgi_params
 COPY ./run.sh /run.sh
 
-ENV API_HOST=api
-ENV API_PORT=8000
-ENV WEB_HOST=web
-ENV WEB_PORT=8002
-
 USER root
 
 RUN chmod +x /run.sh

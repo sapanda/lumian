@@ -21,7 +21,7 @@ server {
     ssl_certificate_key /etc/nginx/ssl/live/api-dev.lumian.ai/privkey.pem;
 
     location / {
-        uwsgi_pass ${API_HOST}:${API_PORT};
+        uwsgi_pass ${API_HOST};
         include /etc/nginx/uwsgi_params;
         client_max_body_size 10M;
     }
@@ -50,6 +50,6 @@ server {
     ssl_certificate_key /etc/nginx/ssl/live/api-dev.lumian.ai/privkey.pem;
 
     location / {
-        proxy_pass http://${WEB_HOST}:${WEB_PORT};
+        proxy_pass http://${WEB_HOST};
     }
 }
