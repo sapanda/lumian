@@ -62,8 +62,11 @@ export default function Summary(props: SummaryType) {
                   {item.text[0]}
                   <span
                     key={index}
-                    className={`hover:bg-blue-100 cursor-pointer ${selectedBgColor}`}
+                    className={`${
+                      item?.references?.length > 0 && "hover:bg-blue-100"
+                    } cursor-pointer ${selectedBgColor}`}
                     onClick={() =>
+                      item?.references?.length > 0 &&
                       handleSummaryItemClick(item.references, index)
                     }
                   >
@@ -76,8 +79,13 @@ export default function Summary(props: SummaryType) {
             return (
               <span
                 key={index}
-                className={`hover:bg-blue-100 cursor-pointer ${selectedBgColor}`}
-                onClick={() => handleSummaryItemClick(item.references, index)}
+                className={`${
+                  item?.references?.length > 0 && "hover:bg-blue-100"
+                } cursor-pointer ${selectedBgColor}`}
+                onClick={() =>
+                  item?.references?.length > 0 &&
+                  handleSummaryItemClick(item.references, index)
+                }
               >
                 {item.text}
               </span>

@@ -55,8 +55,11 @@ export default function Concise(props: conciseType) {
                   {item.text[0]}
                   <span
                     key={index}
-                    className={`hover:bg-blue-100 cursor-pointer ${selectedBgColor}`}
+                    className={`${
+                      item?.references?.length > 0 && "hover:bg-blue-100"
+                    } cursor-pointer ${selectedBgColor}`}
                     onClick={() =>
+                      item?.references?.length > 0 &&
                       handleSummaryItemClick(item.references, index)
                     }
                   >
@@ -72,8 +75,13 @@ export default function Concise(props: conciseType) {
               <>
                 <span
                   key={index}
-                  className={`hover:bg-blue-100 cursor-pointer ${selectedBgColor}`}
-                  onClick={() => handleSummaryItemClick(item.references, index)}
+                  className={`${
+                    item?.references?.length > 0 && "hover:bg-blue-100"
+                  } cursor-pointer ${selectedBgColor}`}
+                  onClick={() =>
+                    item?.references?.length > 0 &&
+                    handleSummaryItemClick(item.references, index)
+                  }
                 >
                   {item.text}
                 </span>
