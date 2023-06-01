@@ -36,6 +36,12 @@ class InitiateTranscription(APIView):
 
     def _add_bot_to_meetings(self, request, meetings, project_id, bot_name):
         url = reverse('add-bot-to-meeting', request=request)
+
+        # TODO: Remove Hack! Django app needs to figure out HTTPS another way
+        if DEPLOY_MODE == ModeEnum.development or \
+           DEPLOY_MODE == ModeEnum.production:
+            url = url.replace('http://', 'https://')
+
         headers = {'Authorization': f'Token {self.request.auth}'}
         response_list = []
         for meeting in meetings:
