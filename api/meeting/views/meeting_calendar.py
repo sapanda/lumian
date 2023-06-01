@@ -70,7 +70,7 @@ class OAuthResponseView(APIView):
 
             access_token = creds.token
             refresh_token = creds.refresh_token
-            meeting_email = "placeholder@gmail.com"
+            meeting_email = f"placeholder-{user.id}@gmail.com"
 
             defaults = {
                 'user': user,

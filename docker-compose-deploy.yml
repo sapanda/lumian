@@ -1,7 +1,15 @@
 version: "3.9"
 
+x-logging-config: &logging-config
+  logging:
+    driver: gcplogs
+    options:
+      gcp-project: ${GCLOUD_PROJECT_ID}
+
 services:
+
   web:
+    <<: *logging-config
     build:
       context: ./web
     ports:
@@ -11,10 +19,14 @@ services:
       - node-modules:/web/node_modules
     env_file:
       - ./.env
+    environment:
+      - VITE_API_URL=${API_SERVICE_URL}/
+      - VITE_ZOOM_REDIRECT_URL=${WEB_SERVICE_URL}/all-projects
     depends_on:
       - api
 
   api:
+    <<: *logging-config
     build:
       context: ./api
     ports:
@@ -30,6 +42,7 @@ services:
       - api_synthesis
 
   api_synthesis:
+    <<: *logging-config
     build:
       context: ./api-synthesis
     ports:
@@ -40,6 +53,26 @@ services:
       - ./.env
     environment:
       - DEBUG=1
+
+  proxy:
+    <<: *logging-config
+    build:
+      context: ./proxy
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./certbot/www:/var/www/certbot/:ro
+      - ./certbot/conf/:/etc/nginx/ssl/:ro
+    depends_on:
+      - api
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/www/:/var/www/certbot/:rw
+      - ./certbot/conf/:/etc/letsencrypt/:rw
 
 volumes:
   node-modules:
