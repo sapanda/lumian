@@ -54,7 +54,7 @@ class QueryInline(ReadOnlyInline):
 class TranscriptAdmin(admin.ModelAdmin):
     """Admin page for the transcript model."""
     form = TranscriptForm
-    list_display = ['title', 'interviewee_names']
+    list_display = ['id', 'title', 'interviewee_names']
 
     def get_inlines(self, request, obj=None):
         return [SynthesisInline, EmbedsInline, QueryInline] \

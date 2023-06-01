@@ -9,7 +9,7 @@ if [ $DEPLOY_MODE != "local" ]; then
     python manage.py collectstatic --noinput
 fi
 
-if [ $DEPLOY_MODE = "prod" ]; then
+if [ $DEPLOY_MODE = "dev" ] || [ $DEPLOY_MODE = "prod" ]; then
     uwsgi --socket :8000 --workers 4 --master --enable-threads --module app.wsgi
 else
     python manage.py runserver 0.0.0.0:8000
