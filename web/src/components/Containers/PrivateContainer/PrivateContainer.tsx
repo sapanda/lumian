@@ -3,8 +3,9 @@ import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 
 import { Sidebar } from "../../../layout";
-import { Toolbar } from "@mui/material";
+import { Backdrop, CircularProgress, Toolbar } from "@mui/material";
 import useAuth from "../../../hooks/useAuth";
+import { useIsFetching } from "@tanstack/react-query";
 
 interface PrivateContainerProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ interface PrivateContainerProps {
 export default function PrivateContainer(props: PrivateContainerProps) {
   const { children, appBar } = props;
   const { isAuthenticated, handleLogout } = useAuth();
+  const isFetching = useIsFetching();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -34,6 +36,12 @@ export default function PrivateContainer(props: PrivateContainerProps) {
         <Toolbar />
         {children}
       </Box>
+      <Backdrop
+        sx={{ zIndex: (theme) => theme.zIndex.drawer + 999 }}
+        open={isFetching > 0}
+      >
+        <CircularProgress color="primary" />
+      </Backdrop>
     </Box>
   );
 }
