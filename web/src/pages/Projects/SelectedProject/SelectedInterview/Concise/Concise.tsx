@@ -1,7 +1,7 @@
 import { Paper, Typography } from "@mui/material";
 import theme from "../../../../../theme/theme";
-import useConcise from "./useConcise";
 import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
+import useInterview from "../useInterview";
 
 interface conciseProps {
   text: string;
@@ -15,7 +15,7 @@ interface conciseType {
 }
 
 export default function Concise(props: conciseType) {
-  const { data, interviewTranscript } = props;
+  const { data } = props;
   const {
     conversation,
     handleSummaryItemClick,
@@ -24,7 +24,7 @@ export default function Concise(props: conciseType) {
     transcriptRef,
     scrollToNextHighlightedText,
     activeCitationIndex,
-  } = useConcise(interviewTranscript);
+  } = useInterview();
   return (
     <div className="flex gap-5 px-8 py-4">
       <Paper
