@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "./api";
-import { baseApiUrl, projectEndpoints } from "./apiEndpoints";
+import { projectEndpoints } from "./apiEndpoints";
 import { useNavigate } from "react-router-dom";
 import { PROJECTS } from "../router/routes.constant";
 
@@ -18,9 +18,7 @@ interface ProjectPayloadType {
 }
 
 const getProjects = async () => {
-  const res = await axiosInstance.get(
-    `${baseApiUrl}${projectEndpoints.projectList}`
-  );
+  const res = await axiosInstance.get(`${projectEndpoints.projectList}`);
   const transformedData = res.data.map((project: ProjectType) => {
     return {
       id: project.id,
@@ -35,7 +33,7 @@ const getProjects = async () => {
 
 const getProject = async (projectId: number | undefined) => {
   const res = await axiosInstance.get(
-    `${baseApiUrl}${projectEndpoints.projectList}${projectId}/`
+    `${projectEndpoints.projectList}${projectId}/`
   );
 
   const transformedData = {
@@ -48,10 +46,7 @@ const getProject = async (projectId: number | undefined) => {
 };
 
 const createProject = async (payload: ProjectPayloadType) => {
-  return await axiosInstance.post(
-    `${baseApiUrl}${projectEndpoints.projectList}`,
-    payload
-  );
+  return await axiosInstance.post(`${projectEndpoints.projectList}`, payload);
 };
 
 const updateProject = async (
@@ -59,7 +54,7 @@ const updateProject = async (
   projectId: number
 ) => {
   return await axiosInstance.patch(
-    `${baseApiUrl}${projectEndpoints.projectList}${projectId}/`,
+    `${projectEndpoints.projectList}${projectId}/`,
     payload
   );
 };

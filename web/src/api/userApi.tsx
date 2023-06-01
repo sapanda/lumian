@@ -1,4 +1,4 @@
-import { baseApiUrl, userEndPoints } from "./apiEndpoints";
+import { userEndPoints } from "./apiEndpoints";
 import { axiosInstance } from "./api";
 import {
   QueryKey,
@@ -14,15 +14,12 @@ interface UpdateMePayload {
 }
 
 const getMe = async () => {
-  const res = await axiosInstance.get(`${baseApiUrl}${userEndPoints.me}`);
+  const res = await axiosInstance.get(`${userEndPoints.me}`);
   return res.data;
 };
 
 const updateMe = async (payload: UpdateMePayload) => {
-  const res = await axiosInstance.put(
-    `${baseApiUrl}${userEndPoints.me}`,
-    payload
-  );
+  const res = await axiosInstance.put(`${userEndPoints.me}`, payload);
   return res.data;
 };
 

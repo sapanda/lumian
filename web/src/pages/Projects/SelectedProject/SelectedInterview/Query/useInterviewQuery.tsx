@@ -1,11 +1,9 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 
-import {
-  baseApiUrl,
-  interviewEndPoints,
-} from "../../../../../api/apiEndpoints";
+import { interviewEndPoints } from "../../../../../api/apiEndpoints";
 import { useParams } from "react-router-dom";
 import { useGetMeetingQuery } from "../../../../../api/meetingApi";
+import { axiosInstance } from "../../../../../api/api";
 
 export default function useInterviewQuery(interviewTranscipt: string) {
   const originalTranscriptRef = useRef<string>("");
@@ -22,26 +20,26 @@ export default function useInterviewQuery(interviewTranscipt: string) {
   const { data: query, refetch: updateQuery } = useGetMeetingQuery(
     parseInt(interviewId || "0")
   );
+
   const askQuery = async () => {
     const formData = new FormData();
     formData.append("query", userQueryText);
 
     const boundary = Math.random().toString().substr(2);
 
-    const res = await fetch(
-      baseApiUrl +
-        interviewEndPoints.interviewQuery.replace(":interviewId", "1"),
+    if (!interviewId) return;
+    const res = await axiosInstance.post(
+      interviewEndPoints.interviewQuery.replace(":interviewId", interviewId),
+      formData,
       {
-        method: "POST",
         headers: {
           "Content-Type": `multipart/form-data; boundary=${boundary}`,
-          Authorization: "Token " + localStorage.getItem("token"),
           accept: "application/json",
         },
-        body: formData,
       }
     );
-    const data = await res.json();
+    const data = await res.data;
+
     if (data.output) {
       setUserQueryText("");
       updateQuery();

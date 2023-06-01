@@ -1,18 +1,12 @@
 import { QueryKey, useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "./api";
-import {
-  baseApiUrl,
-  interviewEndPoints,
-  meetingEndPoints,
-} from "./apiEndpoints";
+import { interviewEndPoints, meetingEndPoints } from "./apiEndpoints";
 
 interface rowProps {
   [key: string]: string | number;
 }
 const connectApp = async () => {
-  const res = await axiosInstance.get(
-    `${baseApiUrl}${meetingEndPoints.oauthUrl}`
-  );
+  const res = await axiosInstance.get(`${meetingEndPoints.oauthUrl}`);
   const redirectUrl = res.data;
   window.location.href = redirectUrl;
 };
