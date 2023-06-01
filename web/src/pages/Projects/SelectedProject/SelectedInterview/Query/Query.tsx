@@ -62,7 +62,7 @@ export default function Query(props: queryType) {
               },
             ]}
           />
-          {query.map((item: queryProps, index: number) => {
+          {query?.map((item: queryProps, index: number) => {
             return (
               <Stack
                 sx={{

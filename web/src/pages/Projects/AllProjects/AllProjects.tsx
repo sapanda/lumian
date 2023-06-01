@@ -7,6 +7,7 @@ import { PrivateAppbar } from "../../../layout";
 import { PROJECTS } from "../../../router/routes.constant";
 import { useNavigate } from "react-router-dom";
 import useProjects from "../useProjects";
+import { connectApp } from "../../../api/meetingApi";
 
 const columns = [
   {
@@ -37,7 +38,7 @@ interface rowType {
 
 export default function AllProjects() {
   const navigate = useNavigate();
-  const { allProjects, connectApp, isFetching, isLoading } = useProjects();
+  const { allProjects, isFetching, isLoading } = useProjects();
 
   function onCellClick(row: rowType) {
     const projectId = row.id;

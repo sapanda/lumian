@@ -10,7 +10,6 @@ export default function SelectedInterview() {
     summary,
     interviewTranscript,
     concise,
-    setActiveTab,
     interviewTitle,
     projectTitle,
     projectId,
@@ -50,13 +49,10 @@ export default function SelectedInterview() {
           },
           {
             name: "Query",
-            component: (
-              <Query interviewTranscript={interviewTranscript} />
-            ),
+            component: <Query interviewTranscript={interviewTranscript} />,
           },
         ]}
         activeTabIndex={0}
-        onTabChange={(index) => setActiveTab(index)}
       />
     </PrivateContainer>
   );
