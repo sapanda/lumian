@@ -1,7 +1,7 @@
 import { Paper, Stack, Typography } from "@mui/material";
 import theme from "../../../../../theme/theme";
-import useSummary from "./useSummary";
 import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
+import useInterview from "../useInterview";
 
 interface summaryProps {
   text: string;
@@ -15,7 +15,7 @@ interface SummaryType {
 }
 
 export default function Summary(props: SummaryType) {
-  const { data, interviewTranscript } = props;
+  const { data } = props;
   const {
     conversation,
     handleSummaryItemClick,
@@ -24,7 +24,7 @@ export default function Summary(props: SummaryType) {
     transcriptRef,
     scrollToNextHighlightedText,
     activeCitationIndex,
-  } = useSummary(interviewTranscript);
+  } = useInterview();
   return (
     <Stack
       sx={{
@@ -48,7 +48,7 @@ export default function Summary(props: SummaryType) {
         <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
           Summary
         </Typography>
-        
+
         <div className="min-h-[63vh] max-h-[63vh] overflow-y-auto">
           {data.map((item, index) => {
             const regex = /^[a-zA-Z0-9]/;

@@ -1,14 +1,12 @@
 import { Paper, Stack } from "@mui/material";
 import theme from "../../../../../theme/theme";
-import useInterviewQuery from "./useInterviewQuery";
+
 import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import QuestionBox from "./QuestionBox/QuestionBox";
 import AnswerBox from "./AnswerBox/AnswerBox";
 import { QueryInput } from "../../../../../components/atoms";
+import useInterview from "../useInterview";
 
-interface queryType {
-  interviewTranscript: string;
-}
 interface answerType {
   text: string;
   references: [number, number][];
@@ -17,8 +15,7 @@ interface queryProps {
   query: string;
   output: answerType[];
 }
-export default function Query(props: queryType) {
-  const { interviewTranscript } = props;
+export default function Query() {
   const {
     conversation,
     citationsCount,
@@ -31,7 +28,7 @@ export default function Query(props: queryType) {
     query,
     handleSummaryItemClick,
     selectedIndex,
-  } = useInterviewQuery(interviewTranscript);
+  } = useInterview();
 
   return (
     <Stack
