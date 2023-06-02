@@ -1,4 +1,4 @@
-import { baseApiUrl, authEndPoints } from "./apiEndpoints";
+import { authEndPoints } from "./apiEndpoints";
 import { axiosInstance } from "./api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -12,7 +12,7 @@ interface LoginParams {
 
 const login = async (credentials: LoginParams) => {
   const response = await axiosInstance.post<LoginResponse>(
-    `${baseApiUrl}${authEndPoints.login}`,
+    `${authEndPoints.login}`,
     credentials
   );
   return response.data;

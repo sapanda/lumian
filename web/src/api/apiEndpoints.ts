@@ -1,5 +1,3 @@
-const baseApiUrl = import.meta.env.VITE_API_URL as string;
-
 const authEndPoints = {
   login: "api/user/token/",
 };
@@ -22,13 +20,12 @@ const interviewEndPoints = {
 };
 
 const meetingEndPoints = {
-  oauthUrl: "/api/meeting/calendar/oauth-request",
+  oauthUrl: "api/meeting/calendar/oauth-request",
   initiateTranscription: "api/meeting/initiate-transcription",
   accessToken: "api/meeting/calendar/oauth-response",
 };
 
 export {
-  baseApiUrl,
   authEndPoints,
   userEndPoints,
   interviewEndPoints,

@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { baseApiUrl, projectEndpoints } from "../../../api/apiEndpoints";
-import { useNavigate, useParams } from "react-router-dom";
-import { PROJECTS } from "../../../router/routes.constant";
+import { useParams } from "react-router-dom";
+
+import {
+  useCreateProjectMutation,
+  useGetProjectMutation,
+  useUpdateProjectMutation,
+} from "../../../api/projectApi";
 
 const initialState = {
   projectName: "",
@@ -10,9 +14,7 @@ const initialState = {
 };
 
 const initialErrors = {
-  projectName: "",
-  goal: "",
-  questions: "",
+  ...initialState,
 };
 
 interface IState {
@@ -22,9 +24,11 @@ interface IState {
 }
 
 export default function useCreateProject() {
+  const { mutateAsync: getProject } = useGetProjectMutation();
   const [state, setState] = useState<IState>(initialState);
   const [errors, setErrors] = useState<IState>(initialErrors);
-  const navigate = useNavigate();
+  const { mutate: createProject } = useCreateProjectMutation();
+  const { mutate: updateProject } = useUpdateProjectMutation();
 
   const { projectId } = useParams();
 
@@ -61,59 +65,28 @@ export default function useCreateProject() {
       questions: state.questions.split("\n").filter((q) => q.length > 0),
     };
 
-    let url = baseApiUrl + projectEndpoints.projectList;
-    let method = "POST";
-    let updateType = "Added";
-
     if (projectId) {
-      url =
-        baseApiUrl +
-        projectEndpoints.projectDetail.replace(":projectId", `${projectId}`);
-      method = "PATCH";
-      updateType = "Updated";
+      updateProject({ payload, projectId: parseInt(projectId) });
+      return;
     }
 
-    const res = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Token " + localStorage.getItem("token"),
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json();
-    if (data) {
-      alert(`Project ${updateType} Successfully`);
-      navigate(PROJECTS.default);
-    }
+    createProject(payload);
   }
 
   const getProjectDetail = useCallback(async () => {
     if (!projectId) {
       return;
     }
-    const res = await fetch(
-      baseApiUrl +
-        projectEndpoints.projectDetail.replace(":projectId", `${projectId}`),
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Token " + localStorage.getItem("token"),
-        },
-      }
-    );
+    const data = await getProject(parseInt(projectId));
 
-    const data = await res.json();
     if (data) {
       setState({
-        projectName: data.title,
+        projectName: data.name,
         goal: data.goal,
         questions: data.questions.join("\n"),
       });
     }
-  }, [projectId]);
+  }, [getProject, projectId]);
 
   useEffect(() => {
     getProjectDetail();

@@ -5,6 +5,7 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   server: {
+    hmr: process.env.DEPLOY_MODE === "local" ? true : false,
     watch: {
       usePolling: true,
     },

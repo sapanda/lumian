@@ -1,20 +1,9 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 
-import {
-  baseApiUrl,
-  interviewEndPoints,
-} from "../../../../../api/apiEndpoints";
+import { interviewEndPoints } from "../../../../../api/apiEndpoints";
 import { useParams } from "react-router-dom";
-
-interface queryProps {
-  query: string;
-  output: answerType[];
-}
-
-interface answerType {
-  text: string;
-  references: [number, number][];
-}
+import { useGetMeetingQuery } from "../../../../../api/meetingApi";
+import { axiosInstance } from "../../../../../api/api";
 
 export default function useInterviewQuery(interviewTranscipt: string) {
   const originalTranscriptRef = useRef<string>("");
@@ -24,55 +13,38 @@ export default function useInterviewQuery(interviewTranscipt: string) {
   const [conversation, setConversation] = useState<string>("");
   const [citationsCount, setCitationsCount] = useState<number>(0);
   const [activeCitationIndex, setActiveCitationIndex] = useState<number>(0);
-  const [query, setQuery] = useState<queryProps[]>([]);
+
   const [userQueryText, setUserQueryText] = useState<string>("");
   const { interviewId } = useParams();
+
+  const { data: query, refetch: updateQuery } = useGetMeetingQuery(
+    parseInt(interviewId || "0")
+  );
 
   const askQuery = async () => {
     const formData = new FormData();
     formData.append("query", userQueryText);
-    console.log(userQueryText);
+
     const boundary = Math.random().toString().substr(2);
 
-    const res = await fetch(
-      baseApiUrl +
-        interviewEndPoints.interviewQuery.replace(":interviewId", "1"),
+    if (!interviewId) return;
+    const res = await axiosInstance.post(
+      interviewEndPoints.interviewQuery.replace(":interviewId", interviewId),
+      formData,
       {
-        method: "POST",
         headers: {
           "Content-Type": `multipart/form-data; boundary=${boundary}`,
-          Authorization: "Token " + localStorage.getItem("token"),
           accept: "application/json",
         },
-        body: formData,
       }
     );
-    const data = await res.json();
+    const data = await res.data;
+
     if (data.output) {
-      setUserQueryText("")
-      getInterviewQuery();
+      setUserQueryText("");
+      updateQuery();
     }
   };
-
-  const getInterviewQuery = useCallback(async () => {
-    const res = await fetch(
-      baseApiUrl +
-        interviewEndPoints.interviewQuery.replace(
-          ":interviewId",
-          `${interviewId}`
-        ),
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Token " + localStorage.getItem("token"),
-        },
-      }
-    );
-
-    const data = await res.json();
-    if (data) setQuery(data);
-  }, [interviewId]);
 
   function scrollToNextHighlightedText(index: number) {
     const nextHightlightedText = transcriptRef.current?.querySelector(
@@ -142,10 +114,6 @@ export default function useInterviewQuery(interviewTranscipt: string) {
   useEffect(() => {
     scrollToNextHighlightedText(0);
   }, [conversation]);
-
-  useEffect(() => {
-    getInterviewQuery();
-  }, [getInterviewQuery]);
 
   return {
     conversation,

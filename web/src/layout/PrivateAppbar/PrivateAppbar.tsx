@@ -1,12 +1,4 @@
-import {
-  AppBar,
-  Backdrop,
-  CircularProgress,
-  IconButton,
-  Stack,
-  Toolbar,
-  Typography,
-} from "@mui/material";
+import { AppBar, IconButton, Stack, Toolbar, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 const drawerWidth = 240;
@@ -63,12 +55,6 @@ function AppBarLabel(
           )}
         </Stack>
       </Stack>
-      <Backdrop
-        sx={{ zIndex: (theme) => theme.zIndex.drawer + 999 }}
-        open={false}
-      >
-        <CircularProgress color="primary" />
-      </Backdrop>
     </Toolbar>
   );
 }
