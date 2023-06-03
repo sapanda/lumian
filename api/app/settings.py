@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from enum import Enum
 from google.oauth2 import service_account
+import json
+import logging
 import os
 from pathlib import Path
 import sys
@@ -248,3 +250,23 @@ if DEPLOY_MODE == ModeEnum.development or DEPLOY_MODE == ModeEnum.production:
     GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
         os.environ.get('GCLOUD_SECRETS_PATH')
     )
+
+
+# Add Json Formatting to Google Cloud Logs
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        log_data = {
+            "severity": record.levelname,
+            "message": record.getMessage(),
+            "logging.googleapis.com/sourceLocation": {
+                "file": record.filename,
+                "line": record.lineno,
+                "function": record.funcName,
+            },
+        }
+        return json.dumps(log_data)
+
+
+if DEPLOY_MODE != ModeEnum.local and DEPLOY_MODE != ModeEnum.github:
+    logging.getLogger().handlers[0].setFormatter(JSONFormatter())
+logger = logging.getLogger()

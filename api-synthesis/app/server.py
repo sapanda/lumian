@@ -54,7 +54,8 @@ class JSONFormatter(logging.Formatter):
 
 
 logging.basicConfig(level=logging.INFO)
-if settings.deploy_mode != ModeEnum.local:
+if settings.deploy_mode != ModeEnum.local and \
+   settings.deploy_mode != ModeEnum.github:
     logging.getLogger().handlers[0].setFormatter(JSONFormatter())
 logger = logging.getLogger()
 
