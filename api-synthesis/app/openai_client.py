@@ -1,8 +1,9 @@
+import logging
 import openai
-from openai.error import Timeout
+from openai.error import Timeout, RateLimitError
 from retry import retry
 
-from .errors import OpenAITimeoutException
+from .errors import OpenAITimeoutException, OpenAIRateLimitException
 from .interfaces import OpenAIClientInterface
 
 
@@ -23,6 +24,15 @@ DEFAULT_TEMPERATURE = 0
 DEFAULT_MAX_TOKENS = 600
 
 
+# Retry Params
+RETRY_TRIES = 3
+RETRY_DELAY_TIMEOUT = 5
+RETRY_DELAY_RATELIMIT = 5
+RETRY_BACKOFF = 2
+
+logger = logging.getLogger()
+
+
 class OpenAIClient(OpenAIClientInterface):
     def __init__(self, org_id: str, api_key: str) -> None:
         openai.organization = org_id
@@ -33,8 +43,10 @@ class OpenAIClient(OpenAIClientInterface):
         cost = tokens_used / 1000 * OPENAI_PRICING[model]
         return cost
 
-    # TODO: Need to save all prompts to a log
-    @retry(OpenAITimeoutException, tries=3, delay=5, backoff=2)
+    @retry(OpenAIRateLimitException, tries=RETRY_TRIES,
+           delay=RETRY_DELAY_RATELIMIT, backoff=RETRY_BACKOFF)
+    @retry(OpenAITimeoutException, tries=RETRY_TRIES,
+           delay=RETRY_DELAY_TIMEOUT, backoff=RETRY_BACKOFF)
     def execute_completion(self,
                            prompt: str,
                            model: str = OPENAI_MODEL_CHAT,
@@ -72,14 +84,21 @@ class OpenAIClient(OpenAIClientInterface):
                 "tokens_used": tokens_used,
                 "cost": cost
             }
-        except Timeout:
+        except Timeout as e:
+            logger.exception("OpenAI Completion Timeout", exc_info=e)
             raise OpenAITimeoutException(
-                detail="OpenAI could not complete the completions"
-                "request in time")
+                detail="OpenAI could not complete the requests in time")
+        except RateLimitError as e:
+            logger.exception("OpenAI Completion hit Rate Limit", exc_info=e)
+            raise OpenAIRateLimitException(
+                detail="OpenAI rate limit exceeded, please try again later")
 
         return ret_val
 
-    @retry(OpenAITimeoutException, tries=3, delay=5, backoff=2)
+    @retry(OpenAIRateLimitException, tries=RETRY_TRIES,
+           delay=RETRY_DELAY_RATELIMIT, backoff=RETRY_BACKOFF)
+    @retry(OpenAITimeoutException, tries=RETRY_TRIES,
+           delay=RETRY_DELAY_TIMEOUT, backoff=RETRY_BACKOFF)
     def execute_embeds(self, text: str) -> dict:
         """Generate embedding vector for the input text"""
         try:
@@ -97,14 +116,21 @@ class OpenAIClient(OpenAIClientInterface):
                 "tokens_used": tokens_used,
                 "cost": cost
             }
-        except Timeout:
+        except Timeout as e:
+            logger.exception("OpenAI Embedding Timeout", exc_info=e)
             raise OpenAITimeoutException(
-                detail="OpenAI could not complete the embedding"
-                "request in time")
+                detail="OpenAI could not complete the requests in time")
+        except RateLimitError as e:
+            logger.exception("OpenAI Embedding hit Rate Limit", exc_info=e)
+            raise OpenAIRateLimitException(
+                detail="OpenAI rate limit exceeded, please try again later")
 
         return ret_val
 
-    @retry(OpenAITimeoutException, tries=3, delay=5, backoff=2)
+    @retry(OpenAIRateLimitException, tries=RETRY_TRIES,
+           delay=RETRY_DELAY_RATELIMIT, backoff=RETRY_BACKOFF)
+    @retry(OpenAITimeoutException, tries=RETRY_TRIES,
+           delay=RETRY_DELAY_TIMEOUT, backoff=RETRY_BACKOFF)
     def execute_embeds_batch(self,
                              request_list: 'list[str]',
                              object_id: int = None,
@@ -146,9 +172,13 @@ class OpenAIClient(OpenAIClientInterface):
                     "tokens_used": tokens_used,
                     "cost": cost
                 }
-        except Timeout:
+        except Timeout as e:
+            logger.exception("OpenAI Embedding Batch Timeout", exc_info=e)
             raise OpenAITimeoutException(
-                detail="OpenAI could not complete the completions"
-                "request in time")
+                detail="OpenAI could not complete the requests in time")
+        except RateLimitError as e:
+            logger.exception("OpenAI Embedding Batch Rate Limit", exc_info=e)
+            raise OpenAIRateLimitException(
+                detail="OpenAI rate limit exceeded, please try again later")
 
         return ret_val
