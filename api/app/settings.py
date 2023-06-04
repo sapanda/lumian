@@ -251,27 +251,6 @@ if DEPLOY_MODE == ModeEnum.development or DEPLOY_MODE == ModeEnum.production:
         os.environ.get('GCLOUD_SECRETS_PATH')
     )
 
-
-# Add Json Formatting to Google Cloud Logs
-class JSONFormatter(logging.Formatter):
-    def format(self, record):
-        log_data = {
-            "severity": record.levelname,
-            "message": record.getMessage(),
-            "logging.googleapis.com/sourceLocation": {
-                "file": record.filename,
-                "line": record.lineno,
-                "function": record.funcName,
-            },
-        }
-        return json.dumps(log_data)
-
-
-default_log_level = os.getenv("DJANGO_LOG_LEVEL", "INFO")
-logging.basicConfig(level=logging.getLevelName(default_log_level))
-if DEPLOY_MODE != ModeEnum.local and DEPLOY_MODE != ModeEnum.github:
-    logging.getLogger().handlers[0].setFormatter(JSONFormatter())
-
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
     SENTRY_DSN = os.environ.get('SENTRY_DSN')

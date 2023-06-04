@@ -38,26 +38,8 @@ if settings.deploy_mode == ModeEnum.local and settings.debug:
     import debugpy
     debugpy.listen(("0.0.0.0", 3001))
 
-
-class JSONFormatter(logging.Formatter):
-    def format(self, record):
-        log_data = {
-            "severity": record.levelname,
-            "message": record.getMessage(),
-            "logging.googleapis.com/sourceLocation": {
-                "file": record.filename,
-                "line": record.lineno,
-                "function": record.funcName,
-            },
-        }
-        return json.dumps(log_data)
-
-
-logging.basicConfig(level=logging.INFO)
-if settings.deploy_mode != ModeEnum.local and \
-   settings.deploy_mode != ModeEnum.github:
-    logging.getLogger().handlers[0].setFormatter(JSONFormatter())
-
+if settings.deploy_mode == ModeEnum.development or \
+   settings.deploy_mode == ModeEnum.production:
     import sentry_sdk
     sentry_sdk.init(
         dsn=settings.sentry_dsn,
@@ -68,7 +50,10 @@ if settings.deploy_mode != ModeEnum.local and \
         traces_sample_rate=1.0,
     )
 
+LOG_FORMAT = "%(asctime)s [%(levelname)-6s] %(name)s: %(message)s | %(funcName)s() L%(lineno)-4d" # noqa
+logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
 logger = logging.getLogger()
+
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
