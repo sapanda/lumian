@@ -10,6 +10,11 @@ class OpenAITimeoutException(SynthesisAPIException):
     pass
 
 
+class OpenAIRateLimitException(SynthesisAPIException):
+    """Rate Limit exception for openai rate limit error"""
+    pass
+
+
 class ObjectNotFoundException(SynthesisAPIException):
     """Exception for object not found in storage"""
     pass

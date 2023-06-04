@@ -10,7 +10,8 @@ from . import models, usecases
 from .config import Settings, ModeEnum
 from .database import SessionLocal, engine
 from .errors import (
-    OpenAITimeoutException, ObjectNotFoundException, SynthesisAPIException,
+    OpenAITimeoutException, OpenAIRateLimitException,
+    ObjectNotFoundException, SynthesisAPIException,
     ObjectAlreadyPresentException
 )
 from .interfaces import (
@@ -26,7 +27,8 @@ from .synthesis import Synthesis
 EXCEPTION_TO_STATUS_CODE_MAPPING = {
     ObjectAlreadyPresentException: status.HTTP_409_CONFLICT,
     ObjectNotFoundException: status.HTTP_404_NOT_FOUND,
-    OpenAITimeoutException: status.HTTP_500_INTERNAL_SERVER_ERROR
+    OpenAITimeoutException: status.HTTP_500_INTERNAL_SERVER_ERROR,
+    OpenAIRateLimitException: status.HTTP_500_INTERNAL_SERVER_ERROR,
 }
 
 settings = Settings()
@@ -36,14 +38,28 @@ if settings.deploy_mode == ModeEnum.local and settings.debug:
     import debugpy
     debugpy.listen(("0.0.0.0", 3001))
 
+if settings.deploy_mode == ModeEnum.development or \
+   settings.deploy_mode == ModeEnum.production:
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        # We recommend adjusting this value in production,
+        traces_sample_rate=1.0,
+    )
+
+LOG_FORMAT = "%(asctime)s [%(levelname)-6s] %(name)s: %(message)s | %(funcName)s() L%(lineno)-4d" # noqa
+logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
+logger = logging.getLogger()
+
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Synthesis API",
     version="0.0.1"
 )
-
-logger = logging.getLogger(__name__)
 
 
 def get_settings():
@@ -112,7 +128,7 @@ def get_synthesis(
 
 @app.exception_handler(SynthesisAPIException)
 def exception_handler(request, exc: SynthesisAPIException):
-    """Exception handler for OpenAITimeoutException"""
+    """Exception handler for SynthesisAPIException"""
     status_code = EXCEPTION_TO_STATUS_CODE_MAPPING[type(exc)]
     return Response(content=json.dumps({"error": exc.detail}),
                     status_code=status_code)
@@ -137,7 +153,7 @@ def get_transcript(
     id: int,
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
 ):
-    print(" ------- GET request :  /transcript/{id}}")
+    logger.info(f" ---- GET request initiated :  /transcript/{id}")
     """API for getting a transcript the way it is stored"""
     data = usecases.get_transcript(id, repo)
     return data
@@ -150,7 +166,7 @@ def save_transcript(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
     transcript: str = Body(),
 ):
-    print(" ------- POST request :  /transcript/{id}")
+    logger.info(f" ---- POST request initiated :  /transcript/{id}")
     """API for saving a transcript"""
     usecases.save_transcript(id=id, transcript=transcript,
                              line_min_size=settings.line_min_size, repo=repo)
@@ -163,7 +179,7 @@ def delete_transcript(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
     embeds_client: EmbedsClientInterface = Depends(get_embeds_client)
 ):
-    print(" ------- DELETE request :  /transcript/{id}")
+    logger.info(f" ---- DELETE request initiated :  /transcript/{id}")
     """API for deleting a transcript"""
     usecases.delete_transcript(id, repo)
     embeds_client.delete(id)
@@ -176,11 +192,11 @@ def get_transcript_metadata(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
     synthesis: Synthesis = Depends(get_synthesis)
 ):
-    print(" ------- GET request :  /transcript/{id}/metadata")
-    '''
+    logger.info(f" ---- GET request initiated :  /transcript/{id}/metadata")
+    """
         API for getting metadata of a meeting transcript :
         Metadata : (title, interviewee, interviwerrs)
-    '''
+    """
     results = usecases.get_transcript_metadata(
         id=id,
         repo=repo,
@@ -196,7 +212,7 @@ def get_transcript_summary(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
     synthesis: Synthesis = Depends(get_synthesis)
 ):
-    print(" ------- GET request :  /transcript/{id}/summary")
+    logger.info(f" ---- GET request initiated :  /transcript/{id}/summary")
     """API for getting a summary of a transcript"""
     results = usecases.get_transcript_summary(
         id=id,
@@ -214,7 +230,7 @@ def get_transcript_concise(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
     synthesis: Synthesis = Depends(get_synthesis)
 ):
-    print(" ------- GET request :  /transcript/{id}/concise")
+    logger.info(f" ---- GET request initiated :  /transcript/{id}/concise")
     """API for getting a concise transcript"""
     results = usecases.get_transcript_concise(
         id=id,
@@ -233,7 +249,7 @@ def create_transcript_embeds(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
     synthesis: Synthesis = Depends(get_synthesis)
 ):
-    print(" ------- POST request :  /transcript/{id}/embeds")
+    logger.info(f" ---- POST request initiated :  /transcript/{id}/embeds")
     """API for generating vector embeds for a transcript"""
     results = usecases.create_transcript_embeds(
         id=id,
@@ -252,7 +268,7 @@ def run_transcript_query(
     repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
     synthesis: Synthesis = Depends(get_synthesis)
 ):
-    print(" ------- POST request :  /transcript/{id}/query}")
+    logger.info(f" ---- POST request initiated :  /transcript/{id}/query")
     """API for running a query against a transcript"""
     results = usecases.run_transcript_query(
         id=id,

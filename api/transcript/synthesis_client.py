@@ -1,6 +1,10 @@
+import logging
 import requests
 from urllib.parse import urlencode
 from app.settings import SYNTHESIS_URL
+
+
+logger = logging.getLogger()
 
 
 def _create_result(response: requests.Response) -> dict:
@@ -20,7 +24,7 @@ def save_transcript_for_id(transcript_id: int,
         data=transcript,
         headers={'Content-Type': 'text/plain'})
     if response.status_code != 204:
-        print(
+        logger.error(
             f"Could not save transcript with {transcript_id}"
             " on synthesis service")
     return _create_result(response)
@@ -31,7 +35,7 @@ def delete_transcript_for_id(transcript_id: int) -> dict:
     response = requests.delete(
         f"{SYNTHESIS_URL}/transcript/{transcript_id}")
     if response.status_code != 204:
-        print(
+        logger.error(
             f"Could not delete transcript with {transcript_id}"
             " on synthesis service")
     return _create_result(response)
@@ -41,7 +45,7 @@ def get_transcript_metadata(transcript_id: int):
     url = f"{SYNTHESIS_URL}/transcript/{transcript_id}/metadata"
     response = requests.get(url=url)
     if response.status_code != 200:
-        print(
+        logger.error(
             f"Could not get metadata for transcript with id = {transcript_id}"
             " on synthesis service")
     return _create_result(response)
@@ -55,7 +59,7 @@ def get_summary_with_citations(transcript_id: int,
         SYNTHESIS_URL, transcript_id, urlencode(query_params))
     response = requests.get(url=url)
     if response.status_code != 200:
-        print(
+        logger.error(
             "Summary generation failed for transcript"
             f" with id = {transcript_id}")
     return _create_result(response)
@@ -69,7 +73,7 @@ def get_concise_with_citations(transcript_id: int,
         SYNTHESIS_URL, transcript_id, urlencode(query_params))
     response = requests.get(url=url)
     if response.status_code != 200:
-        print(
+        logger.error(
             "Concise generation failed for transcript"
             f" with id = {transcript_id}")
     return _create_result(response)
@@ -87,7 +91,7 @@ def generate_embeds(
         SYNTHESIS_URL, transcript_id, urlencode(query_params))
     response = requests.post(url=url)
     if response.status_code != 200:
-        print(
+        logger.error(
             "Embeds generation failed for transcript"
             f" with id = {transcript_id}")
     return _create_result(response)
@@ -100,7 +104,7 @@ def run_query(transcript_id: int, query: str) -> dict:
         SYNTHESIS_URL, transcript_id, urlencode(query_params))
     response = requests.post(url=url)
     if response.status_code != 200:
-        print(
+        logger.error(
             "Running query failed for transcript"
             f" with id = {transcript_id}")
     return _create_result(response)

@@ -1,4 +1,5 @@
 import json
+import logging
 from .domains import (
     SynthesisResult,
     SynthesisResultOutput,
@@ -13,6 +14,9 @@ from .utils import (
     split_indexed_transcript_lines_into_chunks,
     split_and_extract_indices
 )
+
+
+logger = logging.getLogger()
 
 
 # TODO: Split into separate components for Summary, Concise and Embeds
@@ -56,11 +60,12 @@ class Synthesis(SynthesisInterface):
                         'interviewee_names': ['Sean']
                     }
         '''
+        cost = 0
+
         try:
             chunks = split_indexed_lines_into_chunks(
                 indexed_transcript, self.chunk_min_words)
             results = []
-            cost = 0
             message = ""
             context_char = 0
             for chunk in chunks:
@@ -74,16 +79,18 @@ class Synthesis(SynthesisInterface):
                     results.append(summary_text)
 
             response = self._openai_transcript_metadata(results)
+            cost += response["cost"]
             transcript_metadata = json.loads(response["output"])
-
         except json.decoder.JSONDecodeError as e:
+            logger.exception("JSONDecodeError when generating metadata",
+                             exc_info=e)
             transcript_metadata = self._get_empty_transcript_metadata()
             message = str(e)
         except Exception as e:
+            logger.exception("Exception when generating metadata", exc_info=e)
             transcript_metadata = self._get_empty_transcript_metadata()
             message = str(e)
 
-        cost += response["cost"]
         data: MetadataResult = {
                 "title": transcript_metadata["title"],
                 "interviewees": transcript_metadata["interviewee_names"],

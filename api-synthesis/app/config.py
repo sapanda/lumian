@@ -31,5 +31,7 @@ class Settings(BaseSettings):
     context_max_chars: int = 6000
     examples_dir: str = 'examples'
 
+    sentry_dsn: str = None
+
     debug: bool = False
     deploy_mode: ModeEnum = ModeEnum.production
