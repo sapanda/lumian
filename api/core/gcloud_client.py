@@ -6,8 +6,12 @@ from google.cloud.tasks_v2 import CloudTasksClient
 from google.cloud.tasks_v2.services.cloud_tasks.transports \
     import CloudTasksGrpcTransport
 from google.cloud.tasks_v2.types import HttpMethod
+import logging
 
 from app import settings
+
+
+logger = logging.getLogger()
 
 
 class GCloudClientInterface(ABC):
@@ -66,10 +70,11 @@ class GCloudClient(GCloudClientInterface):
             response = self.tasks_client.create_task(
                 request={"parent": parent, "task": task}
             )
-            print(f"Task created: {response.name}")
+
+            logger.info(f"Task created: {response.name}")
             return response.name
         except exceptions.GoogleAPICallError as error:
-            print(f"Error creating task: {error}")
+            logger.exception("Error creating task", exc_info=error)
             return None
 
 
@@ -103,7 +108,7 @@ class GCloudEmulatorClient(GCloudClientInterface):
         }
 
         response = self.client.create_task(task=task, parent=self.queue_name)
-        print(f"Task created: {response.name}")
+        logger.info(f"Task created: {response.name}")
         return response.name
 
 

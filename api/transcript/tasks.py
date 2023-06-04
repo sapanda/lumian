@@ -9,7 +9,6 @@ def _generate_metadata_and_update_transcript(tct: Transcript):
     """Generate the metadata for the transcript."""
     result = synthesis_client.get_transcript_metadata(transcript_id=tct.id)
     if (result['status_code'] < 300):
-        print("------- Result from metadata generation : " + str(result))
         # update the transcript
         if result["title"]:
             tct.title = result["title"]
