@@ -267,6 +267,8 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_data)
 
 
+default_log_level = os.getenv("DJANGO_LOG_LEVEL", "INFO")
+logging.basicConfig(level=logging.getLevelName(default_log_level))
 if DEPLOY_MODE != ModeEnum.local and DEPLOY_MODE != ModeEnum.github:
     logging.getLogger().handlers[0].setFormatter(JSONFormatter())
 logger = logging.getLogger()
