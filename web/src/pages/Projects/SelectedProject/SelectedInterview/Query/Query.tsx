@@ -1,14 +1,12 @@
 import { Paper, Stack } from "@mui/material";
 import theme from "../../../../../theme/theme";
-import useInterviewQuery from "./useInterviewQuery";
+
 import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import QuestionBox from "./QuestionBox/QuestionBox";
 import AnswerBox from "./AnswerBox/AnswerBox";
 import { QueryInput } from "../../../../../components/atoms";
+import useInterview from "../useInterview";
 
-interface queryType {
-  interviewTranscript: string;
-}
 interface answerType {
   text: string;
   references: [number, number][];
@@ -17,8 +15,7 @@ interface queryProps {
   query: string;
   output: answerType[];
 }
-export default function Query(props: queryType) {
-  const { interviewTranscript } = props;
+export default function Query() {
   const {
     conversation,
     citationsCount,
@@ -31,7 +28,7 @@ export default function Query(props: queryType) {
     query,
     handleSummaryItemClick,
     selectedIndex,
-  } = useInterviewQuery(interviewTranscript);
+  } = useInterview();
 
   return (
     <Stack
@@ -98,12 +95,12 @@ export default function Query(props: queryType) {
           minWidth: "49%",
           maxWidth: "49%",
           position: "relative",
-          ...(citationsCount > 0 && { paddingTop: "3.5rem" }),
+          ...(citationsCount > 1 && { paddingTop: "3.5rem" }),
           minHeight: "75vh",
           maxHeight: "75vh",
         }}
       >
-        {citationsCount > 0 && (
+        {citationsCount > 1 && (
           <div className="absolute top-0 right-0 p-2 m-2 bg-white rounded-md shadow-md">
             <span className="text-primary">{`Citation ${activeCitationIndex} of ${citationsCount}`}</span>
 
