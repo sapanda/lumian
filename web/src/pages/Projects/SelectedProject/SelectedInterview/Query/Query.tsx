@@ -24,10 +24,10 @@ export default function Query() {
     activeCitationIndex,
     userQueryText,
     setUserQueryText,
-    askQuery,
     query,
     handleSummaryItemClick,
     selectedIndex,
+    askQuery,
   } = useInterview();
 
   return (
@@ -85,6 +85,12 @@ export default function Query() {
             }}
             value={userQueryText}
             onSend={askQuery}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                askQuery();
+              }
+            }}
           />
         </div>
       </Paper>
