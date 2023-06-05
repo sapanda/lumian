@@ -19,6 +19,7 @@ def generate_metadata(tct: Transcript) -> dict:
             tct.interviewee_names = result["interviewees"]
         if result["interviewers"]:
             tct.interviewer_names = result["interviewers"]
+        tct.metadata_generated = True
         tct.cost += Decimal(result["cost"])
         tct.save()
     return result

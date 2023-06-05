@@ -118,25 +118,28 @@ class GenerateMetadataView(BaseSynthesizerView):
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
-            result = tasks.generate_metadata(tct)
-            status_code = result['status_code']
-            if status.is_success(status_code):
-                client.create_task(
-                    path=reverse('transcript:generate-summary', args=[pk]),
-                    payload='',
-                    timeout_minutes=self.task_timeout_minutes
-                )
-                client.create_task(
-                    path=reverse('transcript:generate-embeds', args=[pk]),
-                    payload='',
-                    timeout_minutes=self.task_timeout_minutes
-                )
-                client.create_task(
-                    path=reverse('transcript:generate-concise', args=[pk]),
-                    payload='',
-                    timeout_minutes=self.task_timeout_minutes
-                )
-            response = Response(status=status_code)
+            if tct.metadata_generated:
+                response = Response(status=status.HTTP_200_OK)
+            else:
+                result = tasks.generate_metadata(tct)
+                status_code = result['status_code']
+                if status.is_success(status_code):
+                    client.create_task(
+                        path=reverse('transcript:generate-summary', args=[pk]),
+                        payload='',
+                        timeout_minutes=self.task_timeout_minutes
+                    )
+                    client.create_task(
+                        path=reverse('transcript:generate-embeds', args=[pk]),
+                        payload='',
+                        timeout_minutes=self.task_timeout_minutes
+                    )
+                    client.create_task(
+                        path=reverse('transcript:generate-concise', args=[pk]),
+                        payload='',
+                        timeout_minutes=self.task_timeout_minutes
+                    )
+                response = Response(status=status_code)
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
         return response
@@ -146,8 +149,13 @@ class GenerateSummaryView(BaseSynthesizerView):
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
-            result = tasks.generate_summary(tct)
-            response = Response(status=result['status_code'])
+            summary = Synthesis.objects.filter(
+                transcript=pk, output_type=SynthesisType.SUMMARY)
+            if summary.exists():
+                response = Response(status=status.HTTP_200_OK)
+            else:
+                result = tasks.generate_summary(tct)
+                response = Response(status=result['status_code'])
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
         return response
@@ -157,8 +165,13 @@ class GenerateConciseView(BaseSynthesizerView):
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
-            result = tasks.generate_concise(tct)
-            response = Response(status=result['status_code'])
+            concise = Synthesis.objects.filter(
+                transcript=pk, output_type=SynthesisType.CONCISE)
+            if concise.exists():
+                response = Response(status=status.HTTP_200_OK)
+            else:
+                result = tasks.generate_concise(tct)
+                response = Response(status=result['status_code'])
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -169,8 +182,12 @@ class GenerateEmbedsView(BaseSynthesizerView):
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
-            result = tasks.generate_embeds(tct)
-            response = Response(status=result['status_code'])
+            embeds = Embeds.objects.filter(transcript=pk)
+            if embeds.exists():
+                response = Response(status=status.HTTP_200_OK)
+            else:
+                result = tasks.generate_embeds(tct)
+                response = Response(status=result['status_code'])
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
         return response
