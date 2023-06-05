@@ -29,6 +29,7 @@ def _create_synthesis_from_result(tct: Transcript,
                                   result: dict,
                                   synthesis_type: SynthesisType) -> Synthesis:
     """Create a synthesis object from the result of a synthesis request."""
+    synthesis_obj = None
     if (result['status_code'] < 300):
         synthesis_obj = Synthesis.objects.create(
             transcript=tct,
