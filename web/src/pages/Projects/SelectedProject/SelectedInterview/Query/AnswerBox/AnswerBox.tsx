@@ -37,8 +37,11 @@ export default function AnswerBox(props: AnswerBoxProps) {
               {item.text[0]}
               <span
                 key={index}
-                className={`hover:bg-blue-100 cursor-pointer ${selectedBgColor}`}
+                className={`${
+                  item?.references?.length > 0 && "hover:bg-blue-100"
+                } cursor-pointer ${selectedBgColor}`}
                 onClick={() =>
+                  item?.references?.length > 0 &&
                   handleSummaryItemClick &&
                   handleSummaryItemClick(item.references, answerIndex)
                 }
@@ -52,7 +55,9 @@ export default function AnswerBox(props: AnswerBoxProps) {
         return (
           <span
             key={index}
-            className={`hover:bg-blue-100 cursor-pointer ${selectedBgColor}`}
+            className={`${
+              item?.references?.length > 0 && "hover:bg-blue-100"
+            } cursor-pointer ${selectedBgColor}`}
             onClick={() =>
               item.references.length > 0 &&
               handleSummaryItemClick &&

@@ -1,7 +1,7 @@
 import { Paper, Typography } from "@mui/material";
 import theme from "../../../../../theme/theme";
-import useConcise from "./useConcise";
 import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
+import useInterview from "../useInterview";
 
 interface conciseProps {
   text: string;
@@ -15,7 +15,7 @@ interface conciseType {
 }
 
 export default function Concise(props: conciseType) {
-  const { data, interviewTranscript } = props;
+  const { data } = props;
   const {
     conversation,
     handleSummaryItemClick,
@@ -24,7 +24,7 @@ export default function Concise(props: conciseType) {
     transcriptRef,
     scrollToNextHighlightedText,
     activeCitationIndex,
-  } = useConcise(interviewTranscript);
+  } = useInterview();
   return (
     <div className="flex gap-5 px-8 py-4">
       <Paper
@@ -55,8 +55,11 @@ export default function Concise(props: conciseType) {
                   {item.text[0]}
                   <span
                     key={index}
-                    className={`hover:bg-blue-100 cursor-pointer ${selectedBgColor}`}
+                    className={`${
+                      item?.references?.length > 0 && "hover:bg-blue-100"
+                    } cursor-pointer ${selectedBgColor}`}
                     onClick={() =>
+                      item?.references?.length > 0 &&
                       handleSummaryItemClick(item.references, index)
                     }
                   >
@@ -72,8 +75,13 @@ export default function Concise(props: conciseType) {
               <>
                 <span
                   key={index}
-                  className={`hover:bg-blue-100 cursor-pointer ${selectedBgColor}`}
-                  onClick={() => handleSummaryItemClick(item.references, index)}
+                  className={`${
+                    item?.references?.length > 0 && "hover:bg-blue-100"
+                  } cursor-pointer ${selectedBgColor}`}
+                  onClick={() =>
+                    item?.references?.length > 0 &&
+                    handleSummaryItemClick(item.references, index)
+                  }
                 >
                   {item.text}
                 </span>
@@ -91,12 +99,12 @@ export default function Concise(props: conciseType) {
           minWidth: "49%",
           maxWidth: "49%",
           position: "relative",
-          ...(citationsCount > 0 && { paddingTop: "3.5rem" }),
+          ...(citationsCount > 1 && { paddingTop: "3.5rem" }),
           minHeight: "75vh",
           maxHeight: "75vh",
         }}
       >
-        {citationsCount > 0 && (
+        {citationsCount > 1 && (
           <div className="absolute top-0 right-0 p-2 m-2 bg-white rounded-md shadow-md">
             <span className="text-primary">{`Citation ${activeCitationIndex} of ${citationsCount}`}</span>
 

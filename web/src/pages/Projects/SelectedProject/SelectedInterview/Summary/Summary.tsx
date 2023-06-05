@@ -1,7 +1,7 @@
 import { Paper, Stack, Typography } from "@mui/material";
 import theme from "../../../../../theme/theme";
-import useSummary from "./useSummary";
 import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
+import useInterview from "../useInterview";
 
 interface summaryProps {
   text: string;
@@ -15,7 +15,7 @@ interface SummaryType {
 }
 
 export default function Summary(props: SummaryType) {
-  const { data, interviewTranscript } = props;
+  const { data } = props;
   const {
     conversation,
     handleSummaryItemClick,
@@ -24,7 +24,7 @@ export default function Summary(props: SummaryType) {
     transcriptRef,
     scrollToNextHighlightedText,
     activeCitationIndex,
-  } = useSummary(interviewTranscript);
+  } = useInterview();
   return (
     <Stack
       sx={{
@@ -48,7 +48,7 @@ export default function Summary(props: SummaryType) {
         <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
           Summary
         </Typography>
-        
+
         <div className="min-h-[63vh] max-h-[63vh] overflow-y-auto">
           {data.map((item, index) => {
             const regex = /^[a-zA-Z0-9]/;
@@ -62,8 +62,11 @@ export default function Summary(props: SummaryType) {
                   {item.text[0]}
                   <span
                     key={index}
-                    className={`hover:bg-blue-100 cursor-pointer ${selectedBgColor}`}
+                    className={`${
+                      item?.references?.length > 0 && "hover:bg-blue-100"
+                    } cursor-pointer ${selectedBgColor}`}
                     onClick={() =>
+                      item?.references?.length > 0 &&
                       handleSummaryItemClick(item.references, index)
                     }
                   >
@@ -76,8 +79,13 @@ export default function Summary(props: SummaryType) {
             return (
               <span
                 key={index}
-                className={`hover:bg-blue-100 cursor-pointer ${selectedBgColor}`}
-                onClick={() => handleSummaryItemClick(item.references, index)}
+                className={`${
+                  item?.references?.length > 0 && "hover:bg-blue-100"
+                } cursor-pointer ${selectedBgColor}`}
+                onClick={() =>
+                  item?.references?.length > 0 &&
+                  handleSummaryItemClick(item.references, index)
+                }
               >
                 {item.text}
               </span>
@@ -92,12 +100,12 @@ export default function Summary(props: SummaryType) {
           minWidth: "49%",
           maxWidth: "49%",
           position: "relative",
-          ...(citationsCount > 0 && { paddingTop: "3.5rem" }),
+          ...(citationsCount > 1 && { paddingTop: "3.5rem" }),
           minHeight: "75vh",
           maxHeight: "75vh",
         }}
       >
-        {citationsCount > 0 && (
+        {citationsCount > 1 && (
           <div className="absolute top-0 right-0 p-2 m-2 bg-white rounded-md shadow-md">
             <span className="text-primary">{`Citation ${activeCitationIndex} of ${citationsCount}`}</span>
             <KeyboardArrowUp
