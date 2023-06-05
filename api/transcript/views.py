@@ -23,6 +23,7 @@ from .models import (
 from .serializers import (
     TranscriptSerializer, SynthesisSerializer, QuerySerializer
 )
+from app.settings import GCLOUD_TASK_TIMEOUT
 from core.gcloud_client import client
 from project.models import Project
 
@@ -86,9 +87,6 @@ class BaseSynthesizerView(APIView):
     # authentication_classes = [authentication.TokenAuthentication]
     # permission_classes = [permissions.IsAuthenticated]
 
-    # TODO: Maybe this should be passed in as an API parameter
-    task_timeout_minutes = 15
-
     def get_serializer(self, *args, **kwargs):
         pass  # Don't need serialization
 
@@ -106,7 +104,7 @@ class InitiateSynthesizerView(BaseSynthesizerView):
                 client.create_task(
                     path=reverse('transcript:generate-metadata', args=[pk]),
                     payload='',
-                    timeout_minutes=self.task_timeout_minutes
+                    timeout_minutes=GCLOUD_TASK_TIMEOUT
                 )
             response = Response(status=status_code)
         except Transcript.DoesNotExist:
@@ -124,17 +122,17 @@ class GenerateMetadataView(BaseSynthesizerView):
                 client.create_task(
                     path=reverse('transcript:generate-summary', args=[pk]),
                     payload='',
-                    timeout_minutes=self.task_timeout_minutes
+                    timeout_minutes=GCLOUD_TASK_TIMEOUT
                 )
                 client.create_task(
                     path=reverse('transcript:generate-embeds', args=[pk]),
                     payload='',
-                    timeout_minutes=self.task_timeout_minutes
+                    timeout_minutes=GCLOUD_TASK_TIMEOUT
                 )
                 client.create_task(
                     path=reverse('transcript:generate-concise', args=[pk]),
                     payload='',
-                    timeout_minutes=self.task_timeout_minutes
+                    timeout_minutes=GCLOUD_TASK_TIMEOUT
                 )
             response = Response(status=status_code)
         except Transcript.DoesNotExist:

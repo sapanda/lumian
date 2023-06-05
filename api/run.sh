@@ -10,7 +10,7 @@ if [ $DEPLOY_MODE != "local" ]; then
 fi
 
 if [ $DEPLOY_MODE = "dev" ] || [ $DEPLOY_MODE = "prod" ]; then
-    uwsgi --socket :8000 --workers 4 --master --enable-threads --module app.wsgi
+    uwsgi --ini uwsgi.ini
 else
     python manage.py runserver 0.0.0.0:8000
 fi

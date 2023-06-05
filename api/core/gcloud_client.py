@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
 import grpc
 from google.api_core import exceptions
 from google.cloud.run_v2.services.services.client import ServicesClient
@@ -7,7 +6,7 @@ from google.cloud.tasks_v2 import CloudTasksClient
 from google.cloud.tasks_v2.services.cloud_tasks.transports \
     import CloudTasksGrpcTransport
 from google.cloud.tasks_v2.types import HttpMethod
-from google.protobuf.timestamp_pb2 import Timestamp
+from google.protobuf.duration_pb2 import Duration
 import logging
 
 from app import settings
@@ -57,9 +56,8 @@ class GCloudClient(GCloudClientInterface):
                                               self.location,
                                               self.queue_name)
 
-        max_attempt_duration = timedelta(minutes=timeout_minutes)
-        dispatch_deadline = Timestamp()
-        dispatch_deadline.FromDatetime(datetime.now() + max_attempt_duration)
+        duration = Duration()
+        duration.FromSeconds(timeout_minutes * 60)
 
         task = {
             "http_request": {
@@ -69,8 +67,8 @@ class GCloudClient(GCloudClientInterface):
                     "Content-Type": "application/json",
                 },
                 "body": payload.encode(),
-                "dispatch_deadline": dispatch_deadline,
-            }
+            },
+            "dispatch_deadline": duration,
         }
 
         try:
