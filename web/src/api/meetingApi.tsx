@@ -1,4 +1,9 @@
-import { QueryKey, useQuery } from "@tanstack/react-query";
+import {
+  QueryKey,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { axiosInstance } from "./api";
 import { interviewEndPoints, meetingEndPoints } from "./apiEndpoints";
 
@@ -88,6 +93,31 @@ const getMeetingQuery = async (meetingId: number | undefined) => {
   return res.data;
 };
 
+const askQuery = async (
+  interviewId: number | undefined,
+  userQueryText: string
+) => {
+  if (!interviewId) return;
+
+  const formData = new FormData();
+  formData.append("query", userQueryText);
+
+  const boundary = Math.random().toString().substr(2);
+
+  const res = await axiosInstance.post(
+    interviewEndPoints.interviewQuery.replace(":interviewId", `${interviewId}`),
+    formData,
+    {
+      headers: {
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+        accept: "application/json",
+      },
+    }
+  );
+  const data = await res.data;
+  return data;
+};
+
 const useInterviewsListQuery = (projectId: number | undefined) => {
   const queryKey: QueryKey = ["interviews", projectId];
   return useQuery(queryKey, () => getInterviewsList(projectId), {
@@ -128,6 +158,20 @@ const useGetMeetingQuery = (meetingId: number | undefined) => {
   });
 };
 
+const useAskQueryMutation = (
+  interviewId: number | undefined,
+  query: string
+) => {
+  const queryClient = useQueryClient();
+  return useMutation(() => askQuery(interviewId, query), {
+    onSuccess: (data) => {
+      if (data.output) {
+        queryClient.invalidateQueries(["meetingQuery", interviewId]);
+      }
+    },
+  });
+};
+
 export {
   connectApp,
   sendAccessToken,
@@ -137,4 +181,5 @@ export {
   useGetMeetingConciseQuery,
   useGetMeetingSummaryQuery,
   useGetMeetingQuery,
+  useAskQueryMutation,
 };

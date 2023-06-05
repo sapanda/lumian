@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import {
+  useAskQueryMutation,
   useGetMeetingConciseQuery,
   useGetMeetingQuery,
   useGetMeetingSummaryQuery,
@@ -7,8 +8,6 @@ import {
 } from "../../../../api/meetingApi";
 import { useGetProjectQuery } from "../../../../api/projectApi";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { axiosInstance } from "../../../../api/api";
-import { interviewEndPoints } from "../../../../api/apiEndpoints";
 
 export default function useInterview() {
   const { interviewId, projectId } = useParams();
@@ -23,9 +22,8 @@ export default function useInterview() {
   const { data: conciseData } = useGetMeetingConciseQuery(
     parseInt(interviewId || "0")
   );
-  const { data: query, refetch: updateQuery } = useGetMeetingQuery(
-    parseInt(interviewId || "0")
-  );
+  const { data: query } = useGetMeetingQuery(parseInt(interviewId || "0"));
+
   const originalTranscriptRef = useRef<string>("");
   const transcriptRef = useRef<HTMLDivElement>(null);
 
@@ -34,30 +32,14 @@ export default function useInterview() {
   const [citationsCount, setCitationsCount] = useState<number>(0);
   const [activeCitationIndex, setActiveCitationIndex] = useState<number>(0);
   const [userQueryText, setUserQueryText] = useState<string>("");
-
+  const { mutateAsync: onAskQuery } = useAskQueryMutation(
+    parseInt(interviewId || "0"),
+    userQueryText
+  );
   const askQuery = async () => {
-    const formData = new FormData();
-    formData.append("query", userQueryText);
-
-    const boundary = Math.random().toString().substr(2);
-
-    if (!interviewId) return;
-    const res = await axiosInstance.post(
-      interviewEndPoints.interviewQuery.replace(":interviewId", interviewId),
-      formData,
-      {
-        headers: {
-          "Content-Type": `multipart/form-data; boundary=${boundary}`,
-          accept: "application/json",
-        },
-      }
-    );
-    const data = await res.data;
-
-    if (data.output) {
-      setUserQueryText("");
-      updateQuery();
-    }
+    if (!userQueryText) return;
+    await onAskQuery();
+    setUserQueryText("");
   };
 
   function scrollToNextHighlightedText(index: number) {
