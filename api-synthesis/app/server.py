@@ -29,6 +29,7 @@ EXCEPTION_TO_STATUS_CODE_MAPPING = {
     ObjectNotFoundException: status.HTTP_404_NOT_FOUND,
     OpenAITimeoutException: status.HTTP_500_INTERNAL_SERVER_ERROR,
     OpenAIRateLimitException: status.HTTP_500_INTERNAL_SERVER_ERROR,
+    PineconeException: status.HTTP_500_INTERNAL_SERVER_ERROR,
 }
 
 settings = Settings()
