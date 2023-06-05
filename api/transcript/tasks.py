@@ -105,7 +105,7 @@ def run_openai_query(tct: Transcript, query: str, level: str) -> Query:
         output=result['output'],
         prompt=result["prompt"],
         cost=Decimal(result['cost']),
-        level=level
+        query_level=level
     )
 
     tct.cost += query_obj.cost
