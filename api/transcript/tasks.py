@@ -81,6 +81,13 @@ def generate_embeds(tct: Transcript) -> dict:
     return result
 
 
+def generate_answers(tct: Transcript) -> dict:
+    questions = tct.project.questions
+    for question in questions:
+        query_obj = run_openai_query(tct, question)
+        print(f" -- Questions {question}\n--Answer {query_obj}")
+
+
 def run_openai_query(tct: Transcript, query: str) -> Query:
     """Run the OpenAI query on the given transcript."""
     result = synthesis_client.run_query(tct.id, query)
