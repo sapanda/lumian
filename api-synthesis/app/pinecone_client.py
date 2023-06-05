@@ -1,13 +1,18 @@
 import logging
 import pinecone
+from retry import retry
 
+from .errors import PineconeException
 from .interfaces import EmbedsClientInterface
 
+# Retry Params
+RETRY_TRIES = 3
+RETRY_DELAY = 5
+RETRY_BACKOFF = 2
 
 logger = logging.getLogger()
 
 
-# TODO: Add error handling
 class PineconeClient(EmbedsClientInterface):
     def __init__(
             self,
@@ -24,6 +29,8 @@ class PineconeClient(EmbedsClientInterface):
         self.index = self._create_index(dimensions)
         self.namespace = namespace
 
+    @retry(PineconeException, tries=RETRY_TRIES,
+           delay=RETRY_DELAY, backoff=RETRY_BACKOFF)
     def _create_index(self, dimensions: int) -> pinecone.Index:
         """Create the index if it doesn't exist."""
         if self.index_name not in pinecone.list_indexes():
@@ -32,7 +39,15 @@ class PineconeClient(EmbedsClientInterface):
                 dimension=dimensions
             )
             logger.debug(f'Pinecone index created: {self.index_name}')
-        return pinecone.Index(self.index_name)
+        try:
+            index = pinecone.Index(self.index_name)
+        except Exception as e:
+            # TODO: This is a hack to handle a random exception that
+            #       occurs within the pinecone client library
+            logger.exception("Exception retrieving Pinecone Index", exc_info=e)
+            raise PineconeException(
+                detail="Exception retrieving Pinecone Index")
+        return index
 
     def upsert(self, vectors: 'list[dict]'):
         """Upsert the vectors into the index."""
