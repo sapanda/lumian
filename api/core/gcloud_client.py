@@ -8,6 +8,7 @@ from google.cloud.tasks_v2.services.cloud_tasks.transports \
 from google.cloud.tasks_v2.types import HttpMethod
 from google.protobuf.duration_pb2 import Duration
 import logging
+from typing import Optional
 
 from app import settings
 
@@ -50,15 +51,12 @@ class GCloudClient(GCloudClientInterface):
         response = self.run_client.get_service(name=name)
         return response.uri
 
-    def create_task(self, path: str, payload: dict, timeout_minutes: int = 10):
+    def create_task(self, path: str, payload: dict,
+                    timeout_minutes: Optional[int] = -1):
         """Create a Google Cloud Task for a given service."""
         parent = self.tasks_client.queue_path(self.project_id,
                                               self.location,
                                               self.queue_name)
-
-        duration = Duration()
-        duration.FromSeconds(timeout_minutes * 60)
-
         task = {
             "http_request": {
                 "http_method": HttpMethod.POST,
@@ -68,8 +66,12 @@ class GCloudClient(GCloudClientInterface):
                 },
                 "body": payload.encode(),
             },
-            "dispatch_deadline": duration,
         }
+
+        if timeout_minutes > 0:
+            duration = Duration()
+            duration.FromSeconds(timeout_minutes * 60)
+            task["dispatch_deadline"] = duration
 
         try:
             response = self.tasks_client.create_task(
@@ -100,7 +102,8 @@ class GCloudEmulatorClient(GCloudClientInterface):
         except exceptions.AlreadyExists:
             pass
 
-    def create_task(self, path: str, payload: dict, timeout_minutes: int = 10):
+    def create_task(self, path: str, payload: dict,
+                    timeout_minutes: Optional[int] = -1):
         task = {
             "http_request": {
                 "http_method": HttpMethod.POST,
@@ -118,7 +121,8 @@ class GCloudEmulatorClient(GCloudClientInterface):
 
 
 class GCloudMockClient(GCloudClientInterface):
-    def create_task(self, path: str, payload: dict, timeout_minutes: int = 10):
+    def create_task(self, path: str, payload: dict,
+                    timeout_minutes: Optional[int] = -1):
         return ""
 
 

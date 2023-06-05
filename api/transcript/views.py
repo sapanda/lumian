@@ -23,7 +23,7 @@ from .models import (
 from .serializers import (
     TranscriptSerializer, SynthesisSerializer, QuerySerializer
 )
-from app.settings import GCLOUD_TASK_TIMEOUT
+from app.settings import SYNTHESIS_TASK_TIMEOUT
 from core.gcloud_client import client
 from project.models import Project
 
@@ -104,7 +104,7 @@ class InitiateSynthesizerView(BaseSynthesizerView):
                 client.create_task(
                     path=reverse('transcript:generate-metadata', args=[pk]),
                     payload='',
-                    timeout_minutes=GCLOUD_TASK_TIMEOUT
+                    timeout_minutes=SYNTHESIS_TASK_TIMEOUT
                 )
             response = Response(status=status_code)
         except Transcript.DoesNotExist:
@@ -125,17 +125,17 @@ class GenerateMetadataView(BaseSynthesizerView):
                     client.create_task(
                         path=reverse('transcript:generate-summary', args=[pk]),
                         payload='',
-                        timeout_minutes=GCLOUD_TASK_TIMEOUT
+                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
                     )
                     client.create_task(
                         path=reverse('transcript:generate-embeds', args=[pk]),
                         payload='',
-                        timeout_minutes=GCLOUD_TASK_TIMEOUT
+                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
                     )
                     client.create_task(
                         path=reverse('transcript:generate-concise', args=[pk]),
                         payload='',
-                        timeout_minutes=GCLOUD_TASK_TIMEOUT
+                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
                     )
                 response = Response(status=status_code)
         except Transcript.DoesNotExist:

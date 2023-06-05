@@ -209,6 +209,7 @@ REST_FRAMEWORK = {
 
 # Synthesis settings
 SYNTHESIS_URL = os.environ.get('SYNTHESIS_URL')
+SYNTHESIS_TASK_TIMEOUT = int(os.environ.get('SYNTHESIS_TASK_TIMEOUT', 10))
 
 # Recall AI settings
 RECALL_API_KEY = os.environ.get("RECALL_API_KEY")
@@ -236,7 +237,6 @@ if DEPLOY_MODE == ModeEnum.development or DEPLOY_MODE == ModeEnum.production:
     GCLOUD_PROJECT_ID = os.environ.get('GCLOUD_PROJECT_ID')
     GCLOUD_LOCATION = os.environ.get('GCLOUD_LOCATION')
     GCLOUD_QUEUE_NAME = os.environ.get('GCLOUD_QUEUE_NAME')
-    GCLOUD_TASK_TIMEOUT = int(os.environ.get('GCLOUD_TASK_TIMEOUT'))
     GCLOUD_API_SERVICE_NAME = os.environ.get('GCLOUD_API_SERVICE_NAME')
     GCLOUD_API_SERVICE_URL = os.environ.get('GCLOUD_API_SERVICE_URL')
 
