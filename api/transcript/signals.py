@@ -17,7 +17,7 @@ def _run_generate_synthesis(sender, instance, created, **kwargs):
     """Generate AI Synthesis for the transcript object"""
     if created:
         client.create_task(
-            path=reverse('transcript:generate-synthesis',
+            path=reverse('transcript:initiate-synthesis',
                          args=[instance.id]),
             payload=''
         )

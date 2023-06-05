@@ -12,8 +12,16 @@ router.register('', views.TranscriptView)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('<int:pk>/generate-synthesis/',
-         views.SynthesizerView.as_view(), name='generate-synthesis'),
+    path('<int:pk>/generate/initiate',
+         views.InitiateSynthesizerView.as_view(), name='initiate-synthesis'),
+    path('<int:pk>/generate/metadata',
+         views.GenerateMetadataView.as_view(), name='generate-metadata'),
+    path('<int:pk>/generate/summary',
+         views.GenerateSummaryView.as_view(), name='generate-summary'),
+    path('<int:pk>/generate/concise',
+         views.GenerateConciseView.as_view(), name='generate-concise'),
+    path('<int:pk>/generate/embeds',
+         views.GenerateEmbedsView.as_view(), name='generate-embeds'),
     path('<int:pk>/summary/',
          views.SummaryView.as_view(), name='summary-detail'),
     path('<int:pk>/concise/',
