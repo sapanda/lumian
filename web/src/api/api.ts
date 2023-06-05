@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const baseApiUrl = import.meta.env.VITE_API_URL as string;
 const axiosInstance = axios.create({
@@ -23,7 +24,11 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
   (response) => {
-    if (response.status === 401) {
+    console.log(response);
+    if (response.status === 201) {
+      toast.success(response.statusText);
+    } else if (response.status === 401) {
+      toast.error("Unauthorized");
       localStorage.removeItem("token");
       window.location.href = "/";
     }
