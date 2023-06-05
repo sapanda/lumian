@@ -12,7 +12,7 @@ from .database import SessionLocal, engine
 from .errors import (
     OpenAITimeoutException, OpenAIRateLimitException,
     ObjectNotFoundException, SynthesisAPIException,
-    ObjectAlreadyPresentException
+    ObjectAlreadyPresentException, PineconeException,
 )
 from .interfaces import (
     OpenAIClientInterface, EmbedsClientInterface,
