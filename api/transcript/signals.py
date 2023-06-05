@@ -2,10 +2,9 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.urls import reverse
 
-from app.settings import SYNTHESIS_TASK_TIMEOUT
+from .models import Transcript
+from .synthesis_client import delete_transcript_for_id
 from core.gcloud_client import client
-from transcript.models import Transcript
-from transcript.synthesis_client import delete_transcript_for_id
 
 
 @receiver(post_save, sender=Transcript)
