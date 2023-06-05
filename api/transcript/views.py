@@ -185,9 +185,33 @@ class GenerateEmbedsView(BaseSynthesizerView):
                 response = Response(status=status.HTTP_200_OK)
             else:
                 result = tasks.generate_embeds(tct)
+                if status.is_success(result['status_code']):
+                    client.create_task(
+                        path=reverse('transcript:generate-answers', args=[pk]),
+                        payload='',
+                        timeout_minutes=GCLOUD_TASK_TIMEOUT
+                    )
                 response = Response(status=result['status_code'])
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
+        return response
+
+
+class GenerateAnswersView(BaseSynthesizerView):
+    def post(self, request, pk):
+        try:
+            tct = Transcript.objects.get(pk=pk)
+            queries = Query.objects.filter(
+                transcript=pk,
+                query_level=Query.QueryLevelChoices.PROJECT)
+            # TODO : Have a way to check if all queries were answered
+            if queries.count() > 1:
+                response = Response(status=status.HTTP_200_OK)
+            data = tasks.generate_answers(tct)
+            response = Response(data, status=status.HTTP_201_CREATED)
+        except Transcript.DoesNotExist:
+            response = Response(status=status.HTTP_404_NOT_FOUND)
+
         return response
 
 
@@ -246,7 +270,9 @@ class QueryView(APIView):
         try:
             tct = Transcript.objects.get(pk=pk)
             Embeds.objects.get(transcript=pk)  # Needed for checking 202
-            query_obj = tasks.run_openai_query(tct, query)
+            query_obj = tasks.run_openai_query(
+                tct, query,
+                Query.QueryLevelChoices.TRANSCRIPT)
             data = {
                 'query': query,
                 'output': query_obj.output
@@ -260,10 +286,22 @@ class QueryView(APIView):
 
         return response
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='query_level',
+                description='level of the query(project or transcript)',
+                required=True,
+                type=str),
+        ]
+    )
     def get(self, request, pk):
         try:
             Transcript.objects.get(pk=pk)  # Needed for checking 404
-            queryset = Query.objects.filter(transcript=pk)
+            query_level = request.query_params.get('query_level')
+            queryset = Query.objects.filter(
+                transcript=pk,
+                query_level=query_level)
             serializer = QuerySerializer(queryset, many=True)
             response = Response(serializer.data, status=status.HTTP_200_OK)
         except Transcript.DoesNotExist:
