@@ -51,7 +51,8 @@ if settings.deploy_mode == ModeEnum.development or \
     )
 
 LOG_FORMAT = "[%(levelname)s] %(message)s | %(filename)s %(funcName)s() Line %(lineno)d" # noqa
-logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
+LOG_LEVEL = logging.getLevelName(settings.synthesis_log_level)
+logging.basicConfig(format=LOG_FORMAT, level=LOG_LEVEL)
 logger = logging.getLogger()
 
 models.Base.metadata.create_all(bind=engine)
