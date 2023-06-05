@@ -12,7 +12,7 @@ from .database import SessionLocal, engine
 from .errors import (
     OpenAITimeoutException, OpenAIRateLimitException,
     ObjectNotFoundException, SynthesisAPIException,
-    ObjectAlreadyPresentException
+    ObjectAlreadyPresentException, PineconeException,
 )
 from .interfaces import (
     OpenAIClientInterface, EmbedsClientInterface,
@@ -29,9 +29,12 @@ EXCEPTION_TO_STATUS_CODE_MAPPING = {
     ObjectNotFoundException: status.HTTP_404_NOT_FOUND,
     OpenAITimeoutException: status.HTTP_500_INTERNAL_SERVER_ERROR,
     OpenAIRateLimitException: status.HTTP_500_INTERNAL_SERVER_ERROR,
+    PineconeException: status.HTTP_500_INTERNAL_SERVER_ERROR,
 }
 
 settings = Settings()
+openai_client = None
+embeds_client = None
 
 # Use for attaching VSCode debugger
 if settings.deploy_mode == ModeEnum.local and settings.debug:
@@ -51,7 +54,8 @@ if settings.deploy_mode == ModeEnum.development or \
     )
 
 LOG_FORMAT = "[%(levelname)s] %(message)s | %(filename)s %(funcName)s() Line %(lineno)d" # noqa
-logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
+LOG_LEVEL = logging.getLevelName(settings.synthesis_log_level)
+logging.basicConfig(format=LOG_FORMAT, level=LOG_LEVEL)
 logger = logging.getLogger()
 
 models.Base.metadata.create_all(bind=engine)
@@ -87,10 +91,13 @@ def get_openai_client(
     settings: Settings = Depends(get_settings)
 ) -> OpenAIClientInterface:
     """OpenAI client provider"""
-    return OpenAIClient(
-        org_id=settings.openai_org_id,
-        api_key=settings.openai_api_key
-    )
+    global openai_client
+    if openai_client is None:
+        openai_client = OpenAIClient(
+            org_id=settings.openai_org_id,
+            api_key=settings.openai_api_key
+        )
+    return openai_client
 
 
 def get_embeds_client(
@@ -103,13 +110,16 @@ def get_embeds_client(
     else:
         namespace = 'dev'
 
-    return PineconeClient(
-        api_key=settings.pinecone_api_key,
-        index_name=settings.pinecone_index,
-        region=settings.pinecone_region,
-        dimensions=settings.pinecone_dimensions,
-        namespace=namespace
-    )
+    global embeds_client
+    if embeds_client is None:
+        embeds_client = PineconeClient(
+            api_key=settings.pinecone_api_key,
+            index_name=settings.pinecone_index,
+            region=settings.pinecone_region,
+            dimensions=settings.pinecone_dimensions,
+            namespace=namespace
+        )
+    return embeds_client
 
 
 def get_synthesis(
