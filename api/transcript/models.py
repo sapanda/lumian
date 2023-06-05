@@ -32,6 +32,7 @@ class Transcript(models.Model):
         models.CharField(max_length=255), default=list)
     transcript = models.TextField(
         max_length=100000, blank=True, null=True)
+    metadata_generated = models.BooleanField(default=False)
     cost = models.DecimalField(
         max_digits=10, decimal_places=4, default=0.0000)
 
