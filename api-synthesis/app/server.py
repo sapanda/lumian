@@ -32,6 +32,8 @@ EXCEPTION_TO_STATUS_CODE_MAPPING = {
 }
 
 settings = Settings()
+openai_client = None
+embeds_client = None
 
 # Use for attaching VSCode debugger
 if settings.deploy_mode == ModeEnum.local and settings.debug:
@@ -88,10 +90,13 @@ def get_openai_client(
     settings: Settings = Depends(get_settings)
 ) -> OpenAIClientInterface:
     """OpenAI client provider"""
-    return OpenAIClient(
-        org_id=settings.openai_org_id,
-        api_key=settings.openai_api_key
-    )
+    global openai_client
+    if openai_client is None:
+        openai_client = OpenAIClient(
+            org_id=settings.openai_org_id,
+            api_key=settings.openai_api_key
+        )
+    return openai_client
 
 
 def get_embeds_client(
@@ -104,13 +109,16 @@ def get_embeds_client(
     else:
         namespace = 'dev'
 
-    return PineconeClient(
-        api_key=settings.pinecone_api_key,
-        index_name=settings.pinecone_index,
-        region=settings.pinecone_region,
-        dimensions=settings.pinecone_dimensions,
-        namespace=namespace
-    )
+    global embeds_client
+    if embeds_client is None:
+        embeds_client = PineconeClient(
+            api_key=settings.pinecone_api_key,
+            index_name=settings.pinecone_index,
+            region=settings.pinecone_region,
+            dimensions=settings.pinecone_dimensions,
+            namespace=namespace
+        )
+    return embeds_client
 
 
 def get_synthesis(
