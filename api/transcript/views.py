@@ -86,6 +86,9 @@ class BaseSynthesizerView(APIView):
     # authentication_classes = [authentication.TokenAuthentication]
     # permission_classes = [permissions.IsAuthenticated]
 
+    # TODO: Maybe this should be passed in as an API parameter
+    task_timeout_minutes = 15
+
     def get_serializer(self, *args, **kwargs):
         pass  # Don't need serialization
 
@@ -102,7 +105,8 @@ class InitiateSynthesizerView(BaseSynthesizerView):
             if status.is_success(status_code):
                 client.create_task(
                     path=reverse('transcript:generate-metadata', args=[pk]),
-                    payload=''
+                    payload='',
+                    timeout_minutes=self.task_timeout_minutes
                 )
             response = Response(status=status_code)
         except Transcript.DoesNotExist:
@@ -119,15 +123,18 @@ class GenerateMetadataView(BaseSynthesizerView):
             if status.is_success(status_code):
                 client.create_task(
                     path=reverse('transcript:generate-summary', args=[pk]),
-                    payload=''
+                    payload='',
+                    timeout_minutes=self.task_timeout_minutes
                 )
                 client.create_task(
                     path=reverse('transcript:generate-embeds', args=[pk]),
-                    payload=''
+                    payload='',
+                    timeout_minutes=self.task_timeout_minutes
                 )
                 client.create_task(
                     path=reverse('transcript:generate-concise', args=[pk]),
-                    payload=''
+                    payload='',
+                    timeout_minutes=self.task_timeout_minutes
                 )
             response = Response(status=status_code)
         except Transcript.DoesNotExist:
