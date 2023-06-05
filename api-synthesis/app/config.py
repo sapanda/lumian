@@ -34,4 +34,5 @@ class Settings(BaseSettings):
     sentry_dsn: str = None
 
     debug: bool = False
+    synthesis_log_level: str = 'INFO'
     deploy_mode: ModeEnum = ModeEnum.production
