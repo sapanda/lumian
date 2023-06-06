@@ -1,8 +1,9 @@
 import { useEffect } from "react";
-import { Stack, Typography } from "@mui/material";
+import { Backdrop, CircularProgress, Stack, Typography } from "@mui/material";
 import useAuth from "../../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { PROJECTS } from "../../../router/routes.constant";
+import { useIsFetching, useIsMutating } from "@tanstack/react-query";
 
 interface PublicContainerProps {
   children: React.ReactNode;
@@ -13,12 +14,15 @@ export default function PublicContainer(props: PublicContainerProps) {
   const { children, bodyStyles, align } = props;
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const isFetching = useIsFetching();
+  const isMutating = useIsMutating();
 
   useEffect(() => {
     if (isAuthenticated) {
       navigate(PROJECTS.default);
     }
   }, [isAuthenticated, navigate]);
+  const isLoading = isFetching > 0 || isMutating > 0;
   return (
     <Stack
       sx={{
@@ -42,17 +46,26 @@ export default function PublicContainer(props: PublicContainerProps) {
         </div>
         <Typography variant="h1">Lumian</Typography>
       </Stack>
-      <Stack
-        sx={{
-          justifyContent: align === "center" ? "center" : "flex-start",
-          alignItems: "center",
-          minHeight: `calc(100vh - 80px)`,
-          padding: "40px",
-          ...bodyStyles,
-        }}
-      >
-        {children}
-      </Stack>
+      {isLoading ? (
+        <Backdrop
+          sx={{ zIndex: (theme) => theme.zIndex.drawer + 999 }}
+          open={isLoading}
+        >
+          <CircularProgress color="primary" />
+        </Backdrop>
+      ) : (
+        <Stack
+          sx={{
+            justifyContent: align === "center" ? "center" : "flex-start",
+            alignItems: "center",
+            minHeight: `calc(100vh - 80px)`,
+            padding: "40px",
+            ...bodyStyles,
+          }}
+        >
+          {children}
+        </Stack>
+      )}
     </Stack>
   );
 }
