@@ -6,8 +6,6 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import theme from "../../../theme/theme";
-import { edit_pencil__icon } from "../../../assets/icons/svg";
-import { useState } from "react";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -44,8 +42,7 @@ interface TableLProps {
 }
 
 export default function TableL(props: TableLProps) {
-  const { columns, rows, onCellClick, onEditClick } = props;
-  const [showEditIndex, setShowEditIndex] = useState(-1);
+  const { columns, rows, onCellClick } = props;
   return (
     <TableContainer>
       <Table sx={{ minWidth: 700 }} aria-label="customized table">
@@ -68,7 +65,7 @@ export default function TableL(props: TableLProps) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.map((row, rowIndex) => (
+          {rows.map((row) => (
             <StyledTableRow
               key={row.name}
               sx={{
@@ -90,27 +87,8 @@ export default function TableL(props: TableLProps) {
                       ? "right"
                       : "center"
                   }
-                  {...(index === 0 && {
-                    onMouseEnter: () => setShowEditIndex(rowIndex),
-                    onMouseLeave: () => setShowEditIndex(-1),
-                  })}
                 >
                   {row[column.field]}
-                  {onEditClick && showEditIndex === rowIndex && index === 0 && (
-                    <img
-                      src={edit_pencil__icon}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEditClick(row);
-                      }}
-                      alt="edit"
-                      style={{
-                        cursor: "pointer",
-                        display: "inline",
-                        marginLeft: "5px",
-                      }}
-                    />
-                  )}
                 </StyledTableCell>
               ))}
             </StyledTableRow>
