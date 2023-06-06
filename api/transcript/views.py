@@ -189,7 +189,7 @@ class GenerateEmbedsView(BaseSynthesizerView):
                     client.create_task(
                         path=reverse('transcript:generate-answers', args=[pk]),
                         payload='',
-                        timeout_minutes=GCLOUD_TASK_TIMEOUT
+                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
                     )
                 response = Response(status=result['status_code'])
         except Transcript.DoesNotExist:
