@@ -42,6 +42,7 @@ export const AccountMenu = () => {
             backgroundColor: "rgba(143, 143, 143, 0.13)",
           },
         }}
+        onClick={handleClick}
       >
         <Stack>
           <Typography
@@ -65,7 +66,6 @@ export const AccountMenu = () => {
         </Stack>
         <Tooltip title="Account settings">
           <IconButton
-            onClick={handleClick}
             size="small"
             sx={{ ml: 2 }}
             aria-controls={open ? "account-menu" : undefined}
@@ -81,6 +81,10 @@ export const AccountMenu = () => {
           "& .MuiMenu-paper": {
             width: "200px",
           },
+        }}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
         }}
         anchorEl={anchorEl}
         id="account-menu"
