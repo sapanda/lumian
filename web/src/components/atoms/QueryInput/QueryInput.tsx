@@ -20,10 +20,11 @@ interface TextInputLProps {
   placeholder?: string;
   size?: "small" | "default";
   multiline?: boolean;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 export default function QueryInput(props: TextInputLProps) {
-  const { value, onChange, placeholder, name, onSend } = props;
+  const { value, onChange, placeholder, name, onSend, onKeyDown } = props;
 
   return (
     <TextField
@@ -61,6 +62,7 @@ export default function QueryInput(props: TextInputLProps) {
       name={name}
       maxRows={5}
       multiline
+      onKeyDown={onKeyDown}
     />
   );
 }
