@@ -1,4 +1,5 @@
 import abc
+from typing import List
 from .domains import Transcript, SynthesisResult, EmbedsResult, MetadataResult
 
 
@@ -6,7 +7,6 @@ class OpenAIClientInterface(abc.ABC):
     """Interface for OpenAI Client"""
     @abc.abstractmethod
     def execute_completion(self, prompt: str,
-                           model: str,
                            temperature: int,
                            max_tokens: int,
                            ) -> dict:
@@ -19,7 +19,7 @@ class OpenAIClientInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def execute_embeds_batch(self, request_list: 'list[str]',
+    def execute_embeds_batch(self, request_list: List[str],
                              object_id: int = None,
                              object_desc: str = None,
                              start_index: int = 0,
@@ -31,12 +31,12 @@ class OpenAIClientInterface(abc.ABC):
 class EmbedsClientInterface(abc.ABC):
     """Interface for Embeddings Client"""
     @abc.abstractmethod
-    def upsert(self, vectors: list[dict]):
+    def upsert(self, vectors: List[dict]):
         """Upsert the vectors into the index"""
         pass
 
     @abc.abstractmethod
-    def search(self, id: int, embedding: list[int], limit: int = 5) -> dict:
+    def search(self, id: int, embedding: List[int], limit: int = 5) -> dict:
         """Retrieve the closest embeds for the input embedding"""
         pass
 

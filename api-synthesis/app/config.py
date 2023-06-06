@@ -17,8 +17,17 @@ class Settings(BaseSettings):
     db_host: str
     db_port: str
 
-    openai_org_id: str
-    openai_api_key: str
+    openai_completions_api_type: str = "open_ai"
+    openai_completions_api_key: str
+    openai_completions_api_base: str = None
+    openai_completions_api_version: str = None
+    openai_completions_model: str = None
+
+    openai_embeddings_api_type: str = "open_ai"
+    openai_embeddings_api_key: str
+    openai_embeddings_api_base: str = None
+    openai_embeddings_api_version: str = None
+    openai_embeddings_model: str = None
 
     pinecone_api_key: str
     pinecone_region: str
