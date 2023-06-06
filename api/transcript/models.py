@@ -103,7 +103,7 @@ class Query(models.Model):
     class Meta:
         verbose_name = 'Query'
         verbose_name_plural = 'Queries'
-    
+
     class QueryLevelChoices(models.TextChoices):
         PROJECT = 'project', _('Project level queries')
         TRANSCRIPT = 'transcript', _('Transcript level queries')
