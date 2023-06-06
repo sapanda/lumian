@@ -24,17 +24,32 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
   (response) => {
-    console.log(response);
     if (response.status === 201) {
-      toast.success(response.statusText);
-    } else if (response.status === 401) {
-      toast.error("Unauthorized");
-      localStorage.removeItem("token");
-      window.location.href = "/";
+      toast.success(response.statusText, {
+        style: {
+          backgroundColor: "#00b300",
+          color: "#fff",
+          fill: "#fff",
+        },
+        theme: "colored",
+      });
     }
     return response;
   },
   (error) => {
+    if (error.response.status === 401) {
+      toast.error("Unauthorized", {
+        style: {
+          backgroundColor: "#ff0000",
+          color: "#fff",
+          fill: "#fff",
+        },
+        theme: "colored",
+        toastId: "unauthorized",
+      });
+      localStorage.removeItem("token");
+      window.location.href = "/";
+    }
     return Promise.reject(error);
   }
 );
