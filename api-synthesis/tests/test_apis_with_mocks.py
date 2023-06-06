@@ -130,8 +130,8 @@ def get_mock_settings():
         db_password='',
         db_port=1000,
         db_user='',
-        openai_api_key='',
-        openai_org_id='',
+        openai_completions_api_key='',
+        openai_embeddings_api_key='',
         line_min_size=5,
         chunk_min_words=20
     )
