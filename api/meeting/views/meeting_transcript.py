@@ -78,7 +78,7 @@ class InitiateTranscription(APIView):
                     request,
                     meetings,
                     project_id,
-                    "LumianBot"
+                    "Lumian Notetaker"
                 )
             return Response(message)
 

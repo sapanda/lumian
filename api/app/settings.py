@@ -209,17 +209,7 @@ REST_FRAMEWORK = {
 
 # Synthesis settings
 SYNTHESIS_URL = os.environ.get('SYNTHESIS_URL')
-
-# Google cloud settings
-GCLOUD_PROJECT_ID = os.environ.get('GCLOUD_PROJECT_ID')
-GCLOUD_LOCATION = os.environ.get('GCLOUD_LOCATION')
-GCLOUD_QUEUE_NAME = os.environ.get('GCLOUD_QUEUE_NAME')
-GCLOUD_API_SERVICE_NAME = os.environ.get('GCLOUD_API_SERVICE_NAME')
-GCLOUD_API_SERVICE_URL = os.environ.get('GCLOUD_API_SERVICE_URL')
-
-# Google cloud emulator settings
-GCLOUD_EMULATOR_URL = os.environ.get('GCLOUD_EMULATOR_URL')
-GCLOUD_EMULATOR_SERVICE_URL = os.environ.get('GCLOUD_EMULATOR_SERVICE_URL')
+SYNTHESIS_TASK_TIMEOUT = int(os.environ.get('SYNTHESIS_TASK_TIMEOUT', 10))
 
 # Recall AI settings
 RECALL_API_KEY = os.environ.get("RECALL_API_KEY")
@@ -244,6 +234,12 @@ STATIC_ROOT = '/vol/web/static'
 MEDIA_ROOT = '/vol/web/media'
 
 if DEPLOY_MODE == ModeEnum.development or DEPLOY_MODE == ModeEnum.production:
+    GCLOUD_PROJECT_ID = os.environ.get('GCLOUD_PROJECT_ID')
+    GCLOUD_LOCATION = os.environ.get('GCLOUD_LOCATION')
+    GCLOUD_QUEUE_NAME = os.environ.get('GCLOUD_QUEUE_NAME')
+    GCLOUD_API_SERVICE_NAME = os.environ.get('GCLOUD_API_SERVICE_NAME')
+    GCLOUD_API_SERVICE_URL = os.environ.get('GCLOUD_API_SERVICE_URL')
+
     STATICFILES_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
     DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
     GS_BUCKET_NAME = os.environ.get('GCLOUD_BUCKET_NAME')
@@ -270,3 +266,6 @@ if DEPLOY_MODE == ModeEnum.development or DEPLOY_MODE == ModeEnum.production:
         # django.contrib.auth) you may enable sending PII data.
         send_default_pii=True
     )
+else:
+    GCLOUD_EMULATOR_URL = os.environ.get('GCLOUD_EMULATOR_URL')
+    GCLOUD_EMULATOR_SERVICE_URL = os.environ.get('GCLOUD_EMULATOR_SERVICE_URL')

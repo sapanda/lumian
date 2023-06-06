@@ -41,7 +41,7 @@ def delete_transcript_for_id(transcript_id: int) -> dict:
     return _create_result(response)
 
 
-def get_transcript_metadata(transcript_id: int):
+def get_transcript_metadata(transcript_id: int) -> dict:
     url = f"{SYNTHESIS_URL}/transcript/{transcript_id}/metadata"
     response = requests.get(url=url)
     if response.status_code != 200:
