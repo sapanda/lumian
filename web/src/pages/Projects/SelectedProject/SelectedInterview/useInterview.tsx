@@ -5,6 +5,7 @@ import {
   useGetMeetingQuery,
   useGetMeetingSummaryQuery,
   useGetMeetingTranscriptQuery,
+  useInterviewsListQuery,
 } from "../../../../api/meetingApi";
 import { useGetProjectQuery } from "../../../../api/projectApi";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -13,9 +14,11 @@ export default function useInterview() {
   const { interviewId, projectId } = useParams();
 
   const { data: projectData } = useGetProjectQuery(parseInt(projectId || "0"));
-  const { data: interviewData } = useGetMeetingTranscriptQuery(
-    parseInt(interviewId || "0")
+  const { refetch: refreshInterviewList } = useInterviewsListQuery(
+    parseInt(projectId || "0")
   );
+  const { data: interviewData, refetch: refreshInterviewData } =
+    useGetMeetingTranscriptQuery(parseInt(interviewId || "0"));
   const { data: summaryData } = useGetMeetingSummaryQuery(
     parseInt(interviewId || "0")
   );
@@ -122,6 +125,7 @@ export default function useInterview() {
     interviewTitle: interviewData?.title ?? "",
     projectTitle: projectData?.name ?? "",
     projectId,
+    interviewId,
     selectedIndex,
     citationsCount,
     activeCitationIndex,
@@ -132,5 +136,7 @@ export default function useInterview() {
     askQuery,
     userQueryText,
     setUserQueryText,
+    refreshInterviewData,
+    refreshInterviewList,
   };
 }

@@ -10,6 +10,14 @@ import { interviewEndPoints, meetingEndPoints } from "./apiEndpoints";
 interface rowProps {
   [key: string]: string | number;
 }
+
+interface MeetingTranscriptPayloadType {
+  project: number | undefined;
+  title?: string;
+  interviewee_names?: string[];
+  interviewer_names?: string[];
+  transcript?: string;
+}
 const connectApp = async () => {
   const res = await axiosInstance.get(`${meetingEndPoints.oauthUrl}`);
   const redirectUrl = res.data;
@@ -58,6 +66,20 @@ const getMeetingTranscript = async (meetingId: number | undefined) => {
     )
   );
   return res.data;
+};
+
+const updateMeetingTranscript = async (
+  payload: MeetingTranscriptPayloadType,
+  meetingId: number | undefined
+) => {
+  if (!meetingId || !payload.project) return;
+  return await axiosInstance.patch(
+    interviewEndPoints.interviewTranscipt.replace(
+      ":interviewId",
+      meetingId.toString()
+    ),
+    payload
+  );
 };
 
 const getMeetingConcise = async (meetingId: number | undefined) => {
@@ -175,6 +197,7 @@ const useAskQueryMutation = (
 export {
   connectApp,
   sendAccessToken,
+  updateMeetingTranscript,
   useInterviewsListQuery,
   startTranscribe,
   useGetMeetingTranscriptQuery,

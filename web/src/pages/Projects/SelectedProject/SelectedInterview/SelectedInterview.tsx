@@ -1,4 +1,5 @@
 import { Concise, Query, Summary } from ".";
+import { updateMeetingTranscript } from "../../../../api/meetingApi";
 import { profile_icon } from "../../../../assets/icons/svg";
 import { PrivateContainer } from "../../../../components/Containers";
 import { TabNav } from "../../../../components/molecules";
@@ -8,12 +9,29 @@ import useInterview from "./useInterview";
 export default function SelectedInterview() {
   const {
     summary,
-    interviewTranscript,
     concise,
     interviewTitle,
     projectTitle,
     projectId,
+    interviewId,
+    refreshInterviewList,
+    refreshInterviewData,
   } = useInterview();
+
+  async function onEditEnd(newTitle: string) {
+    const res = await updateMeetingTranscript(
+      {
+        project: parseInt(projectId || "0"),
+        title: newTitle,
+      },
+      parseInt(interviewId || "0")
+    );
+
+    if (res?.status === 200) {
+      await refreshInterviewData();
+      await refreshInterviewList();
+    }
+  }
   return (
     <PrivateContainer
       appBar={
@@ -24,6 +42,10 @@ export default function SelectedInterview() {
             title: projectTitle,
             path: `/project/${projectId}`,
           }}
+          isTitleEditable
+          onEditEnd={(newTitle) => {
+            onEditEnd(newTitle);
+          }}
         />
       }
     >
@@ -31,25 +53,15 @@ export default function SelectedInterview() {
         tabs={[
           {
             name: "Summary",
-            component: (
-              <Summary
-                data={summary}
-                interviewTranscript={interviewTranscript}
-              />
-            ),
+            component: <Summary data={summary} />,
           },
           {
             name: "Concise",
-            component: (
-              <Concise
-                data={concise}
-                interviewTranscript={interviewTranscript}
-              />
-            ),
+            component: <Concise data={concise} />,
           },
           {
             name: "Query",
-            component: <Query interviewTranscript={interviewTranscript} />,
+            component: <Query />,
           },
         ]}
         activeTabIndex={0}
