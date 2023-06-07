@@ -47,7 +47,7 @@ export const PUBLIC_ROUTES = [
   },
   {
     path: HOME,
-    component: Login,
+    component: Projects.AllProjects,
     exact: true,
   },
   {
