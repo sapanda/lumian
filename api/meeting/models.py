@@ -32,7 +32,6 @@ class MeetingApp(models.Model):
 
     class MeetingAppChoices(models.TextChoices):
         ZOOM = 'zoom', _('Zoom meeting app')
-        GOOGLE = 'google', _('Google Calendar')
         # TODO : add other meeting choices
 
     user = models.ForeignKey(
@@ -54,3 +53,29 @@ class MeetingApp(models.Model):
 
     def __str__(self):
         return f'{self.user.id}: {self.meeting_email}'
+
+
+class MeetingCalendar(models.Model):
+
+    class CalendarChoices(models.TextChoices):
+        GOOGLE = 'google', _('Google Calendar')
+        # TODO : add other meeting choices
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    calendar_app = models.CharField(
+        max_length=32,
+        choices=CalendarChoices.choices)
+    calendar_id = models.CharField(max_length=512)
+    calendar_email = models.EmailField(max_length=512)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['calendar_email', 'calendar_app'],
+                                    name='unique_calendar_details')
+        ]
+
+    def __str__(self):
+        return f'{self.user.id}: {self.calendar_email}'

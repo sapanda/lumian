@@ -10,10 +10,6 @@ from meeting.views.meeting_app import (
     OAuthCallbackView,
     MeetingDetailView
 )
-from meeting.views.meeting_transcript import (
-    InitiateTranscription
-)
-
 from meeting.views.meeting_calendar import (
     OAuthRequestView,
     OAuthResponseView,
@@ -29,7 +25,7 @@ urlpatterns = [
           GetBotStatusView.as_view(), name='get-bot-status'),
      path('app/oauth-request',
           OAuthView.as_view(), name='app-oauth-request-url'),
-     path('app/access-token',
+     path('app/oauth-response',
           OAuthCallbackView.as_view(), name='app-oauth-response-token'),
      path('app/meetings',
           MeetingDetailView.as_view(), name='app-meeting-details'),
@@ -39,7 +35,4 @@ urlpatterns = [
           OAuthResponseView.as_view(), name='calendar-oauth-response-token'),
      path('calendar/meetings',
           EventDetailsView.as_view(), name='calendar-meeting-details'),
-     path('initiate-transcription',
-          InitiateTranscription.as_view(), name='initiate-transcription')
-
 ]
