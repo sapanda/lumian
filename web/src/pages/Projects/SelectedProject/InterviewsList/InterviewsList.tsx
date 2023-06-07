@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   cloud_upload__icon,
   projects_icon,
@@ -14,13 +14,39 @@ import { GetStarted, InterviewsTab } from ".";
 import useInterviewsList from "./useInterviewsList";
 import { PrivateAppbar } from "../../../../layout";
 import { Button, Typography } from "@mui/material";
-import { startTranscribe } from "../../../../api/meetingApi";
+import {
+  startTranscribe,
+  useCreateInterviewWithTranscriptMutation,
+} from "../../../../api/meetingApi";
 
 export default function InterviewsList() {
   const { rows, columns, projectTitle, projectId } = useInterviewsList();
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [pickedFiles, setPickedFiles] = useState<File[]>([]);
+  const transcriptRef = useRef<string>("");
+  const { mutateAsync: createInterview } =
+    useCreateInterviewWithTranscriptMutation(
+      parseInt(projectId || "0"),
+      transcriptRef.current
+    );
 
+  const handlePickedFiles = (files: File[]) => {
+    setPickedFiles(files);
+    //read the content of the file, it will be a json file
+    const reader = new FileReader();
+    reader.readAsText(files[0]);
+    reader.onloadend = () => {
+      // The file's text will be printed here
+      transcriptRef.current = reader.result as string;
+    };
+  };
+
+  const handleUpload = () => {
+    //upload the file to the server
+    createInterview();
+    setPickedFiles([]);
+    setModalOpen(false);
+  };
   return (
     <PrivateContainer
       appBar={
@@ -83,7 +109,7 @@ export default function InterviewsList() {
 
           <FileUploadDnD
             onUpload={(files: File[]) => {
-              setPickedFiles(files);
+              handlePickedFiles(files);
             }}
             uploaderStyles={{
               display: "flex",
@@ -91,6 +117,10 @@ export default function InterviewsList() {
               justifyContent: "center",
               alignItems: "center",
               height: "132px",
+            }}
+            extensions={{
+              "application/json": [".json"],
+              "text/plain": [".txt"],
             }}
           >
             <img src={cloud_upload__icon} alt="cloud_upload__icon" />
@@ -120,7 +150,7 @@ export default function InterviewsList() {
             <Button
               variant="contained"
               onClick={() => {
-                setPickedFiles([]);
+                handleUpload();
               }}
             >
               Upload

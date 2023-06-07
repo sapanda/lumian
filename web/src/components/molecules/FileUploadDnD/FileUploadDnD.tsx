@@ -11,13 +11,13 @@ interface FileUploadDnDProps {
   uploaderStyles?: React.CSSProperties;
   extensions?: Accept;
 }
-
 export default function FileUploadDnD(props: FileUploadDnDProps) {
   const {
     id = "file-uploader",
     children,
     onUpload,
     uploaderStyles = {},
+    extensions,
   } = props;
 
   const onDrop = useCallback(
@@ -32,6 +32,7 @@ export default function FileUploadDnD(props: FileUploadDnDProps) {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    accept: extensions ? extensions : undefined,
   });
   return (
     <div
