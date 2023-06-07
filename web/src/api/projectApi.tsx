@@ -73,7 +73,7 @@ const useGetProjectMutation = () => {
   });
 };
 const useGetProjectQuery = (project_id: number | undefined) => {
-  return useQuery(["project"], () => getProject(project_id), {
+  return useQuery(["project", project_id], () => getProject(project_id), {
     enabled: !!project_id,
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
