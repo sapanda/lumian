@@ -48,7 +48,7 @@ axiosInstance.interceptors.response.use(
         toastId: "unauthorized",
       });
       localStorage.removeItem("token");
-      window.location.href = "/";
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   }

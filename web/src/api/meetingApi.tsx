@@ -57,6 +57,20 @@ const startTranscribe = async (projectId: number | undefined) => {
   });
 };
 
+const createInterviewWithTranscript = async (
+  projectId: number | undefined,
+  transcript: string
+) => {
+  if (!projectId) return;
+  await axiosInstance.post(interviewEndPoints.transcript, {
+    project: projectId,
+    transcript: transcript,
+    title: "Interview 1",
+    interviewer_names: ["Interviewer 1"],
+    interviewee_names: ["Interviewee 1"],
+  });
+};
+
 const getMeetingTranscript = async (meetingId: number | undefined) => {
   if (!meetingId) return;
   const res = await axiosInstance.get(
@@ -148,6 +162,20 @@ const useInterviewsListQuery = (projectId: number | undefined) => {
   });
 };
 
+const useCreateInterviewWithTranscriptMutation = (
+  projectId: number | undefined,
+  transcript: string
+) => {
+  const queryClient = useQueryClient();
+  return useMutation(
+    () => createInterviewWithTranscript(projectId, transcript),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["interviews", projectId]);
+      },
+    }
+  );
+};
 const useGetMeetingTranscriptQuery = (meetingId: number | undefined) => {
   const queryKey: QueryKey = ["meetingTranscript", meetingId];
   return useQuery(queryKey, () => getMeetingTranscript(meetingId), {
@@ -201,6 +229,7 @@ export {
   useInterviewsListQuery,
   startTranscribe,
   useGetMeetingTranscriptQuery,
+  useCreateInterviewWithTranscriptMutation,
   useGetMeetingConciseQuery,
   useGetMeetingSummaryQuery,
   useGetMeetingQuery,

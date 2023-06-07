@@ -5,7 +5,7 @@ export default function useAuth() {
   const isAuthenticated = localStorage.getItem("token");
   function handleLogout() {
     localStorage.clear();
-    navigate("/");
+    navigate("/login");
   }
 
   return { handleLogout, isAuthenticated };

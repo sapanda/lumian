@@ -12,6 +12,7 @@ const projectEndpoints = {
 };
 
 const interviewEndPoints = {
+  transcript: "api/transcripts/",
   interviewTranscipt: "api/transcripts/:interviewId/",
   interviewList: "api/transcripts/?project=:projectId",
   interviewSummary: "api/transcripts/:interviewId/summary/",
