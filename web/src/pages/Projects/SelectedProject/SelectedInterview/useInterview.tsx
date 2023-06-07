@@ -116,7 +116,6 @@ export default function useInterview() {
     scrollToNextHighlightedText(0);
   }, [conversation]);
   return {
-    interviewTranscript: interviewData?.transcript ?? "",
     summary: summaryData?.output ?? [],
     concise: conciseData?.output ?? [],
     query,

@@ -12,9 +12,9 @@ interface ProjectType {
 }
 
 interface ProjectPayloadType {
-  title: string;
-  goal: string;
-  questions: string[];
+  title?: string;
+  goal?: string;
+  questions?: string[];
 }
 
 const getProjects = async () => {
@@ -106,7 +106,6 @@ const useUpdateProjectMutation = () => {
     }) => updateProject(payload, projectId),
     {
       onSuccess: () => {
-        alert(`Project updated Successfully`);
         queryClient.invalidateQueries(["projects"]);
         setTimeout(() => {
           navigate(PROJECTS.default);
@@ -117,6 +116,7 @@ const useUpdateProjectMutation = () => {
 };
 
 export {
+  updateProject,
   useGetProjectsQuery,
   useGetProjectMutation,
   useGetProjectQuery,

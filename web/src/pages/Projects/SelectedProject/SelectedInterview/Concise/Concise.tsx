@@ -11,7 +11,6 @@ interface conciseProps {
 
 interface conciseType {
   data: conciseProps[];
-  interviewTranscript: string;
 }
 
 export default function Concise(props: conciseType) {

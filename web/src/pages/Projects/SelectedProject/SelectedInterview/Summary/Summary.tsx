@@ -11,7 +11,6 @@ interface summaryProps {
 
 interface SummaryType {
   data: summaryProps[];
-  interviewTranscript: string;
 }
 
 export default function Summary(props: SummaryType) {
