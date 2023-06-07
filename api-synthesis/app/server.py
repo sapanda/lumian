@@ -94,8 +94,16 @@ def get_openai_client(
     global openai_client
     if openai_client is None:
         openai_client = OpenAIClient(
-            org_id=settings.openai_org_id,
-            api_key=settings.openai_api_key
+            completions_api_type=settings.openai_completions_api_type,
+            completions_api_key=settings.openai_completions_api_key,
+            completions_api_base=settings.openai_completions_api_base,
+            completions_api_version=settings.openai_completions_api_version,
+            completions_model=settings.openai_completions_model,
+            embeddings_api_type=settings.openai_embeddings_api_type,
+            embeddings_api_key=settings.openai_embeddings_api_key,
+            embeddings_api_base=settings.openai_embeddings_api_base,
+            embeddings_api_version=settings.openai_embeddings_api_version,
+            embeddings_model=settings.openai_embeddings_model,
         )
     return openai_client
 

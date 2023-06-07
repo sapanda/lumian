@@ -82,7 +82,22 @@ def generate_embeds(tct: Transcript) -> dict:
     return result
 
 
-def run_openai_query(tct: Transcript, query: str) -> Query:
+def generate_answers(tct: Transcript) -> 'list[dict]':
+    questions = tct.project.questions
+    query_objects = []
+    for question in questions:
+        query_obj = run_openai_query(
+            tct, question,
+            Query.QueryLevelChoices.PROJECT)
+        data = {
+                'query': question,
+                'output': query_obj.output
+            }
+        query_objects.append(data)
+    return query_objects
+
+
+def run_openai_query(tct: Transcript, query: str, level: str) -> Query:
     """Run the OpenAI query on the given transcript."""
     result = synthesis_client.run_query(tct.id, query)
     query_obj = Query.objects.create(
@@ -91,6 +106,7 @@ def run_openai_query(tct: Transcript, query: str) -> Query:
         output=result['output'],
         prompt=result["prompt"],
         cost=Decimal(result['cost']),
+        query_level=level
     )
 
     tct.cost += query_obj.cost
