@@ -64,6 +64,7 @@ export default function TabNav(props: TabNavProps) {
       >
         {tabs.map((tab, index) => (
           <div
+            key={`${tab.name}_${index}`}
             style={{
               paddingBottom: "6px",
               paddingTop: "18px",
