@@ -60,6 +60,13 @@ function AppBarLabel(
                 onEditEnd && onEditEnd(editTitle);
                 setIsEditing(false);
               }}
+              onKeyDown={(e) => {
+                e.preventDefault();
+                if (e.key === "Enter") {
+                  onEditEnd && onEditEnd(editTitle);
+                  setIsEditing(false);
+                }
+              }}
               style={{
                 border: "#E5E5E5 1px solid",
                 outline: "none",
