@@ -61,8 +61,8 @@ function AppBarLabel(
                 setIsEditing(false);
               }}
               onKeyDown={(e) => {
-                e.preventDefault();
                 if (e.key === "Enter") {
+                  e.preventDefault();
                   onEditEnd && onEditEnd(editTitle);
                   setIsEditing(false);
                 }
