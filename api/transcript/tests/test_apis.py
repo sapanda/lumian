@@ -41,6 +41,11 @@ def query_url(transcript_id):
     return reverse('transcript:query-detail', args=[transcript_id])
 
 
+def synthesis_url(transcript_id):
+    """Create and return a generate-synthesis posting URL."""
+    return reverse('transcript:generate-synthesis', args=[transcript_id])
+
+
 class PublicAPITests(APITestCase):
     """Test unauthenticated API requests."""
 
@@ -51,7 +56,7 @@ class PublicAPITests(APITestCase):
 
 
 @patch('transcript.signals._run_generate_synthesis')
-class MockAPITests(APITestCase):
+class TranscriptAPITests(APITestCase):
     """Test the API with mocked synthesis service."""
 
     def setUp(self):
@@ -313,7 +318,7 @@ class MockAPITests(APITestCase):
 
 @skip("OpenAI Costs: Run only when testing AI Synthesis changes")
 @patch('transcript.signals._run_generate_synthesis')
-class EndToEndAPITests(APITestCase):
+class EndToEndQueryTests(APITestCase):
     """Test the full API endpoints."""
 
     def setUp(self):

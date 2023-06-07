@@ -1,6 +1,7 @@
 """
 Views for the transcript API.
 """
+from django.urls import reverse
 from drf_spectacular.utils import (
     extend_schema, inline_serializer, OpenApiParameter, OpenApiTypes
 )
@@ -15,13 +16,15 @@ from rest_framework import (
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from . import tasks
 from .models import (
     Transcript, SynthesisType, Synthesis, Embeds, Query
 )
 from .serializers import (
     TranscriptSerializer, SynthesisSerializer, QuerySerializer
 )
-from .tasks import run_openai_query, generate_synthesis
+from app.settings import SYNTHESIS_TASK_TIMEOUT
+from core.gcloud_client import client
 from project.models import Project
 
 
@@ -78,21 +81,11 @@ class TranscriptView(viewsets.ModelViewSet):
         return qset
 
 
-class SynthesizerView(APIView):
+class BaseSynthesizerView(APIView):
     """Generate synthesis for a transcript."""
-    def post(self, request, pk):
-        try:
-            tct = Transcript.objects.get(pk=pk)
-            status_code = generate_synthesis(tct.id)
-            if status_code == 200:
-                response = Response(status=status.HTTP_200_OK)
-            else:
-                response = Response(status=status.
-                                    HTTP_500_INTERNAL_SERVER_ERROR)
-        except Transcript.DoesNotExist:
-            response = Response(status=status.HTTP_404_NOT_FOUND)
-
-        return response
+    # TODO: Figure out how to make authenticated calls from Google Cloud Tasks
+    # authentication_classes = [authentication.TokenAuthentication]
+    # permission_classes = [permissions.IsAuthenticated]
 
     def get_serializer(self, *args, **kwargs):
         pass  # Don't need serialization
@@ -101,9 +94,132 @@ class SynthesizerView(APIView):
         pass  # Don't need serialization
 
 
-class SynthesisView(APIView):
+class InitiateSynthesizerView(BaseSynthesizerView):
+    def post(self, request, pk):
+        try:
+            tct = Transcript.objects.get(pk=pk)
+            result = tasks.initiate_synthesis(tct)
+            status_code = result['status_code']
+            if status.is_success(status_code):
+                client.create_task(
+                    path=reverse('transcript:generate-metadata', args=[pk]),
+                    payload='',
+                    timeout_minutes=SYNTHESIS_TASK_TIMEOUT
+                )
+            response = Response(status=status_code)
+        except Transcript.DoesNotExist:
+            response = Response(status=status.HTTP_404_NOT_FOUND)
+        return response
+
+
+class GenerateMetadataView(BaseSynthesizerView):
+    def post(self, request, pk):
+        try:
+            tct = Transcript.objects.get(pk=pk)
+            if tct.metadata_generated:
+                response = Response(status=status.HTTP_200_OK)
+            else:
+                result = tasks.generate_metadata(tct)
+                status_code = result['status_code']
+                if status.is_success(status_code):
+                    client.create_task(
+                        path=reverse('transcript:generate-summary', args=[pk]),
+                        payload='',
+                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
+                    )
+                    client.create_task(
+                        path=reverse('transcript:generate-embeds', args=[pk]),
+                        payload='',
+                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
+                    )
+                    client.create_task(
+                        path=reverse('transcript:generate-concise', args=[pk]),
+                        payload='',
+                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
+                    )
+                response = Response(status=status_code)
+        except Transcript.DoesNotExist:
+            response = Response(status=status.HTTP_404_NOT_FOUND)
+        return response
+
+
+class GenerateSummaryView(BaseSynthesizerView):
+    def post(self, request, pk):
+        try:
+            tct = Transcript.objects.get(pk=pk)
+            summary = Synthesis.objects.filter(
+                transcript=pk, output_type=SynthesisType.SUMMARY)
+            if summary.exists():
+                response = Response(status=status.HTTP_200_OK)
+            else:
+                result = tasks.generate_summary(tct)
+                response = Response(status=result['status_code'])
+        except Transcript.DoesNotExist:
+            response = Response(status=status.HTTP_404_NOT_FOUND)
+        return response
+
+
+class GenerateConciseView(BaseSynthesizerView):
+    def post(self, request, pk):
+        try:
+            tct = Transcript.objects.get(pk=pk)
+            concise = Synthesis.objects.filter(
+                transcript=pk, output_type=SynthesisType.CONCISE)
+            if concise.exists():
+                response = Response(status=status.HTTP_200_OK)
+            else:
+                result = tasks.generate_concise(tct)
+                response = Response(status=result['status_code'])
+        except Transcript.DoesNotExist:
+            response = Response(status=status.HTTP_404_NOT_FOUND)
+
+        return response
+
+
+class GenerateEmbedsView(BaseSynthesizerView):
+    def post(self, request, pk):
+        try:
+            tct = Transcript.objects.get(pk=pk)
+            embeds = Embeds.objects.filter(transcript=pk)
+            if embeds.exists():
+                response = Response(status=status.HTTP_200_OK)
+            else:
+                result = tasks.generate_embeds(tct)
+                if status.is_success(result['status_code']):
+                    client.create_task(
+                        path=reverse('transcript:generate-answers', args=[pk]),
+                        payload='',
+                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
+                    )
+                response = Response(status=result['status_code'])
+        except Transcript.DoesNotExist:
+            response = Response(status=status.HTTP_404_NOT_FOUND)
+        return response
+
+
+class GenerateAnswersView(BaseSynthesizerView):
+    def post(self, request, pk):
+        try:
+            tct = Transcript.objects.get(pk=pk)
+            queries = Query.objects.filter(
+                transcript=pk,
+                query_level=Query.QueryLevelChoices.PROJECT)
+            # TODO : Have a way to check if all queries were answered
+            if queries.count() > 1:
+                response = Response(status=status.HTTP_200_OK)
+            data = tasks.generate_answers(tct)
+            response = Response(data, status=status.HTTP_201_CREATED)
+        except Transcript.DoesNotExist:
+            response = Response(status=status.HTTP_404_NOT_FOUND)
+
+        return response
+
+
+class BaseSynthesisView(APIView):
     """"Base class for all AI synthesis views."""
     serializer_class = SynthesisSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_of_type(self, request, pk, synthesis_type):
         """Retrieve the AISynthesis of the given type."""
@@ -124,13 +240,13 @@ class SynthesisView(APIView):
         return response
 
 
-class SummaryView(SynthesisView):
+class SummaryView(BaseSynthesisView):
     """View for getting summary of a transcript."""
     def get(self, request, pk):
         return self.get_of_type(request, pk, SynthesisType.SUMMARY)
 
 
-class ConciseView(SynthesisView):
+class ConciseView(BaseSynthesisView):
     """View for getting concise transcript."""
     def get(self, request, pk):
         return self.get_of_type(request, pk, SynthesisType.CONCISE)
@@ -140,6 +256,8 @@ class QueryView(APIView):
     """View for executing a query and getting all existing query results."""
     parser_classes = [parsers.MultiPartParser]
     serializer_class = QuerySerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
         request=inline_serializer(
@@ -152,7 +270,9 @@ class QueryView(APIView):
         try:
             tct = Transcript.objects.get(pk=pk)
             Embeds.objects.get(transcript=pk)  # Needed for checking 202
-            query_obj = run_openai_query(tct, query)
+            query_obj = tasks.run_openai_query(
+                tct, query,
+                Query.QueryLevelChoices.TRANSCRIPT)
             data = {
                 'query': query,
                 'output': query_obj.output
@@ -166,10 +286,22 @@ class QueryView(APIView):
 
         return response
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='query_level',
+                description='level of the query(project or transcript)',
+                required=True,
+                type=str),
+        ]
+    )
     def get(self, request, pk):
         try:
             Transcript.objects.get(pk=pk)  # Needed for checking 404
-            queryset = Query.objects.filter(transcript=pk)
+            query_level = request.query_params.get('query_level')
+            queryset = Query.objects.filter(
+                transcript=pk,
+                query_level=query_level)
             serializer = QuerySerializer(queryset, many=True)
             response = Response(serializer.data, status=status.HTTP_200_OK)
         except Transcript.DoesNotExist:

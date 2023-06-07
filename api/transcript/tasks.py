@@ -1,60 +1,71 @@
-from transcript import synthesis_client
-from transcript.models import (
-    Transcript, SynthesisType, Query,
-    Embeds, Synthesis
-)
+from decimal import Decimal
+from . import synthesis_client
+from .models import Transcript, SynthesisType, Query, Embeds, Synthesis
 
 
-def _generate_metadata_and_update_transcript(tct: Transcript):
+def initiate_synthesis(tct: Transcript) -> dict:
+    """Initiate transcript synthesis using the synthesis service"""
+    return synthesis_client.save_transcript_for_id(
+        transcript_id=tct.id, transcript=tct.transcript)
+
+
+def generate_metadata(tct: Transcript) -> dict:
     """Generate the metadata for the transcript."""
     result = synthesis_client.get_transcript_metadata(transcript_id=tct.id)
-    if (result['status_code'] < 300):
-        # update the transcript
+    if (result["status_code"] < 300):
         if result["title"]:
             tct.title = result["title"]
         if result["interviewees"]:
             tct.interviewee_names = result["interviewees"]
         if result["interviewers"]:
             tct.interviewer_names = result["interviewers"]
-        tct.cost = result["cost"]
+        tct.metadata_generated = True
+        tct.cost += Decimal(result["cost"])
         tct.save()
+    return result
 
 
-def _generate_summary(tct: Transcript) -> Synthesis:
+def _create_synthesis_from_result(tct: Transcript,
+                                  result: dict,
+                                  synthesis_type: SynthesisType) -> Synthesis:
+    """Create a synthesis object from the result of a synthesis request."""
+    synthesis_obj = None
+    if (result['status_code'] < 300):
+        synthesis_obj = Synthesis.objects.create(
+            transcript=tct,
+            output_type=synthesis_type,
+            output=result["output"],
+            prompt=result["prompt"],
+            cost=Decimal(result["cost"])
+        )
+        tct.cost += synthesis_obj.cost
+        tct.save()
+    return synthesis_obj
+
+
+def generate_summary(tct: Transcript) -> dict:
     """Generate synthesized summary using the synthesis service"""
     # TODO: add support for multiple interviewees
     result = synthesis_client.get_summary_with_citations(
         transcript_id=tct.id,
         interviewee=tct.interviewee_names[0]
     )
-    if (result['status_code'] < 300):
-        return Synthesis.objects.create(
-            transcript=tct,
-            output_type=SynthesisType.SUMMARY,
-            output=result["output"],
-            prompt=result["prompt"],
-            cost=result["cost"]
-        )
+    _create_synthesis_from_result(tct, result, SynthesisType.SUMMARY)
+    return result
 
 
-def _generate_concise(tct: Transcript) -> Synthesis:
+def generate_concise(tct: Transcript) -> dict:
     """Generate concise transcript using the synthesis service"""
     # TODO: add support for multiple interviewees
     result = synthesis_client.get_concise_with_citations(
         transcript_id=tct.id,
         interviewee=tct.interviewee_names[0]
     )
-    if (result['status_code'] < 300):
-        return Synthesis.objects.create(
-            transcript=tct,
-            output_type=SynthesisType.CONCISE,
-            output=result["output"],
-            prompt=result["prompt"],
-            cost=result["cost"]
-        )
+    _create_synthesis_from_result(tct, result, SynthesisType.CONCISE)
+    return result
 
 
-def _generate_embeds(tct: Transcript) -> Embeds:
+def generate_embeds(tct: Transcript) -> dict:
     """Generate the embeds for the transcript."""
     result = synthesis_client.generate_embeds(
         transcript_id=tct.id,
@@ -62,33 +73,31 @@ def _generate_embeds(tct: Transcript) -> Embeds:
         interviewee=tct.interviewee_names[0]
     )
     if (result['status_code'] < 300):
-        return Embeds.objects.create(
+        embeds = Embeds.objects.create(
             transcript=tct,
-            cost=result["cost"]
+            cost=Decimal(result["cost"])
         )
+        tct.cost += embeds.cost
+        tct.save()
+    return result
 
 
-def generate_synthesis(transcript_id) -> int:
-    """Generate synthesized outputs using the synthesis service"""
-    tct = Transcript.objects.get(id=transcript_id)
-    result = synthesis_client.save_transcript_for_id(
-        transcript_id=tct.id, transcript=tct.transcript
-    )
-    if result['status_code'] < 300:
-        _generate_metadata_and_update_transcript(tct)
-        summary = _generate_summary(tct)
-        concise = _generate_concise(tct)
-        embeds = _generate_embeds(tct)
-
-        if summary and concise and embeds:
-            tct.cost += summary.cost + concise.cost + embeds.cost
-            tct.save()
-            return 200
-
-    return 500
+def generate_answers(tct: Transcript) -> 'list[dict]':
+    questions = tct.project.questions
+    query_objects = []
+    for question in questions:
+        query_obj = run_openai_query(
+            tct, question,
+            Query.QueryLevelChoices.PROJECT)
+        data = {
+                'query': question,
+                'output': query_obj.output
+            }
+        query_objects.append(data)
+    return query_objects
 
 
-def run_openai_query(tct: Transcript, query: str) -> Query:
+def run_openai_query(tct: Transcript, query: str, level: str) -> Query:
     """Run the OpenAI query on the given transcript."""
     result = synthesis_client.run_query(tct.id, query)
     query_obj = Query.objects.create(
@@ -96,10 +105,11 @@ def run_openai_query(tct: Transcript, query: str) -> Query:
         query=query,
         output=result['output'],
         prompt=result["prompt"],
-        cost=result['cost'],
+        cost=Decimal(result['cost']),
+        query_level=level
     )
 
-    tct.cost = float(tct.cost) + query_obj.cost
+    tct.cost += query_obj.cost
     tct.save()
 
     return query_obj

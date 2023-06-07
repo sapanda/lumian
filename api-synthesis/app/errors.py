@@ -15,6 +15,11 @@ class OpenAIRateLimitException(SynthesisAPIException):
     pass
 
 
+class PineconeException(SynthesisAPIException):
+    """Generic exception when using Pinecone APIs"""
+    pass
+
+
 class ObjectNotFoundException(SynthesisAPIException):
     """Exception for object not found in storage"""
     pass

@@ -32,6 +32,7 @@ class Transcript(models.Model):
         models.CharField(max_length=255), default=list)
     transcript = models.TextField(
         max_length=100000, blank=True, null=True)
+    metadata_generated = models.BooleanField(default=False)
     cost = models.DecimalField(
         max_digits=10, decimal_places=4, default=0.0000)
 
@@ -103,6 +104,11 @@ class Query(models.Model):
         verbose_name = 'Query'
         verbose_name_plural = 'Queries'
 
+    class QueryLevelChoices(models.TextChoices):
+        PROJECT = 'project', _('Project level queries')
+        TRANSCRIPT = 'transcript', _('Transcript level queries')
+        # TODO : add other meeting choices
+
     transcript = models.ForeignKey(
         Transcript, on_delete=models.CASCADE)
 
@@ -111,6 +117,9 @@ class Query(models.Model):
     prompt = models.TextField(max_length=20000, blank=True)
     cost = models.DecimalField(
         max_digits=10, decimal_places=4, default=0.0000)
+    query_level = models.CharField(
+        max_length=32,
+        choices=QueryLevelChoices.choices)
 
     @property
     def synthesis(self) -> str:

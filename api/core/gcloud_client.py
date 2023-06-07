@@ -6,7 +6,9 @@ from google.cloud.tasks_v2 import CloudTasksClient
 from google.cloud.tasks_v2.services.cloud_tasks.transports \
     import CloudTasksGrpcTransport
 from google.cloud.tasks_v2.types import HttpMethod
+from google.protobuf.duration_pb2 import Duration
 import logging
+from typing import Optional
 
 from app import settings
 
@@ -17,7 +19,7 @@ logger = logging.getLogger()
 class GCloudClientInterface(ABC):
     """Interface for OpenAI Client"""
     @abstractmethod
-    def create_task(self, path: str, payload: dict):
+    def create_task(self, path: str, payload: dict, timeout_minutes: int):
         """Add a task to the queue"""
         pass
 
@@ -49,12 +51,12 @@ class GCloudClient(GCloudClientInterface):
         response = self.run_client.get_service(name=name)
         return response.uri
 
-    def create_task(self, path, payload):
+    def create_task(self, path: str, payload: dict,
+                    timeout_minutes: Optional[int] = -1):
         """Create a Google Cloud Task for a given service."""
         parent = self.tasks_client.queue_path(self.project_id,
                                               self.location,
                                               self.queue_name)
-
         task = {
             "http_request": {
                 "http_method": HttpMethod.POST,
@@ -63,8 +65,13 @@ class GCloudClient(GCloudClientInterface):
                     "Content-Type": "application/json",
                 },
                 "body": payload.encode(),
-            }
+            },
         }
+
+        if timeout_minutes > 0:
+            duration = Duration()
+            duration.FromSeconds(timeout_minutes * 60)
+            task["dispatch_deadline"] = duration
 
         try:
             response = self.tasks_client.create_task(
@@ -95,7 +102,8 @@ class GCloudEmulatorClient(GCloudClientInterface):
         except exceptions.AlreadyExists:
             pass
 
-    def create_task(self, path, payload):
+    def create_task(self, path: str, payload: dict,
+                    timeout_minutes: Optional[int] = -1):
         task = {
             "http_request": {
                 "http_method": HttpMethod.POST,
@@ -113,7 +121,8 @@ class GCloudEmulatorClient(GCloudClientInterface):
 
 
 class GCloudMockClient(GCloudClientInterface):
-    def create_task(self, path, payload):
+    def create_task(self, path: str, payload: dict,
+                    timeout_minutes: Optional[int] = -1):
         return ""
 
 
