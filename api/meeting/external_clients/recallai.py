@@ -1,11 +1,11 @@
 import requests
 from retry import retry
 from urllib.parse import urlencode
+import datetime
 from requests.exceptions import (
     HTTPError,
     RequestException
 )
-
 from meeting.errors import RecallAITimeoutException
 from app.settings import (
     RECALL_API_KEY,
@@ -116,45 +116,6 @@ def create_calendar(refresh_token):
         raise RecallAITimeoutException(error_msg, status_code)
 
 
-@retry(RecallAITimeoutException, tries=3, delay=5, backoff=2)
-def list_calendar_events(calendar_id):
-
-    params = {
-                "calendar_id": calendar_id,
-            }
-
-    url = f"{LIST_CALENDAR_EVENTS}?{urlencode(params)}"
-    token = RECALL_API_KEY
-
-    headers = {
-        "accept": "application/json",
-        "Authorization": "Token " + token
-    }
-
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        res = response.json()
-        events = []
-        for result in res['results']:
-            event = {}
-            event['meeting_url'] = result['raw']['location']
-            event['start_time'] = result['start_time']
-            event['end_time'] = result['end_time']
-            event['summary'] = result['raw']['summary']
-            events.append(event)
-
-        return events
-    except HTTPError as e:
-        error_msg = f"HTTP error occurred: {e}"
-        status_code = e.response.status_code
-        raise RecallAITimeoutException(error_msg, status_code)
-    except RequestException as e:
-        error_msg = f"An error occurred: {e}"
-        status_code = None
-        raise RecallAITimeoutException(error_msg, status_code)
-
-
 @retry(RecallAITimeoutException, tries=3, delay=10, backoff=3)
 def retrieve_calendar(calendar_id):
 
@@ -174,6 +135,53 @@ def retrieve_calendar(calendar_id):
             raise RequestException()
         return res['oauth_email']
         # TODO : check status and fetch reason in case of error
+    except HTTPError as e:
+        error_msg = f"HTTP error occurred: {e}"
+        status_code = e.response.status_code
+        raise RecallAITimeoutException(error_msg, status_code)
+    except RequestException as e:
+        error_msg = f"An error occurred: {e}"
+        status_code = None
+        raise RecallAITimeoutException(error_msg, status_code)
+
+
+@retry(RecallAITimeoutException, tries=3, delay=5, backoff=2)
+def list_calendar_events(calendar_id):
+
+    now = datetime.datetime.utcnow()
+    logger.debug(now)
+    time_min = (now - datetime.timedelta(minutes=60)).isoformat() + 'Z'
+    time_max = (now + datetime.timedelta(minutes=1)).isoformat() + 'Z'
+    params = {
+                "start_time__gte": time_min,
+                "start_time__lte": time_max,
+                "calendar_id": calendar_id,
+            }
+
+    url = f"{LIST_CALENDAR_EVENTS}?{urlencode(params)}"
+    token = RECALL_API_KEY
+
+    headers = {
+        "accept": "application/json",
+        "Authorization": "Token " + token
+    }
+
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        res = response.json()
+        events = []
+        for result in res['results']:
+            event = {}
+            event['meeting_url'] = result['raw']['location']
+            event['start_time'] = result['raw']['start']['dateTime']
+            event['end_time'] = result['raw']['end']['dateTime']
+            event['summary'] = result['raw']['summary']
+
+            # TODO : Check if meeting has been finished already
+            events.append(event)
+
+        return events
     except HTTPError as e:
         error_msg = f"HTTP error occurred: {e}"
         status_code = e.response.status_code
