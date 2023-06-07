@@ -60,21 +60,30 @@ export default function InterviewsList() {
         >
           <div className="flex items-center justify-end w-full gap-5 px-10 py-5">
             <Typography variant="body1">Feb 2 to Feb 10</Typography>
-            <Button
-              variant="contained"
-              onClick={() => startTranscribe(parseInt(projectId || "0"))}
-            >
-              Transcribe
-            </Button>
-            <Button variant="contained" onClick={() => setModalOpen(true)}>
-              Upload
-            </Button>
+            {rows?.length > 0 && (
+              <>
+                <Button
+                  variant="contained"
+                  onClick={() => startTranscribe(parseInt(projectId || "0"))}
+                >
+                  Transcribe
+                </Button>
+                <Button variant="contained" onClick={() => setModalOpen(true)}>
+                  Upload
+                </Button>
+              </>
+            )}
             <Button variant="outlined">Settings</Button>
           </div>
         </PrivateAppbar>
       }
     >
-      {rows?.length === 0 && <GetStarted />}
+      {rows?.length === 0 && (
+        <GetStarted
+          onUploadClick={() => setModalOpen(true)}
+          startTranscibe={() => startTranscribe(parseInt(projectId || "0"))}
+        />
+      )}
       {rows?.length > 0 && (
         <TabNav
           tabs={[

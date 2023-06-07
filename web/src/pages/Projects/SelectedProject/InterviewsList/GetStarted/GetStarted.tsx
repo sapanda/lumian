@@ -1,10 +1,13 @@
-import { Button,  Typography } from "@mui/material";
-import { useNavigate } from "react-router-dom";
-import { PROJECTS } from "../../../../../router/routes.constant";
+import { Button, Typography } from "@mui/material";
 import { DescriptionText } from "../../../../../components/atoms";
 import line from "./line.svg";
-export default function GetStarted() {
-  const navigate = useNavigate();
+
+interface GetStartedProps {
+  onUploadClick: () => void;
+  startTranscibe: () => void;
+}
+export default function GetStarted(props: GetStartedProps) {
+  const { onUploadClick, startTranscibe } = props;
   return (
     <div className="flex flex-col items-center flex-1 h-full">
       <div className="flex flex-col max-w-[360px] mt-[10%]">
@@ -18,7 +21,9 @@ export default function GetStarted() {
             <DescriptionText>You can upload multiple files</DescriptionText>
 
             <div className="mt-2">
-              <Button variant="contained">Upload Transcript</Button>
+              <Button variant="contained" onClick={onUploadClick}>
+                Upload Transcript
+              </Button>
             </div>
           </div>
 
@@ -40,7 +45,7 @@ export default function GetStarted() {
             <div
               className="mt-2"
               onClick={() => {
-                navigate(PROJECTS.CREATE_PROJECT);
+                startTranscibe();
               }}
             >
               <Button variant="contained">Initiate Transcription</Button>
