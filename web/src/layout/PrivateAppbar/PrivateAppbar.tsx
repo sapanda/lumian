@@ -109,7 +109,6 @@ function AppBarLabel(
 export default function PrivateAppbar(props: PrivateAppbarProps) {
   const { children, breadcrumb, icon, title, isTitleEditable, onEditEnd } =
     props;
-  console.log({ title });
   return (
     <AppBar
       position="fixed"
