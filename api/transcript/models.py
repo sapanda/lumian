@@ -62,8 +62,8 @@ class Synthesis(models.Model):
         Transcript, on_delete=models.CASCADE)
 
     output_type = models.CharField(max_length=2, choices=SynthesisType.choices)
-    output = models.JSONField(blank=True)
-    prompt = models.TextField(max_length=20000, blank=True)
+    output = models.JSONField(blank=True, null=True)
+    prompt = models.TextField(max_length=20000, blank=True, null=True)
     cost = models.DecimalField(
         max_digits=10, decimal_places=4, default=0.0000, editable=False)
     status = models.CharField(max_length=2, choices=SynthesisStatus.choices)
