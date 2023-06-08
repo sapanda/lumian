@@ -129,16 +129,6 @@ export const AccountMenu = () => {
           isBackgroundWhite={true}
         />
 
-        <SidebarBtn
-          item={{
-            label: "Settings",
-            path: ACCOUNT_SETTINGS,
-          }}
-          onClick={() => {
-            handleClose();
-          }}
-          isBackgroundWhite={true}
-        />
         <Divider />
         <SidebarBtn
           item={{

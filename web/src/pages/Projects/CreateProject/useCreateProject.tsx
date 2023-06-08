@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 
 import {
   useCreateProjectMutation,
+  useDeleteProjectMutation,
   useGetProjectMutation,
   useUpdateProjectMutation,
 } from "../../../api/projectApi";
@@ -24,13 +25,13 @@ interface IState {
 }
 
 export default function useCreateProject() {
-  const { mutateAsync: getProject } = useGetProjectMutation();
+  const { projectId } = useParams();
   const [state, setState] = useState<IState>(initialState);
   const [errors, setErrors] = useState<IState>(initialErrors);
+  const { mutateAsync: getProject } = useGetProjectMutation();
   const { mutate: createProject } = useCreateProjectMutation();
   const { mutate: updateProject } = useUpdateProjectMutation();
-
-  const { projectId } = useParams();
+  const { mutate: deleteProject } = useDeleteProjectMutation();
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
@@ -92,5 +93,5 @@ export default function useCreateProject() {
     getProjectDetail();
   }, [getProjectDetail]);
 
-  return { state, handleChange, handleSave, errors, projectId };
+  return { state, handleChange, handleSave, errors, projectId, deleteProject };
 }

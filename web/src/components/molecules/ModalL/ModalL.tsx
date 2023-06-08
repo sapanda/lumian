@@ -5,9 +5,10 @@ interface ModalLProps {
   open: boolean;
   handleClose: () => void;
   sx?: SxProps<Theme>;
+  containerStyles?: React.CSSProperties;
 }
 export default function ModalL(props: ModalLProps) {
-  const { children, open, handleClose, sx } = props;
+  const { children, open, handleClose, sx, containerStyles } = props;
   return (
     <Dialog
       fullWidth
@@ -17,7 +18,11 @@ export default function ModalL(props: ModalLProps) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-
+        ".MuiDialog-paper": {
+          padding: "20px",
+          width: "100%",
+          ...containerStyles,
+        },
         ...sx,
       }}
     >
