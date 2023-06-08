@@ -1,4 +1,5 @@
 import { AppBar, IconButton, Stack, Toolbar, Typography } from "@mui/material";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const drawerWidth = 240;
@@ -11,6 +12,8 @@ interface PrivateAppbarProps {
   icon: string;
   title: string;
   children?: React.ReactNode;
+  isTitleEditable?: boolean;
+  onEditEnd?: (title: string) => void;
 }
 
 function AppBarLabel(
@@ -19,9 +22,17 @@ function AppBarLabel(
   breadcrumb?: {
     title: string;
     path: string;
-  }
+  },
+  isTitleEditable?: boolean,
+  onEditEnd?: (title: string) => void
 ) {
   const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(title);
+
+  useEffect(() => {
+    setEditTitle(title);
+  }, [title]);
   return (
     <Toolbar>
       <Stack
@@ -38,9 +49,45 @@ function AppBarLabel(
           <img src={icon} alt="Projects" />
         </IconButton>
         <Stack>
-          <Typography variant="h2" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {title}
-          </Typography>
+          {isEditing ? (
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) => {
+                setEditTitle(e.target.value);
+              }}
+              onBlur={() => {
+                onEditEnd && onEditEnd(editTitle);
+                setIsEditing(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  onEditEnd && onEditEnd(editTitle);
+                  setIsEditing(false);
+                }
+              }}
+              style={{
+                border: "#E5E5E5 1px solid",
+                outline: "none",
+                color: "black",
+                padding: "4px",
+              }}
+              className="text-20-700"
+            />
+          ) : (
+            <Typography
+              variant="h2"
+              noWrap
+              component="div"
+              sx={{ flexGrow: 1 }}
+              {...(isTitleEditable && {
+                onDoubleClick: () => setIsEditing(true),
+              })}
+            >
+              {title}
+            </Typography>
+          )}
           {!!breadcrumb && breadcrumb.title && (
             <Typography
               variant="h6"
@@ -60,8 +107,9 @@ function AppBarLabel(
 }
 
 export default function PrivateAppbar(props: PrivateAppbarProps) {
-  const { children, breadcrumb, icon, title } = props;
-
+  const { children, breadcrumb, icon, title, isTitleEditable, onEditEnd } =
+    props;
+  console.log({ title });
   return (
     <AppBar
       position="fixed"
@@ -69,7 +117,9 @@ export default function PrivateAppbar(props: PrivateAppbarProps) {
       sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}
     >
       <Stack direction="row" gap="20px">
-        <Toolbar>{AppBarLabel(icon, title, breadcrumb)}</Toolbar>
+        <Toolbar>
+          {AppBarLabel(icon, title, breadcrumb, isTitleEditable, onEditEnd)}
+        </Toolbar>
         {!!children && children}
       </Stack>
     </AppBar>
