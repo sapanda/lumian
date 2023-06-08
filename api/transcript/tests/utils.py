@@ -30,6 +30,17 @@ def create_project(user, **params):
     return pjt
 
 
+def default_transcript_payload(project):
+    """Return a default transcript payload."""
+    return {
+        'project': project.id,
+        'title': 'Test Title',
+        'interviewee_names': ['Interviewee'],
+        'interviewer_names': ['Interviewer 1', 'Interviewer 2'],
+        'transcript': 'Test Transcript',
+    }
+
+
 def create_transcript(project, **params):
     """Create and return a sample transcript."""
     defaults = {
