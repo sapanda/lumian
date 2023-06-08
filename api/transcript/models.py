@@ -45,6 +45,12 @@ class SynthesisType(models.TextChoices):
     CONCISE = 'CS', _('Concise')
 
 
+class SynthesisStatus(models.TextChoices):
+    IN_PROGRESS = 'IP', _('In Progress')
+    COMPLETED = 'C', _('Completed')
+    FAILED = 'F', _('Failed')
+
+
 class Synthesis(models.Model):
     """Model representing final synthesis of a transcript"""
 
@@ -60,6 +66,7 @@ class Synthesis(models.Model):
     prompt = models.TextField(max_length=20000, blank=True)
     cost = models.DecimalField(
         max_digits=10, decimal_places=4, default=0.0000, editable=False)
+    status = models.CharField(max_length=2, choices=SynthesisStatus.choices)
 
     def get_synthesis_type(self) -> SynthesisType:
         return dict(SynthesisType.choices).get(self.output_type)
@@ -92,6 +99,7 @@ class Embeds(models.Model):
 
     cost = models.DecimalField(
         max_digits=10, decimal_places=4, default=0.0000, editable=False)
+    status = models.CharField(max_length=2, choices=SynthesisStatus.choices)
 
     def __str__(self):
         return f'{self.transcript}'

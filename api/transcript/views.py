@@ -5,6 +5,7 @@ from django.urls import reverse
 from drf_spectacular.utils import (
     extend_schema, inline_serializer, OpenApiParameter, OpenApiTypes
 )
+import logging
 from rest_framework import (
     authentication,
     parsers,
@@ -18,7 +19,7 @@ from rest_framework.views import APIView
 
 from . import tasks
 from .models import (
-    Transcript, SynthesisType, Synthesis, Embeds, Query
+    Transcript, SynthesisType, Synthesis, Embeds, Query, SynthesisStatus
 )
 from .serializers import (
     TranscriptSerializer, SynthesisSerializer, QuerySerializer
@@ -26,6 +27,9 @@ from .serializers import (
 from app.settings import SYNTHESIS_TASK_TIMEOUT
 from core.gcloud_client import client
 from project.models import Project
+
+
+logger = logging.getLogger(__name__)
 
 
 class TranscriptView(viewsets.ModelViewSet):
@@ -95,6 +99,7 @@ class BaseSynthesizerView(APIView):
 
 
 class InitiateSynthesizerView(BaseSynthesizerView):
+    """Initiate the synthesis process for a transcript."""
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
@@ -113,6 +118,7 @@ class InitiateSynthesizerView(BaseSynthesizerView):
 
 
 class GenerateMetadataView(BaseSynthesizerView):
+    """Generate trancsript metadata AND kick off the other synthesis tasks"""
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
@@ -143,47 +149,65 @@ class GenerateMetadataView(BaseSynthesizerView):
         return response
 
 
-class GenerateSummaryView(BaseSynthesizerView):
-    def post(self, request, pk):
+class BaseSynthesisSynthesizerView(BaseSynthesizerView):
+    """Base class for synthesis generation views"""
+    def post_of_type(self, request, pk, synthesis_type, func):
         try:
             tct = Transcript.objects.get(pk=pk)
-            summary = Synthesis.objects.filter(
-                transcript=pk, output_type=SynthesisType.SUMMARY)
-            if summary.exists():
-                response = Response(status=status.HTTP_200_OK)
+            synthesis_qs = Synthesis.objects.filter(
+                transcript=pk, output_type=synthesis_type)
+
+            run_generate = False
+            if synthesis_qs.exists():
+                synthesis = synthesis_qs.first()
+                if synthesis.status == SynthesisStatus.FAILED:
+                    # Restart the generation
+                    synthesis.delete()
+                    run_generate = True
             else:
-                result = tasks.generate_summary(tct)
+                run_generate = True
+
+            if run_generate:
+                result = func(tct)
                 response = Response(status=result['status_code'])
+            else:
+                response = Response(status=status.HTTP_200_OK)
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
         return response
 
 
-class GenerateConciseView(BaseSynthesizerView):
+class GenerateSummaryView(BaseSynthesisSynthesizerView):
+    """Generate a summary of the transcript"""
     def post(self, request, pk):
-        try:
-            tct = Transcript.objects.get(pk=pk)
-            concise = Synthesis.objects.filter(
-                transcript=pk, output_type=SynthesisType.CONCISE)
-            if concise.exists():
-                response = Response(status=status.HTTP_200_OK)
-            else:
-                result = tasks.generate_concise(tct)
-                response = Response(status=result['status_code'])
-        except Transcript.DoesNotExist:
-            response = Response(status=status.HTTP_404_NOT_FOUND)
+        return self.post_of_type(
+            request, pk, SynthesisType.SUMMARY, tasks.generate_summary)
 
-        return response
+
+class GenerateConciseView(BaseSynthesisSynthesizerView):
+    """Generate a concise version of the transcript"""
+    def post(self, request, pk):
+        return self.post_of_type(
+            request, pk, SynthesisType.CONCISE, tasks.generate_concise)
 
 
 class GenerateEmbedsView(BaseSynthesizerView):
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
-            embeds = Embeds.objects.filter(transcript=pk)
-            if embeds.exists():
-                response = Response(status=status.HTTP_200_OK)
+            embeds_qs = Embeds.objects.filter(transcript=pk)
+
+            run_generate = False
+            if embeds_qs.exists():
+                embeds = embeds_qs.first()
+                if embeds.status == SynthesisStatus.FAILED:
+                    # Restart the generation
+                    embeds.delete()
+                    run_generate = True
             else:
+                run_generate = True
+
+            if run_generate:
                 result = tasks.generate_embeds(tct)
                 if status.is_success(result['status_code']):
                     client.create_task(
@@ -192,6 +216,8 @@ class GenerateEmbedsView(BaseSynthesizerView):
                         timeout_minutes=SYNTHESIS_TASK_TIMEOUT
                     )
                 response = Response(status=result['status_code'])
+            else:
+                response = Response(status=status.HTTP_200_OK)
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
         return response
@@ -225,17 +251,29 @@ class BaseSynthesisView(APIView):
         """Retrieve the AISynthesis of the given type."""
         try:
             Transcript.objects.get(pk=pk)  # Needed for checking 404
-            synthesis = Synthesis.objects.get(
+            synthesis_qs = Synthesis.objects.filter(
                 transcript=pk,
                 output_type=synthesis_type
-            )
-            serializer = SynthesisSerializer(synthesis)
-            response = Response(serializer.data)
+            ).order_by('-id')
+            if synthesis_qs.exists():
+                if len(synthesis_qs) > 1:
+                    logger.error(
+                        f"Multiple Synthesis Objects for Transcript {pk}")
+
+                synthesis = synthesis_qs.first()
+                if synthesis.status == SynthesisStatus.FAILED:
+                    response = Response(
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                elif synthesis.status == SynthesisStatus.IN_PROGRESS:
+                    response = Response(status=status.HTTP_202_ACCEPTED)
+                else:
+                    serializer = SynthesisSerializer(synthesis)
+                    response = Response(serializer.data)
+            else:
+                # TODO: Should we return a 404 if synthesis has not started?
+                response = Response(status=status.HTTP_202_ACCEPTED)
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
-        except Synthesis.DoesNotExist:
-            # TODO: Have a way to check if summary in progress
-            response = Response(status=status.HTTP_202_ACCEPTED)
 
         return response
 
@@ -269,20 +307,26 @@ class QueryView(APIView):
         query = request.data.get('query')
         try:
             tct = Transcript.objects.get(pk=pk)
-            Embeds.objects.get(transcript=pk)  # Needed for checking 202
-            query_obj = tasks.run_openai_query(
-                tct, query,
-                Query.QueryLevelChoices.TRANSCRIPT)
-            data = {
-                'query': query,
-                'output': query_obj.output
-            }
-            response = Response(data, status=status.HTTP_201_CREATED)
+
+            embeds_qs = Embeds.objects.filter(transcript=pk)
+            if embeds_qs.exists:
+                if len(embeds_qs) > 1:
+                    logger.error(
+                        f"Multiple Embeds Objects for Transcript {pk}")
+
+                query_obj = tasks.run_openai_query(
+                    tct, query,
+                    Query.QueryLevelChoices.TRANSCRIPT)
+                data = {
+                    'query': query,
+                    'output': query_obj.output
+                }
+                response = Response(data, status=status.HTTP_201_CREATED)
+            else:
+                # TODO: Should we return a 404 if embeds has not started?
+                response = Response(status=status.HTTP_202_ACCEPTED)
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
-        except Embeds.DoesNotExist:
-            # TODO: Have a way to check if summary in progress
-            response = Response(status=status.HTTP_202_ACCEPTED)
 
         return response
 
