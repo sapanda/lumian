@@ -96,7 +96,7 @@ export default function CreateProject() {
       {/* ------------ DELETE PROJECT MODAL----------- */}
       <ModalL open={modalOpen} handleClose={() => setModalOpen(false)}>
         <div className="flex flex-col justify-center gap-5 max-w-[400px]">
-          <h2 className="text-20-700">Delete Project</h2>
+          <h2 className="text-20-700">Delete Project?</h2>
           <p className="text-red-500 text-12-400">
             All interviews in this project will also be deleted. Neither the
             project nor the interviews can be recovered. Are you sure you want

@@ -37,6 +37,18 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error) => {
+    if (error.response.status === 400) {
+      toast.error(error.response.statusText, {
+        style: {
+          backgroundColor: "#ff0000",
+          color: "#fff",
+          fill: "#fff",
+        },
+        theme: "colored",
+        toastId: "unauthorized",
+      });
+    }
+
     if (error.response.status === 401) {
       toast.error("Unauthorized", {
         style: {
