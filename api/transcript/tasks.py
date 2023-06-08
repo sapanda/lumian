@@ -1,8 +1,12 @@
 from decimal import Decimal
+import logging
 from . import synthesis_client
 from .models import (
     Transcript, SynthesisType, Query, Embeds, Synthesis, SynthesisStatus
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def initiate_synthesis(tct: Transcript) -> dict:
@@ -47,57 +51,73 @@ def _update_synthesis_from_result(tct: Transcript,
 
 def generate_summary(tct: Transcript) -> dict:
     """Generate synthesized summary using the synthesis service"""
-    synthesis = Synthesis.objects.create(
-        transcript=tct,
-        output_type=SynthesisType.SUMMARY,
-        status=SynthesisStatus.IN_PROGRESS
-    )
-    # TODO: add support for multiple interviewees
-    result = synthesis_client.get_summary_with_citations(
-        transcript_id=tct.id,
-        interviewee=tct.interviewee_names[0]
-    )
-    _update_synthesis_from_result(tct, synthesis, result)
+    try:
+        synthesis = Synthesis.objects.get(
+            transcript=tct,
+            output_type=SynthesisType.SUMMARY
+        )
+        # TODO: add support for multiple interviewees
+        result = synthesis_client.get_summary_with_citations(
+            transcript_id=tct.id,
+            interviewee=tct.interviewee_names[0]
+        )
+        _update_synthesis_from_result(tct, synthesis, result)
+    except Synthesis.DoesNotExist as e:
+        logger.exception(("Synthesis doesn't exist. "
+                          "Summary generation will be skipped."),
+                         exc_info=e)
+        result = {'status_code': 500}
     return result
 
 
 def generate_concise(tct: Transcript) -> dict:
     """Generate concise transcript using the synthesis service"""
-    synthesis = Synthesis.objects.create(
-        transcript=tct,
-        output_type=SynthesisType.CONCISE,
-        status=SynthesisStatus.IN_PROGRESS
-    )
-    # TODO: add support for multiple interviewees
-    result = synthesis_client.get_concise_with_citations(
-        transcript_id=tct.id,
-        interviewee=tct.interviewee_names[0]
-    )
-    _update_synthesis_from_result(tct, synthesis, result)
+    try:
+        synthesis = Synthesis.objects.get(
+            transcript=tct,
+            output_type=SynthesisType.CONCISE
+        )
+        # TODO: add support for multiple interviewees
+        result = synthesis_client.get_concise_with_citations(
+            transcript_id=tct.id,
+            interviewee=tct.interviewee_names[0]
+        )
+        _update_synthesis_from_result(tct, synthesis, result)
+    except Synthesis.DoesNotExist as e:
+        logger.exception(("Synthesis doesn't exist. "
+                          "Concise generation will be skipped."),
+                         exc_info=e)
+        result = {'status_code': 500}
     return result
 
 
 def generate_embeds(tct: Transcript) -> dict:
     """Generate the embeds for the transcript."""
-    embeds = Embeds.objects.create(
-        transcript=tct,
-        status=SynthesisStatus.IN_PROGRESS
-    )
-    result = synthesis_client.generate_embeds(
-        transcript_id=tct.id,
-        transcript_title=tct.title,
-        interviewee=tct.interviewee_names[0]
-    )
-    if (result['status_code'] < 300):
-        embeds.cost = Decimal(result["cost"])
-        embeds.status = SynthesisStatus.COMPLETED
-        embeds.save()
+    try:
+        embeds = Embeds.objects.get(
+            transcript=tct
+        )
+        # TODO: add support for multiple interviewees
+        result = synthesis_client.generate_embeds(
+            transcript_id=tct.id,
+            transcript_title=tct.title,
+            interviewee=tct.interviewee_names[0]
+        )
+        if (result['status_code'] < 300):
+            embeds.cost = Decimal(result["cost"])
+            embeds.status = SynthesisStatus.COMPLETED
+            embeds.save()
 
-        tct.cost += embeds.cost
-        tct.save()
-    else:
-        embeds.status = SynthesisStatus.FAILED
-        embeds.save()
+            tct.cost += embeds.cost
+            tct.save()
+        else:
+            embeds.status = SynthesisStatus.FAILED
+            embeds.save()
+    except Embeds.DoesNotExist as e:
+        logger.exception(("Embeds Object doesn't exist. "
+                          "Embeds generation will be skipped."),
+                         exc_info=e)
+        result = {'status_code': 500}
     return result
 
 
