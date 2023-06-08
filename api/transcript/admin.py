@@ -30,14 +30,14 @@ class TranscriptForm(forms.ModelForm):
 class SynthesisInline(ReadOnlyInline):
     model = Synthesis
     exclude = ['output', 'output_type', 'prompt']
-    readonly_fields = ['synthesis', 'cost']
+    readonly_fields = ['synthesis', 'cost', 'status']
     verbose_name = ""
     verbose_name_plural = "Syntheses"
 
 
 class EmbedsInline(ReadOnlyInline):
     model = Embeds
-    readonly_fields = ['cost']
+    readonly_fields = ['cost', 'status']
     verbose_name = ""
     verbose_name_plural = "Embeds"
 
@@ -68,7 +68,7 @@ class SynthesisAdmin(admin.ModelAdmin):
     list_display = ['transcript', 'output_type', 'synthesis', 'cost']
     fields = ('transcript', 'output_type', 'output',
               'cost', 'synthesis', 'citations', 'prompt')
-    readonly_fields = ('cost', 'synthesis', 'citations', 'prompt')
+    readonly_fields = ('cost', 'synthesis', 'citations', 'prompt', 'status')
 
 
 @admin.register(Query)
