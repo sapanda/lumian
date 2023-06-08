@@ -48,7 +48,7 @@ def test_get_transcript(setup_teardown):
         headers={
             'Content-Type': 'text/plain'
         })
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.status_code == status.HTTP_201_CREATED
     response = client.get(f"/transcript/{TRANSCRIPT_ID}")
     assert response.status_code == status.HTTP_200_OK
     data = json.loads(response.content)
@@ -66,7 +66,7 @@ def test_save_transcript(setup_teardown):
         headers={
             'Content-Type': 'text/plain'
         })
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.status_code == status.HTTP_201_CREATED
     response = client.post(
         f"/transcript/{TRANSCRIPT_ID}",
         content=transcript_text,
@@ -89,7 +89,7 @@ def test_delete_transcript(setup_teardown):
         headers={
             'Content-Type': 'text/plain'
         })
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.status_code == status.HTTP_201_CREATED
     response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
@@ -106,7 +106,7 @@ def test_get_transcript_metadta(setup_teardown):
         headers={
             'Content-Type': 'text/plain'
         })
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.status_code == status.HTTP_201_CREATED
     response = client.get(
         f'/transcript/{TRANSCRIPT_ID}/metadata')
     body = json.loads(response.content)
@@ -129,7 +129,7 @@ def test_get_summary(setup_teardown):
         headers={
             'Content-Type': 'text/plain'
         })
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.status_code == status.HTTP_201_CREATED
     response = client.get(
         f'/transcript/{TRANSCRIPT_ID}/summary?interviewee=Jason')
     body = json.loads(response.content)
@@ -154,7 +154,7 @@ def test_get_concise(setup_teardown):
         headers={
             'Content-Type': 'text/plain'
         })
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.status_code == status.HTTP_201_CREATED
     response = client.get(
         f'/transcript/{TRANSCRIPT_ID}/concise?interviewee=Jason')
     body = json.loads(response.content)
@@ -179,7 +179,7 @@ def test_create_embeds(setup_teardown):
         headers={
             'Content-Type': 'text/plain'
         })
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.status_code == status.HTTP_201_CREATED
     response = client.post(
         f"/transcript/{TRANSCRIPT_ID}/embeds?interviewee=Jason&title=Test")
     assert response.status_code == status.HTTP_200_OK
@@ -203,7 +203,7 @@ def test_run_query(setup_teardown):
         headers={
             'Content-Type': 'text/plain'
         })
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.status_code == status.HTTP_201_CREATED
     response = client.post(
         f"/transcript/{TRANSCRIPT_ID}/embeds?interviewee=Jason&title=Test")
     assert response.status_code == status.HTTP_200_OK
