@@ -67,7 +67,7 @@ class SynthesisAdmin(admin.ModelAdmin):
     """Admin page for the Synthesis model"""
     list_display = ['transcript', 'output_type', 'synthesis', 'cost']
     fields = ('transcript', 'output_type', 'output',
-              'cost', 'synthesis', 'citations', 'prompt')
+              'cost', 'synthesis', 'citations', 'prompt', 'status')
     readonly_fields = ('cost', 'synthesis', 'citations', 'prompt', 'status')
 
 
