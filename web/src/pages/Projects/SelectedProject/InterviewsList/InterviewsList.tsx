@@ -108,7 +108,12 @@ export default function InterviewsList() {
         </PrivateAppbar>
       }
     >
-      {rows?.length === 0 && <GetStarted />}
+      {rows?.length === 0 && (
+        <GetStarted
+          onUploadClick={() => setModalOpen(true)}
+          startTranscibe={() => startTranscribe(parseInt(projectId || "0"))}
+        />
+      )}
       {rows?.length > 0 && (
         <TabNav
           tabs={[
