@@ -1,5 +1,7 @@
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.db import IntegrityError
+from django.urls import reverse
+import requests
 from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_202_ACCEPTED,
@@ -199,12 +201,21 @@ class ScheduleBotView(APIView):
             )
             calendar_id = meeting_calendar_details.calendar_id
             events = list_calendar_events(calendar_id, schedule=True)
+
             for event in events:
                 logger.debug(event)
                 bot = add_bot_to_meeting(
                     bot_name='Lumian Notetaker',
                     meeting_url=event['meeting_url'],
                     join_at=event['start_time']
+                )
+                project = Project.objects.get(id=1)
+                MeetingBot.objects.create(
+                    id=bot['id'],
+                    status=MeetingBot.StatusChoices.READY,
+                    message="Bot is created and ready to join the call",
+                    transcript=None,
+                    project=project
                 )
                 logger.info(f"Bot id {bot['id']} Meeting {event['summary']}")
 
