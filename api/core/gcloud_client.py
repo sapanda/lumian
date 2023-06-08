@@ -13,7 +13,7 @@ from typing import Optional
 from app import settings
 
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 class GCloudClientInterface(ABC):

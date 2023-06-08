@@ -16,7 +16,7 @@ from .utils import (
 )
 
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 # TODO: Split into separate components for Summary, Concise and Embeds
