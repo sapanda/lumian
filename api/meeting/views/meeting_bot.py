@@ -1,7 +1,5 @@
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.db import IntegrityError
-from django.urls import reverse
-import requests
 from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_202_ACCEPTED,
