@@ -3,7 +3,8 @@ from django.urls import path
 from meeting.views.meeting_bot import (
     AddBotView,
     BotStatusChangeView,
-    GetBotStatusView
+    GetBotStatusView,
+    ScheduleBotView
 )
 from meeting.views.meeting_app import (
     OAuthView,
@@ -19,6 +20,8 @@ from meeting.views.meeting_calendar import (
 urlpatterns = [
      path('bot/add',
           AddBotView.as_view(), name='add-bot-to-meeting'),
+     path('bot/schedule',
+          ScheduleBotView.as_view(), name='add-bot-to-scheduled-meeting'),
      path('bot/status/update',
           BotStatusChangeView.as_view(), name='webhook-bot-status-change'),
      path('bot/status',

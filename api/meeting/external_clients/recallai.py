@@ -25,7 +25,7 @@ LIST_CALENDAR_EVENTS = "https://api.recall.ai/api/v2/calendar-events/"
 
 
 @retry(RecallAITimeoutException, tries=3, delay=5, backoff=2)
-def add_bot_to_meeting(bot_name: str, meeting_url: str):
+def add_bot_to_meeting(bot_name: str, meeting_url: str, join_at: str = None):
 
     url = CREATE_BOT_URL
     token = RECALL_API_KEY
@@ -34,8 +34,10 @@ def add_bot_to_meeting(bot_name: str, meeting_url: str):
     payload = {
         "bot_name": bot_name,
         "transcription_options": {"provider": transcript_provider},
-        "meeting_url": meeting_url
+        "meeting_url": meeting_url,
+        "join_at": join_at if join_at else None
     }
+
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
@@ -146,12 +148,16 @@ def retrieve_calendar(calendar_id):
 
 
 @retry(RecallAITimeoutException, tries=3, delay=5, backoff=2)
-def list_calendar_events(calendar_id):
+def list_calendar_events(calendar_id, schedule=False):
 
     now = datetime.datetime.utcnow()
     logger.debug(now)
-    time_min = (now - datetime.timedelta(minutes=60)).isoformat() + 'Z'
-    time_max = (now + datetime.timedelta(minutes=1)).isoformat() + 'Z'
+    if schedule:
+        time_min = now.isoformat() + 'Z'
+        time_max = (now + datetime.timedelta(minutes=30)).isoformat() + 'Z'
+    else:
+        time_min = (now - datetime.timedelta(minutes=60)).isoformat() + 'Z'
+        time_max = (now + datetime.timedelta(minutes=1)).isoformat() + 'Z'
     params = {
                 "start_time__gte": time_min,
                 "start_time__lte": time_max,
