@@ -7,13 +7,16 @@ from rest_framework import status
 from unittest import skip
 from unittest.mock import patch
 
-from transcript.models import Transcript, SynthesisType, Synthesis
+from transcript.models import (
+    Transcript, SynthesisType, SynthesisStatus, Synthesis, Embeds
+)
 from transcript.serializers import TranscriptSerializer
 from transcript.synthesis_client import generate_embeds
 from transcript.tests.utils import (
     create_user,
     create_project,
     create_transcript,
+    default_transcript_payload,
 )
 from project.models import Project
 
@@ -70,13 +73,7 @@ class TranscriptAPITests(APITestCase):
 
     def test_create_transcript_success(self, patched_signal):
         """Test creating a transcript is successful."""
-        payload = {
-            'project': self.project.id,
-            'title': 'Test Title',
-            'interviewee_names': ['Interviewee'],
-            'interviewer_names': ['Interviewer 1', 'Interviewer 2'],
-            'transcript': 'Test Transcript',
-        }
+        payload = default_transcript_payload(self.project)
         res = self.client.post(TRANSCRIPT_URL, payload)
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         tpt = Transcript.objects.get(id=res.data['id'])
@@ -200,15 +197,10 @@ class TranscriptAPITests(APITestCase):
 
     def test_summary_in_progress(self, patched_signal):
         """Test getting a summary of a transcript that is in progress."""
-        tpt = Transcript.objects.create(
-            project=self.project,
-            title='Test Title',
-            interviewee_names=['Test Interviewee'],
-            interviewer_names=['Test Interviewer'],
-            transcript='Test Transcript',
-        )
+        payload = default_transcript_payload(self.project)
+        res = self.client.post(TRANSCRIPT_URL, payload)
 
-        url = summary_url(tpt.id)
+        url = summary_url(res.data['id'])
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_202_ACCEPTED)
@@ -216,15 +208,19 @@ class TranscriptAPITests(APITestCase):
 
     def test_summary_valid(self, patched_signal):
         """Test getting a summary of a transcript."""
-        tpt = create_transcript(project=self.project)
-
-        url = summary_url(tpt.id)
-        res = self.client.get(url)
-
+        payload = default_transcript_payload(self.project)
+        res = self.client.post(TRANSCRIPT_URL, payload)
+        tpt = Transcript.objects.get(id=res.data['id'])
         summary = Synthesis.objects.get(
             transcript=tpt,
             output_type=SynthesisType.SUMMARY
         )
+        summary.status = SynthesisStatus.COMPLETED
+        summary.save()
+
+        url = summary_url(tpt.id)
+        res = self.client.get(url)
+
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data['output'], summary.output)
 
@@ -237,15 +233,10 @@ class TranscriptAPITests(APITestCase):
 
     def test_concise_in_progress(self, patched_signal):
         """Test getting a concise transcript that is in progress."""
-        tpt = Transcript.objects.create(
-            project=self.project,
-            title='Test Title',
-            interviewee_names=['Test Interviewee'],
-            interviewer_names=['Test Interviewer'],
-            transcript='Test Transcript',
-        )
+        payload = default_transcript_payload(self.project)
+        res = self.client.post(TRANSCRIPT_URL, payload)
 
-        url = concise_url(tpt.id)
+        url = concise_url(res.data['id'])
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_202_ACCEPTED)
@@ -253,15 +244,18 @@ class TranscriptAPITests(APITestCase):
 
     def test_concise_valid(self, patched_signal):
         """Test getting a concise transcript."""
-        tpt = create_transcript(project=self.project)
-
-        url = concise_url(tpt.id)
-        res = self.client.get(url)
-
+        payload = default_transcript_payload(self.project)
+        res = self.client.post(TRANSCRIPT_URL, payload)
+        tpt = Transcript.objects.get(id=res.data['id'])
         concise = Synthesis.objects.get(
             transcript=tpt,
             output_type=SynthesisType.CONCISE
         )
+        concise.status = SynthesisStatus.COMPLETED
+        concise.save()
+
+        url = concise_url(tpt.id)
+        res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data['output'], concise.output)
@@ -279,6 +273,10 @@ class TranscriptAPITests(APITestCase):
     def test_query_success(self, patched_query, patched_signal):
         """Test querying a transcript successfully."""
         tpt = create_transcript(project=self.project)
+        embeds = Embeds.objects.get(transcript=tpt)
+        embeds.status = SynthesisStatus.COMPLETED
+        embeds.save()
+
         query = "Where does Jason live?"
         query_output = {
             'output': 'Jason lives in Boise',
