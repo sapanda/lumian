@@ -50,7 +50,7 @@ export default function TableL(props: TableLProps) {
           <TableRow>
             {columns.map((column, index) => (
               <StyledTableCell
-                key={column.headerName}
+                key={`${column.headerName}_${index}`}
                 align={
                   index === 0
                     ? "left"
@@ -65,9 +65,9 @@ export default function TableL(props: TableLProps) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.map((row) => (
+          {rows.map((row, rowIndex) => (
             <StyledTableRow
-              key={row.name}
+              key={`${row.name} ${rowIndex}`}
               sx={{
                 "&:last-child td, &:last-child th": { border: 0 },
                 "&:hover": {
@@ -79,7 +79,7 @@ export default function TableL(props: TableLProps) {
             >
               {columns.map((column, index) => (
                 <StyledTableCell
-                  key={column.field}
+                  key={`${column.field}_${index}`}
                   align={
                     index === 0
                       ? "left"

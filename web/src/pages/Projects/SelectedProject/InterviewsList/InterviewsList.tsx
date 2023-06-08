@@ -18,9 +18,17 @@ import {
   startTranscribe,
   useCreateInterviewWithTranscriptMutation,
 } from "../../../../api/meetingApi";
+import { updateProject } from "../../../../api/projectApi";
 
 export default function InterviewsList() {
-  const { rows, columns, projectTitle, projectId } = useInterviewsList();
+  const {
+    rows,
+    columns,
+    projectTitle,
+    projectId,
+    getProject,
+    refreshProjectsList,
+  } = useInterviewsList();
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [pickedFiles, setPickedFiles] = useState<File[]>([]);
   const transcriptRef = useRef<string>("");
@@ -29,7 +37,18 @@ export default function InterviewsList() {
       parseInt(projectId || "0"),
       transcriptRef.current
     );
-
+  async function onEditEnd(newTitle: string) {
+    const res = await updateProject(
+      {
+        title: newTitle,
+      },
+      parseInt(projectId || "0")
+    );
+    if (res.status === 200) {
+      await getProject();
+      await refreshProjectsList();
+    }
+  }
   const handlePickedFiles = (files: File[]) => {
     setPickedFiles(files);
     //read the content of the file, it will be a json file
@@ -57,6 +76,8 @@ export default function InterviewsList() {
             title: "All projects",
             path: "/all-projects",
           }}
+          isTitleEditable
+          onEditEnd={(newTitle: string) => onEditEnd(newTitle)}
         >
           <div className="flex items-center justify-end w-full gap-5 px-10 py-5">
             <Typography variant="body1">Feb 2 to Feb 10</Typography>
