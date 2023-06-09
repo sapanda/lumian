@@ -19,15 +19,17 @@ from rest_framework.response import Response
 
 from meeting.external_clients.recallai import (
     add_bot_to_meeting,
-    get_meeting_transcript
+    get_meeting_transcript,
+    list_calendar_events
 )
 from meeting.serializers import (
     AddBotSerializer,
     BotStatusChangeSerializer,
-    GetBotStatusSerializer
+    GetBotStatusSerializer,
+    ScheduleBotSerializer
 )
 from meeting.utils import generate_transcript_text
-from meeting.models import MeetingBot
+from meeting.models import MeetingBot, MeetingCalendar
 from meeting.errors import RecallAITimeoutException
 from project.models import Project
 
@@ -120,7 +122,8 @@ class BotStatusChangeView(APIView):
         try:
             serializer = self.serializer_class(data=request.data)
             if not serializer.is_valid():
-                logger.error(f"-- Serialization Error -- {serializer.errors}")
+                logger.exception("Serialization error",
+                                 exc_info=serializer.errors)
                 return Response({}, HTTP_202_ACCEPTED)
 
             data = serializer.validated_data['data']
@@ -160,7 +163,8 @@ class GetBotStatusView(APIView):
         try:
             serializer = self.serializer_class(data=request.query_params)
             if not serializer.is_valid():
-                logger.error(f"-- Serialization Error -- {serializer.errors}")
+                logger.exception("Serialization error",
+                                 exc_info=serializer.errors)
                 return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
 
             bot_id = serializer.validated_data['bot_id']
@@ -174,3 +178,48 @@ class GetBotStatusView(APIView):
             response_status = HTTP_400_BAD_REQUEST
 
         return Response(response_data, response_status)
+
+
+class ScheduleBotView(APIView):
+
+    serializer_class = ScheduleBotSerializer
+
+    def post(self, request):
+        try:
+            serializer = self.serializer_class(data=request.data)
+            if not serializer.is_valid():
+                logger.exception("Serialization error while scheduling bot",
+                                 exc_info=serializer.errors)
+                return Response(serializer.errors, HTTP_202_ACCEPTED)
+
+            calendar_email = serializer.validated_data['calendar_email']
+            meeting_calendar_details = MeetingCalendar.objects.get(
+                calendar_email=calendar_email,
+                calendar_app=MeetingCalendar.CalendarChoices.GOOGLE
+            )
+            calendar_id = meeting_calendar_details.calendar_id
+            events = list_calendar_events(calendar_id, schedule=True)
+
+            for event in events:
+                logger.debug(event)
+                bot = add_bot_to_meeting(
+                    bot_name='Lumian Notetaker',
+                    meeting_url=event['meeting_url'],
+                    join_at=event['start_time']
+                )
+                project = Project.objects.get(id=1)
+                MeetingBot.objects.create(
+                    id=bot['id'],
+                    status=MeetingBot.StatusChoices.READY,
+                    message="Bot is created and ready to join the call",
+                    transcript=None,
+                    project=project
+                )
+                logger.info(f"Bot id {bot['id']} Meeting {event['summary']}")
+
+        except Exception as e:
+            logger.exception("Exception while scheduling bot",
+                             exc_info=str(e))
+            return Response(str(e), HTTP_202_ACCEPTED)
+
+        return Response({}, HTTP_201_CREATED)

@@ -5,6 +5,7 @@ from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
+    HTTP_412_PRECONDITION_FAILED
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -16,11 +17,17 @@ from rest_framework import (
     permissions
 )
 from meeting.errors import (
-    GoogleAPIException
+    GoogleAPIException,
+    RecallAITimeoutException
 )
-from meeting.models import MeetingApp
+from meeting.models import MeetingCalendar
 from meeting.external_clients.google import (
     google_api
+)
+from meeting.external_clients.recallai import (
+    create_calendar,
+    retrieve_calendar,
+    list_calendar_events
 )
 from meeting.serializers import (
     OAuthSerializer,
@@ -66,25 +73,24 @@ class OAuthResponseView(APIView):
 
             user = request.user
             code = serializer.validated_data['code']
-            creds = google_api.get_access_token(code)
-
-            access_token = creds.token
-            refresh_token = creds.refresh_token
-            meeting_email = f"placeholder-{user.id}@gmail.com"
-
+            _, refresh_token = google_api.get_access_token(code)
+            calendar_id = create_calendar(refresh_token)
+            calendar_email = retrieve_calendar(calendar_id)
             defaults = {
-                'user': user,
-                'access_token': access_token,
-                'refresh_token': refresh_token,
+                'calendar_id': calendar_id,
             }
-            MeetingApp.objects.update_or_create(
-                meeting_email=meeting_email,
-                meeting_app=MeetingApp.MeetingAppChoices.GOOGLE,
+            MeetingCalendar.objects.update_or_create(
+                user=user,
+                calendar_email=calendar_email,
+                calendar_app=MeetingCalendar.CalendarChoices.GOOGLE,
                 defaults=defaults
             )
             return Response(HTTP_201_CREATED)
 
         except GoogleAPIException as e:
+            message = str(e)
+            status_code = HTTP_412_PRECONDITION_FAILED
+        except RecallAITimeoutException as e:
             message = str(e)
             status_code = HTTP_401_UNAUTHORIZED
         except Exception as e:
@@ -103,31 +109,21 @@ class EventDetailsView(APIView):
 
     def get(self, request):
         try:
-            meeting_app_details = MeetingApp.objects.get(
+            meeting_calendar_details = MeetingCalendar.objects.get(
                 user=request.user,
-                meeting_app=MeetingApp.MeetingAppChoices.GOOGLE
+                calendar_app=MeetingCalendar.CalendarChoices.GOOGLE
             )
-            # TODO : Add check for meeting app type and initialize accordingly
-            access_token = meeting_app_details.access_token
-            refresh_token = meeting_app_details.refresh_token
 
-            token_expired, new_creds = google_api.is_access_token_expired(
-                                                access_token, refresh_token)
-            if token_expired and new_creds:
-                meeting_app_details.access_token = new_creds.token
-                meeting_app_details.refresh_token = new_creds.refresh_token
-                meeting_app_details.save()
+            events = list_calendar_events(meeting_calendar_details.calendar_id)
+            return Response(events)
 
-            meeting_urls = google_api.get_meeting_urls()
-            return Response(meeting_urls)
-
-        except MeetingApp.DoesNotExist:
-            message = "Meeting details not found"
+        except MeetingCalendar.DoesNotExist:
+            message = "Calendar integration doesn't exist for this user"
             status_code = HTTP_404_NOT_FOUND
         except ValidationError as e:
             message = str(e)
             status_code = HTTP_406_NOT_ACCEPTABLE
-        except GoogleAPIException as e:
+        except RecallAITimeoutException as e:
             message = str(e)
             status_code = HTTP_401_UNAUTHORIZED
         except Exception as e:
@@ -136,7 +132,3 @@ class EventDetailsView(APIView):
 
         logger.error(f"-- Exception : {message} --")
         return Response(message, status_code)
-
-
-# TODO :
-# 1. Get meeting email attached to the calendar account

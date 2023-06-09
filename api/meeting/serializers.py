@@ -43,8 +43,8 @@ class MeetingDetailsSerializer(serializers.Serializer):
     pass
 
 
-class InitiateTranscriptionSerializer(serializers.Serializer):
-    project_id = serializers.IntegerField()
+class ScheduleBotSerializer(serializers.Serializer):
+    calendar_email = serializers.CharField()
 
 
 # TODO : Cleanup Nested serialization
