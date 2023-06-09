@@ -35,18 +35,10 @@ class Synthesis(SynthesisInterface):
     def __init__(self,
                  openai_client: OpenAIClientInterface,
                  embeds_client: EmbedsClientInterface,
-                 chunk_min_tokens_summary: int,
-                 chunk_min_tokens_query: int,
-                 max_input_tokens_summary: int,
-                 max_input_tokens_query: int,
-                 max_input_tokens_metadata: int):
+                 ** kwargs):
         self.openai_client = openai_client
         self.embeds_client = embeds_client
-        self.chunk_min_tokens_summary = chunk_min_tokens_summary
-        self.chunk_min_tokens_query = chunk_min_tokens_query
-        self.max_input_tokens_summary = max_input_tokens_summary
-        self.max_input_tokens_query = max_input_tokens_query
-        self.max_input_tokens_metadata = max_input_tokens_metadata
+        self.__dict__.update(kwargs)
 
     def _get_empty_transcript_metadata(self):
         return {
@@ -248,7 +240,7 @@ class Synthesis(SynthesisInterface):
              {"text": "John: It sure is!", "references": [(4, 9), (14)]}]
         """
         chunks = split_indexed_transcript_lines_into_chunks(
-            indexed_transcript, interviewee, self.chunk_min_tokens_summary)
+            indexed_transcript, interviewee, self.chunk_min_tokens_concise)
         results = []
         prompts = []
         cost = 0

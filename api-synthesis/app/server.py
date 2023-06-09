@@ -140,8 +140,10 @@ def get_synthesis(
         openai_client=openai_client,
         embeds_client=embeds_client,
         chunk_min_tokens_summary=settings.chunk_min_tokens_summary,
+        chunk_min_tokens_concise=settings.chunk_min_tokens_concise,
         chunk_min_tokens_query=settings.chunk_min_tokens_query,
         max_input_tokens_summary=settings.max_input_tokens_summary,
+        max_input_tokens_concise=settings.max_input_tokens_concise,
         max_input_tokens_query=settings.max_input_tokens_query,
         max_input_tokens_metadata=settings.max_input_tokens_metadata
     )
