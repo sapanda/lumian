@@ -17,7 +17,8 @@ const interviewEndPoints = {
   interviewList: "api/transcripts/?project=:projectId",
   interviewSummary: "api/transcripts/:interviewId/summary/",
   interviewConcise: "api/transcripts/:interviewId/concise/",
-  interviewQuery: "api/transcripts/:interviewId/query/",
+  interviewQuery:
+    "api/transcripts/:interviewId/query/?query_level=:query_level",
 };
 
 const meetingEndPoints = {

@@ -7,6 +7,11 @@ import {
 import { axiosInstance } from "./api";
 import { interviewEndPoints, meetingEndPoints } from "./apiEndpoints";
 
+export const QUERY_LEVEL = {
+  PROJECT_LEVEL: "project",
+  TRANSCRIPT_LEVEL: "transcript",
+};
+
 interface rowProps {
   [key: string]: string | number;
 }
@@ -128,30 +133,36 @@ const getMeetingSummary = async (meetingId: number | undefined) => {
   return res.data;
 };
 
-const getMeetingQuery = async (meetingId: number | undefined) => {
+const getMeetingQuery = async (
+  meetingId: number | undefined,
+  queryLevel: "project" | "transcript"
+) => {
   if (!meetingId) return;
   const res = await axiosInstance.get(
-    interviewEndPoints.interviewQuery.replace(
-      ":interviewId",
-      meetingId.toString()
-    )
+    interviewEndPoints.interviewQuery
+      .replace(":interviewId", meetingId.toString())
+      .replace(":query_level", queryLevel)
   );
   return res.data;
 };
 
 const askQuery = async (
   interviewId: number | undefined,
-  userQueryText: string
+  userQueryText: string,
+  queryLevel: "project" | "transcript"
 ) => {
   if (!interviewId) return;
 
   const formData = new FormData();
   formData.append("query", userQueryText);
+  formData.append("query_level", queryLevel);
 
   const boundary = Math.random().toString().substr(2);
 
   const res = await axiosInstance.post(
-    interviewEndPoints.interviewQuery.replace(":interviewId", `${interviewId}`),
+    interviewEndPoints.interviewQuery
+      .replace(":interviewId", `${interviewId}`)
+      .replace(":query_level", queryLevel),
     formData,
     {
       headers: {
@@ -223,9 +234,12 @@ const useGetMeetingSummaryQuery = (meetingId: number | undefined) => {
   });
 };
 
-const useGetMeetingQuery = (meetingId: number | undefined) => {
+const useGetMeetingQuery = (
+  meetingId: number | undefined,
+  queryLevel: "project" | "transcript"
+) => {
   const queryKey: QueryKey = ["meetingQuery", meetingId];
-  return useQuery(queryKey, () => getMeetingQuery(meetingId), {
+  return useQuery(queryKey, () => getMeetingQuery(meetingId, queryLevel), {
     staleTime: 1000 * 60 * 30, // 30 minutes
     enabled: !!meetingId,
   });
@@ -233,10 +247,11 @@ const useGetMeetingQuery = (meetingId: number | undefined) => {
 
 const useAskQueryMutation = (
   interviewId: number | undefined,
-  query: string
+  query: string,
+  queryLevel: "project" | "transcript"
 ) => {
   const queryClient = useQueryClient();
-  return useMutation(() => askQuery(interviewId, query), {
+  return useMutation(() => askQuery(interviewId, query, queryLevel), {
     onSuccess: (data) => {
       if (data.output) {
         queryClient.invalidateQueries(["meetingQuery", interviewId]);

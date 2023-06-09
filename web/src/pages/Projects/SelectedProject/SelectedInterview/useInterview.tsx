@@ -25,7 +25,10 @@ export default function useInterview() {
   const { data: conciseData } = useGetMeetingConciseQuery(
     parseInt(interviewId || "0")
   );
-  const { data: query } = useGetMeetingQuery(parseInt(interviewId || "0"));
+  const { data: query } = useGetMeetingQuery(
+    parseInt(interviewId || "0"),
+    "project"
+  );
 
   const originalTranscriptRef = useRef<string>("");
   const transcriptRef = useRef<HTMLDivElement>(null);
@@ -38,7 +41,8 @@ export default function useInterview() {
   const currentRangeLength = useRef<number>(0);
   const { mutateAsync: onAskQuery } = useAskQueryMutation(
     parseInt(interviewId || "0"),
-    userQueryText
+    userQueryText,
+    "project"
   );
   const askQuery = async () => {
     if (!userQueryText) return;
