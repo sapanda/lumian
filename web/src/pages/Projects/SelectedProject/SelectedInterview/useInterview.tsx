@@ -35,6 +35,7 @@ export default function useInterview() {
   const [citationsCount, setCitationsCount] = useState<number>(0);
   const [activeCitationIndex, setActiveCitationIndex] = useState<number>(0);
   const [userQueryText, setUserQueryText] = useState<string>("");
+  const currentRangeLength = useRef<number>(0);
   const { mutateAsync: onAskQuery } = useAskQueryMutation(
     parseInt(interviewId || "0"),
     userQueryText
@@ -46,13 +47,16 @@ export default function useInterview() {
   };
 
   function scrollToNextHighlightedText(index: number) {
+    let circularIndex = index % currentRangeLength.current;
+    if (circularIndex < 0)
+      circularIndex = currentRangeLength.current + circularIndex;
     const nextHightlightedText = transcriptRef.current?.querySelector(
-      `#highlight${index}`
+      `#highlight${circularIndex}`
     );
 
     if (nextHightlightedText) {
       nextHightlightedText.scrollIntoView();
-      setActiveCitationIndex(index + 1);
+      setActiveCitationIndex(circularIndex + 1);
     }
   }
 
@@ -100,6 +104,8 @@ export default function useInterview() {
             ?.replaceAll('"\n\n', '"<br/> <br/>');
         }
       });
+
+      currentRangeLength.current = mergedRanges.length;
 
       setConversation(transcript);
     },
