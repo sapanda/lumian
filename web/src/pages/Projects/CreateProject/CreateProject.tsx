@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button, Stack, Typography } from "@mui/material";
 import { PrivateContainer } from "../../../components/Containers";
 import { projects_icon } from "../../../assets/icons/svg";
@@ -6,10 +7,12 @@ import useCreateProject from "./useCreateProject";
 import { PrivateAppbar } from "../../../layout";
 import { PROJECTS } from "../../../router/routes.constant";
 import { useNavigate } from "react-router-dom";
+import ModalL from "../../../components/molecules/ModalL/ModalL";
 
 export default function CreateProject() {
-  const { errors, handleChange, handleSave, state, projectId } =
+  const { errors, handleChange, handleSave, state, projectId, deleteProject } =
     useCreateProject();
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
   const navigate = useNavigate();
   return (
     <PrivateContainer
@@ -74,9 +77,54 @@ export default function CreateProject() {
             >
               Cancel
             </Button>
+            {projectId && (
+              <div className="flex justify-end w-full">
+                <Button
+                  variant="text"
+                  sx={{ width: "100px" }}
+                  color="error"
+                  onClick={() => projectId && setModalOpen(true)}
+                >
+                  Delete
+                </Button>
+              </div>
+            )}
           </Stack>
         </div>
       </div>
+
+      {/* ------------ DELETE PROJECT MODAL----------- */}
+      <ModalL open={modalOpen} handleClose={() => setModalOpen(false)}>
+        <div className="flex flex-col justify-center gap-5 max-w-[400px]">
+          <h2 className="text-20-700">Delete Project</h2>
+          <p className="text-red-500 text-12-400">
+            All interviews in this project will also be deleted. Neither the
+            project nor the interviews can be recovered. Are you sure you want
+            to proceed?
+          </p>
+
+          <div className="flex justify-end gap-5">
+            <Button
+              variant="text"
+              onClick={() => setModalOpen(false)}
+              sx={{ width: "100px" }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              sx={{ width: "100px" }}
+              onClick={() => {
+                projectId && deleteProject(parseInt(projectId));
+                setModalOpen(false);
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        </div>
+      </ModalL>
     </PrivateContainer>
   );
 }

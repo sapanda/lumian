@@ -43,6 +43,8 @@ export default {
 
         black: "#000000",
         white: "#FFFFFF",
+
+        red500: "#BC2626",
       },
 
       boxShadow: {

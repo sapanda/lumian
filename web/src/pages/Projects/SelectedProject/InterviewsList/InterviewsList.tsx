@@ -19,6 +19,8 @@ import {
   useCreateInterviewWithTranscriptMutation,
 } from "../../../../api/meetingApi";
 import { updateProject } from "../../../../api/projectApi";
+import { PROJECTS } from "../../../../router/routes.constant";
+import { useNavigate } from "react-router-dom";
 
 export default function InterviewsList() {
   const {
@@ -29,6 +31,8 @@ export default function InterviewsList() {
     getProject,
     refreshProjectsList,
   } = useInterviewsList();
+
+  const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [pickedFiles, setPickedFiles] = useState<File[]>([]);
   const transcriptRef = useRef<string>("");
@@ -81,20 +85,25 @@ export default function InterviewsList() {
         >
           <div className="flex items-center justify-end w-full gap-5 px-10 py-5">
             <Typography variant="body1">Feb 2 to Feb 10</Typography>
-            {rows?.length > 0 && (
-              <>
-                <Button
-                  variant="contained"
-                  onClick={() => startTranscribe(parseInt(projectId || "0"))}
-                >
-                  Transcribe
-                </Button>
-                <Button variant="contained" onClick={() => setModalOpen(true)}>
-                  Upload
-                </Button>
-              </>
-            )}
-            <Button variant="outlined">Settings</Button>
+            <Button
+              variant="contained"
+              onClick={() => startTranscribe(parseInt(projectId || "0"))}
+            >
+              Transcribe
+            </Button>
+            <Button variant="contained" onClick={() => setModalOpen(true)}>
+              Upload
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() =>
+                navigate(
+                  PROJECTS.MANAGE_PROJECT.replace(":projectId", `${projectId}`)
+                )
+              }
+            >
+              Settings
+            </Button>
           </div>
         </PrivateAppbar>
       }
@@ -120,12 +129,8 @@ export default function InterviewsList() {
       <ModalL
         open={modalOpen}
         handleClose={() => setModalOpen(false)}
-        sx={{
-          "& .MuiDialog-paper": {
-            padding: "20px",
-            maxWidth: "400px",
-            width: "100%",
-          },
+        containerStyles={{
+          maxWidth: "400px",
         }}
       >
         <div className="flex flex-col gap-5">

@@ -59,6 +59,11 @@ const updateProject = async (
   );
 };
 
+const deleteProject = async (projectId: number) => {
+  return await axiosInstance.delete(
+    `${projectEndpoints.projectList}${projectId}/`
+  );
+};
 const useGetProjectsQuery = () => {
   return useQuery(["projects"], getProjects, {
     staleTime: 1000 * 60 * 30, // 30 minutes
@@ -84,7 +89,19 @@ const useCreateProjectMutation = () => {
   const navigate = useNavigate();
   return useMutation((payload: ProjectPayloadType) => createProject(payload), {
     onSuccess: () => {
-      alert(`Project created Successfully`);
+      queryClient.invalidateQueries(["projects"]);
+      setTimeout(() => {
+        navigate(PROJECTS.default);
+      }, 500);
+    },
+  });
+};
+
+const useDeleteProjectMutation = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  return useMutation((projectId: number) => deleteProject(projectId), {
+    onSuccess: () => {
       queryClient.invalidateQueries(["projects"]);
       setTimeout(() => {
         navigate(PROJECTS.default);
@@ -122,4 +139,5 @@ export {
   useGetProjectQuery,
   useCreateProjectMutation,
   useUpdateProjectMutation,
+  useDeleteProjectMutation,
 };
