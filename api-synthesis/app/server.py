@@ -188,7 +188,7 @@ def save_transcript(
     """API for saving a transcript"""
     usecases.save_transcript(id=id, transcript=transcript,
                              line_min_size=settings.line_min_size, repo=repo)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return Response(status_code=status.HTTP_201_CREATED)
 
 
 @app.delete('/transcript/{id}')
