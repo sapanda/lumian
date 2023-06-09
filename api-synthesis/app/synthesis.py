@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import List
 from .domains import (
     SynthesisResult,
     SynthesisResultOutput,
@@ -9,7 +10,16 @@ from .domains import (
 from .interfaces import (
     OpenAIClientInterface, EmbedsClientInterface, SynthesisInterface
 )
+from .prompts import (
+    METADATA_PROMPT_TEMPLATE,
+    METADATA_SCHEMA,
+    SUMMARY_CHUNK_PROMPT_TEMPLATE,
+    SUMMARY_PROMPT_TEMPLATE,
+    CONCISE_PROMPT_TEMPLATE,
+    QUERY_PROMPT_TEMPLATE,
+)
 from .utils import (
+    token_count,
     split_indexed_lines_into_chunks,
     split_indexed_transcript_lines_into_chunks,
     split_and_extract_indices
@@ -22,21 +32,21 @@ logger = logging.getLogger()
 # TODO: Split into separate components for Summary, Concise and Embeds
 class Synthesis(SynthesisInterface):
 
-    EG_SUMMARY = 'eg-summary.json'
-    EG_CONCISE = 'eg-concise.json'
-    EG_QUERY = 'eg-query.json'
-
     def __init__(self,
                  openai_client: OpenAIClientInterface,
                  embeds_client: EmbedsClientInterface,
-                 chunk_min_words: int,
-                 context_max_chars: int,
-                 examples_dir: str):
+                 chunk_min_tokens_summary: int,
+                 chunk_min_tokens_query: int,
+                 max_input_tokens_summary: int,
+                 max_input_tokens_query: int,
+                 max_input_tokens_metadata: int):
         self.openai_client = openai_client
         self.embeds_client = embeds_client
-        self.chunk_min_words = chunk_min_words
-        self.context_max_chars = context_max_chars
-        self.examples_dir = examples_dir
+        self.chunk_min_tokens_summary = chunk_min_tokens_summary
+        self.chunk_min_tokens_query = chunk_min_tokens_query
+        self.max_input_tokens_summary = max_input_tokens_summary
+        self.max_input_tokens_query = max_input_tokens_query
+        self.max_input_tokens_metadata = max_input_tokens_metadata
 
     def _get_empty_transcript_metadata(self):
         return {
@@ -48,7 +58,7 @@ class Synthesis(SynthesisInterface):
     def metadata_transcript(
             self, indexed_transcript: str
     ) -> MetadataResult:
-        '''
+        """
             Return metadata for transcript
             Example transcript :
                 The interviewee, Sean, had some technical difficulties
@@ -59,24 +69,32 @@ class Synthesis(SynthesisInterface):
                         'interviewer_names': ['Saswat', 'Wilbert'],
                         'interviewee_names': ['Sean']
                     }
-        '''
+        """
         cost = 0
 
         try:
             chunks = split_indexed_lines_into_chunks(
-                indexed_transcript, self.chunk_min_words)
+                indexed_transcript, self.chunk_min_tokens_summary)
+
+            base_prompt = METADATA_PROMPT_TEMPLATE.format(
+                schema=METADATA_SCHEMA, summaries="")
+
             results = []
             message = ""
-            context_char = 0
+            input_tokens = token_count(base_prompt)
             for chunk in chunks:
-                result = self._openai_summarize_chunk(chunk)
+                chunk_str = "\n".join(chunk)
+                result = self._openai_summarize_chunk(chunk_str)
                 summary = split_and_extract_indices(result["output"])
                 summary_text = "".join([f"{summary[i]['text']}"
                                         for i in range(len(summary))])
-                if (context_char + len(summary_text) < self.context_max_chars):
-                    context_char += len(summary_text)
-                    cost += result["cost"]
+                cost += result["cost"]
+                input_tokens += token_count(summary_text)
+
+                if input_tokens < self.max_input_tokens_metadata:
                     results.append(summary_text)
+                else:
+                    break
 
             response = self._openai_transcript_metadata(results)
             cost += response["cost"]
@@ -92,54 +110,23 @@ class Synthesis(SynthesisInterface):
             message = str(e)
 
         data: MetadataResult = {
-                "title": transcript_metadata["title"],
-                "interviewees": transcript_metadata["interviewee_names"],
-                "interviewers": transcript_metadata["interviewer_names"],
-                "cost": cost,
-                "message": message
-            }
+            "title": transcript_metadata["title"],
+            "interviewees": transcript_metadata["interviewee_names"],
+            "interviewers": transcript_metadata["interviewer_names"],
+            "cost": cost,
+            "message": message
+        }
         return data
 
-    def _openai_transcript_metadata(
-        self,
-        summary_list: 'list[str]'
-    ) -> dict:
-        '''
+    def _openai_transcript_metadata(self, summary_list: List[str]) -> dict:
+        """
             Generate metadata for meeting transcript.
             Metadata : title, interviewees, interviewers
-        '''
-        prompt = self._create_openai_prompt_transcript_metadata(summary_list)
-        return self.openai_client.execute_completion(prompt)
-
-    def _create_openai_prompt_transcript_metadata(
-            self,
-            summary_list: 'list[str]'
-    ) -> dict:
-        '''
-            Create prompt to generate metadata for the summary
-        '''
-
-        header = (
-            "The following are summaries of various sections "
-            "of an interview. Please fill out the Interview Title, "
-            "Interviewee Names and Interviewer Names. Title should "
-            "contain the Interviewee Name. Use a Json Format: "
-            )
-
-        format_dict = {
-            "title": "",
-            "interviewer_names": [""],
-            "interviewee_names": [""],
-        }
-
+        """
         summaries = "\n* ".join(summary_list)
-        format_json = json.dumps(format_dict)
-        prompt = (
-            f"{header}\n\nOutput Format: ###\n{format_json}\n###"
-            f"\n\nSummaries: ###\n* {summaries}\n###\n"
-            )
-
-        return prompt
+        prompt = METADATA_PROMPT_TEMPLATE.format(schema=METADATA_SCHEMA,
+                                                 summaries=summaries.strip())
+        return self.openai_client.execute_completion(prompt)
 
     def summarize_transcript(
             self, indexed_transcript: str, interviewee: str
@@ -153,11 +140,12 @@ class Synthesis(SynthesisInterface):
              {"text": "over the lazy dog", "references": [(4, 9), (14)]}]
         """
         chunks = split_indexed_transcript_lines_into_chunks(
-            indexed_transcript, interviewee, self.chunk_min_words)
+            indexed_transcript, interviewee, self.chunk_min_tokens_summary)
         results = []
         cost = 0
         for chunk in chunks:
-            result = self._openai_summarize_chunk(chunk, interviewee)
+            chunk_str = "\n".join(chunk)
+            result = self._openai_summarize_chunk(chunk_str)
             summary = result["output"]
             cost += result["cost"]
             summary_sentences_and_indices = split_and_extract_indices(summary)
@@ -190,7 +178,8 @@ class Synthesis(SynthesisInterface):
     ) -> SynthesisResult:
         """Summarize indexed notes and return reference indices
         for phrases and sentences in the final summary"""
-        chunks = split_indexed_lines_into_chunks(text, self.chunk_min_words)
+        chunks = split_indexed_lines_into_chunks(
+            text, self.chunk_min_tokens_summary)
         last_prompt = ""
         results = []
         cost = 0
@@ -237,48 +226,14 @@ class Synthesis(SynthesisInterface):
             }
         return data
 
-    def _create_openai_prompt_summarize_chunk(
-        self,
-        text: str,
-        interviewee: str = None,
-    ) -> dict:
-        """Create prompt to generate a summary for a chunk of the
-          transcript."""
-        if interviewee is not None:
-            prompt_detail = "summary of only {interviewee}'s comments"
-        else:
-            prompt_detail = "summary"
-        header = (
-            f"The following is a section of an interview transcript. "
-            f"Please provide a {prompt_detail}. "
-        )
-        return self._create_openai_prompt_citations(text, header,
-                                                    self.EG_SUMMARY)
-
-    def _create_openai_prompt_summarize_full(self, text: str) -> dict:
-        """Create prompt to generate a summary from a combined
-        transcript summary."""
-        header = (
-            "Write a detailed synopsis based on the following notes."
-            "Each sentence should be short and contain only one piece of data."
-        )
-        return self._create_openai_prompt_citations(text, header,
-                                                    self.EG_SUMMARY)
-
-    def _openai_summarize_chunk(
-        self,
-        text: str,
-        interviewee: str = None,
-    ) -> dict:
+    def _openai_summarize_chunk(self, text: str) -> dict:
         """Generate a summary for a chunk of the transcript."""
-        prompt = self._create_openai_prompt_summarize_chunk(text, interviewee)
+        prompt = SUMMARY_CHUNK_PROMPT_TEMPLATE.format(text=text.strip())
         return self.openai_client.execute_completion(prompt)
 
-    def _openai_summarize_full(
-            self,
-            text: str) -> dict:
+    def _openai_summarize_full(self, text: str) -> dict:
         """Generate a summary from a combined transcript summary."""
-        prompt = self._create_openai_prompt_summarize_full(text)
+        prompt = SUMMARY_PROMPT_TEMPLATE.format(text=text.strip())
         return self.openai_client.execute_completion(prompt)
 
     def concise_transcript(
@@ -293,7 +248,7 @@ class Synthesis(SynthesisInterface):
              {"text": "John: It sure is!", "references": [(4, 9), (14)]}]
         """
         chunks = split_indexed_transcript_lines_into_chunks(
-            indexed_transcript, interviewee, self.chunk_min_words)
+            indexed_transcript, interviewee, self.chunk_min_tokens_summary)
         results = []
         prompts = []
         cost = 0
@@ -313,20 +268,9 @@ class Synthesis(SynthesisInterface):
         }
         return data
 
-    def _create_openai_prompt_concise_chunk(self, text: str) -> dict:
-        """Create prompt to generate a concise transcript from a chunk."""
-        header = (
-            "The following is a section of an interview transcript. "
-            "Please clean it up but still in dialogue form. The speaker "
-            "name should always be preserved. Do not add any details "
-            "not present in the original transcript. "
-        )
-        return self._create_openai_prompt_citations(text, header,
-                                                    self.EG_CONCISE)
-
     def _openai_concise_chunk(self, text: str) -> dict:
         """Generate a concise transcript for a chunk of the transcript."""
-        prompt = self._create_openai_prompt_concise_chunk(text)
+        prompt = CONCISE_PROMPT_TEMPLATE.format(text=text.strip())
         return self.openai_client.execute_completion(prompt)
 
     def embed_transcript(
@@ -338,7 +282,7 @@ class Synthesis(SynthesisInterface):
     ) -> EmbedsResult:
         """Generate embeds for the transcript"""
         chunks = split_indexed_transcript_lines_into_chunks(
-            indexed_transcript, interviewee, self.chunk_min_words)
+            indexed_transcript, interviewee, self.chunk_min_tokens_query)
 
         content_list = []
         for chunk in chunks:
@@ -351,7 +295,7 @@ class Synthesis(SynthesisInterface):
     def _openai_embed_and_upsert(self,
                                  transcript_id: int,
                                  transcript_title: str,
-                                 content_list: 'list[str]') -> dict:
+                                 content_list: List[str]) -> dict:
         """Generate embeds for the input strings using Open AI."""
 
         # TODO: OpenAI only allows max 8192 tokens per API call
@@ -380,9 +324,9 @@ class Synthesis(SynthesisInterface):
         return {'cost': cost}
 
     def _create_batches_for_embeds(self,
-                                   content_list: 'list[str]',
+                                   content_list: List[str],
                                    max_length: int
-                                   ) -> 'list[list[str]]':
+                                   ) -> List[List[str]]:
         """
         Split the content_list into batches of the appropriate
         size for sending to the OpenAI Embeddings API.
@@ -408,17 +352,13 @@ class Synthesis(SynthesisInterface):
         return batches
 
     def query_transcript(
-            self,
-            transcript_id: int,
-            query: str
-    ) -> SynthesisResult:
+            self, transcript_id: int, query: str) -> SynthesisResult:
         """Run query against the transcript"""
         embed_result = self.openai_client.execute_embeds(query)
         search_results = self.embeds_client.search(
             transcript_id, embed_result['embedding']
         )
-        chosen_sections = self._context_from_search_results(search_results)
-        query_results = self._openai_query(query, chosen_sections)
+        query_results = self._openai_query(query, search_results)
 
         query_output = query_results["output"]
         sentences_and_indices = split_and_extract_indices(query_output)
@@ -430,84 +370,24 @@ class Synthesis(SynthesisInterface):
         }
         return results
 
-    def _context_from_search_results(self, search_results: dict
-                                     ) -> 'list[str]':
-        """
-        Parse the search_results and return a context string
-        list with total length under max_char_length
-        """
-        chosen_sections = []
-        total_length = 0
-        for match in search_results['matches']:
-            item = match['metadata']['text']
-            # TODO: Verify chunks are not larger than cutoff
-            if total_length + len(item) > self.context_max_chars:
-                break
-
-            chosen_sections.append(item)
-            total_length += len(item)
-
-        return chosen_sections
-
-    def _create_openai_prompt_query(
-            self, query: str, chosen_sections: 'list[str]'
-            ) -> dict:
-        """Create prompt to generate a query result."""
-
-        prompt_header = ('Answer the query using the provided context, '
-                         'which consists of excerpts from interviews. ')
-
-        text = f'{query}\n###\nCONTEXT:\n'
-        for section in chosen_sections:
-            section = section.replace('\n\n', '\n')
-            text = f'{text}{section}'
-
-        return self._create_openai_prompt_citations(
-            text, prompt_header, self.EG_QUERY
-        )
-
-    def _openai_query(
-            self, query: str, chosen_sections: 'list[str]'
-            ) -> dict:
+    def _openai_query(self, query: str, search_results: dict) -> dict:
         """Run a query against chosen sections of a transcript."""
-        prompt = self._create_openai_prompt_query(query, chosen_sections)
+        base_prompt = QUERY_PROMPT_TEMPLATE.format(query=query.strip(),
+                                                   context="")
+
+        # Build the context string, but ensure OpenAI Completion
+        # input token count doesn't exceed self.max_input_tokens_query
+        total_tokens = token_count(base_prompt)
+        context = ""
+        separator = "-" * 4
+        for match in search_results['matches']:
+            section = match['metadata']['text']
+            total_tokens += token_count(section)
+            if total_tokens < self.max_input_tokens_query:
+                context = f"{separator}\n{section.strip()}\n"
+        context = f"{context}{separator}\n"
+
+        prompt = QUERY_PROMPT_TEMPLATE.format(query=query.strip(),
+                                              context=context.strip())
+
         return self.openai_client.execute_completion(prompt)
-
-    def _create_openai_prompt_citations(
-        self,
-        text: str,
-        prompt_header: str = None,
-        example_filename: str = None,
-        max_examples: int = 1,
-    ) -> dict:
-        """Create the prompt for the OpenAI API request."""
-
-        prompt = (
-            f"{prompt_header} For each phrase in the output, "
-            f"also specify in parenthesis the exact index of where that "
-            f"information comes from in the source. When listing indexes "
-            f"in parentheses, mention all the locations the info is "
-            f"mentioned, even if repeated. Only answer truthfully "
-            f"and don't include anything not in the original input: "
-        )
-
-        with open(f'{self.examples_dir}/{example_filename}', "r") as f:
-            examples = json.load(f)
-
-        # Add examples to the prompt
-        index = 1
-        for example in examples:
-            input_text = f"INPUT {index}: ###\n{example['input']}\n###\n"
-            output_text = f"OUTPUT {index}: ###\n{example['output']}\n###\n"
-            prompt = f"{prompt}\n\n{input_text}{output_text}"
-            index += 1
-
-            if index > max_examples:
-                break
-
-        prompt = (
-            f"{prompt}\nINPUT {index}: ###\n{text}\n###\n"
-            f"OUTPUT {index}:###\n\n###"
-        )
-
-        return prompt

@@ -78,13 +78,13 @@ def test_split_text_into_multiple_lines_for_speaker():
 
 def test_split_indexed_lines_into_chunks():
     result = split_indexed_lines_into_chunks(
-        indexed_notes, chunk_min_words=20)
+        indexed_notes, chunk_min_tokens=28)
     assert result == indexed_lines_into_chunks_indexed_chunks_results
 
 
 def test_split_indexed_transcript_lines_into_chunks():
     result = split_indexed_transcript_lines_into_chunks(
-        indexed_transcript, interviewee="Jason", chunk_min_words=10)
+        indexed_transcript, interviewee="Jason", chunk_min_tokens=14)
     assert indexed_transcript_into_chunks_indexed_chunks_results == result
 
 

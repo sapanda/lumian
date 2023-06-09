@@ -1,6 +1,0 @@
-[
-    {
-        "input": "Tell me about Wil's family.\n###\nCONTEXT:###\n[5] Ben: Can you tell us your living situation?\n[6] Wil: Yeah I'm married with two kids.\n[6] Wil: 8 years old girl for one.\n[14] Wil: I had an inheritance lately. So we took all that money and paid off the mortgage.\n[15] Wil: Didn't mention my son - five-year- old boy.\n[16] Wil: But yeah two kids.",
-        "output": "Wil is married (6) with two children - an 8-year-old girl, and a 5-year-old boy (7,15-17)"
-    }
-]

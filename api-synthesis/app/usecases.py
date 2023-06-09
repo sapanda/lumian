@@ -23,7 +23,7 @@ def _get_transcript(
 def save_transcript(
         id: int,
         transcript: str,
-        line_min_size: int,
+        line_min_chars: int,
         repo: TranscriptRepositoryInterface):
     """Generate a multiline transcript with index references in the original
     transcript text and save it in storage"""
@@ -33,7 +33,7 @@ def save_transcript(
             detail=f"Transcript for id = {id} is already"
             "present in storage")
     data = split_text_into_multiple_lines_for_speaker(
-        transcript, line_min_size)
+        transcript, line_min_chars)
     repo.save(transcript=Transcript(id=id, data=data))
 
 
