@@ -71,6 +71,16 @@ const createInterviewWithTranscript = async (
   });
 };
 
+const deleteInterview = async (interviewId: number | undefined) => {
+  if (!interviewId) return;
+  await axiosInstance.delete(
+    interviewEndPoints.interviewTranscipt.replace(
+      ":interviewId",
+      interviewId.toString()
+    )
+  );
+};
+
 const getMeetingTranscript = async (meetingId: number | undefined) => {
   if (!meetingId) return;
   const res = await axiosInstance.get(
@@ -176,6 +186,19 @@ const useCreateInterviewWithTranscriptMutation = (
     }
   );
 };
+
+const useDeleteInterviewMutation = (
+  interviewId: number | undefined,
+  projectId: number | undefined
+) => {
+  const queryClient = useQueryClient();
+  return useMutation(() => deleteInterview(interviewId), {
+    onSuccess: () => {
+      queryClient.invalidateQueries(["interviews", projectId]);
+    },
+  });
+};
+
 const useGetMeetingTranscriptQuery = (meetingId: number | undefined) => {
   const queryKey: QueryKey = ["meetingTranscript", meetingId];
   return useQuery(queryKey, () => getMeetingTranscript(meetingId), {
@@ -230,6 +253,7 @@ export {
   startTranscribe,
   useGetMeetingTranscriptQuery,
   useCreateInterviewWithTranscriptMutation,
+  useDeleteInterviewMutation,
   useGetMeetingConciseQuery,
   useGetMeetingSummaryQuery,
   useGetMeetingQuery,
