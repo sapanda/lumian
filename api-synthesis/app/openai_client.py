@@ -34,7 +34,7 @@ RETRY_BACKOFF = 2
 OPENAI_API_TYPE = "open_ai"
 AZURE_API_TYPE = "azure"
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 class OpenAIClient(OpenAIClientInterface):

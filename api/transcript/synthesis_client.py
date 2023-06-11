@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 from app.settings import SYNTHESIS_URL
 
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 def _create_result(response: requests.Response) -> dict:

@@ -10,7 +10,7 @@ RETRY_TRIES = 3
 RETRY_DELAY = 5
 RETRY_BACKOFF = 2
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 class PineconeClient(EmbedsClientInterface):

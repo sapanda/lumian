@@ -1,10 +1,12 @@
 """
 Views for the transcript API.
 """
+from django.db import transaction
 from django.urls import reverse
 from drf_spectacular.utils import (
     extend_schema, inline_serializer, OpenApiParameter, OpenApiTypes
 )
+import logging
 from rest_framework import (
     authentication,
     parsers,
@@ -18,7 +20,7 @@ from rest_framework.views import APIView
 
 from . import tasks
 from .models import (
-    Transcript, SynthesisType, Synthesis, Embeds, Query
+    Transcript, SynthesisType, Synthesis, Embeds, Query, SynthesisStatus
 )
 from .serializers import (
     TranscriptSerializer, SynthesisSerializer, QuerySerializer
@@ -26,6 +28,9 @@ from .serializers import (
 from app.settings import SYNTHESIS_TASK_TIMEOUT
 from core.gcloud_client import client
 from project.models import Project
+
+
+logger = logging.getLogger(__name__)
 
 
 class TranscriptView(viewsets.ModelViewSet):
@@ -52,7 +57,20 @@ class TranscriptView(viewsets.ModelViewSet):
             raise serializers.ValidationError(
                 {"project": "Project does not belong to the requesting user."})
 
-        serializer.save()
+        # TODO: Is it possible that we create a transcript and synthesis
+        #       objects already exist? Likely shouldn't since Django keys
+        #       are unique even if deleted.
+        with transaction.atomic():
+            tct = serializer.save()
+            Synthesis.objects.create(
+                transcript=tct,
+                output_type=SynthesisType.SUMMARY
+            )
+            Synthesis.objects.create(
+                transcript=tct,
+                output_type=SynthesisType.CONCISE
+            )
+            Embeds.objects.create(transcript=tct)
 
     @extend_schema(parameters=[
         OpenApiParameter(
@@ -95,6 +113,7 @@ class BaseSynthesizerView(APIView):
 
 
 class InitiateSynthesizerView(BaseSynthesizerView):
+    """Initiate the synthesis process for a transcript."""
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
@@ -113,6 +132,7 @@ class InitiateSynthesizerView(BaseSynthesizerView):
 
 
 class GenerateMetadataView(BaseSynthesizerView):
+    """Generate trancsript metadata AND kick off the other synthesis tasks"""
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
@@ -143,47 +163,64 @@ class GenerateMetadataView(BaseSynthesizerView):
         return response
 
 
-class GenerateSummaryView(BaseSynthesizerView):
-    def post(self, request, pk):
+class BaseSynthesisSynthesizerView(BaseSynthesizerView):
+    """Base class for synthesis generation views"""
+    def post_of_type(self, request, pk, synthesis_type, generate_func):
         try:
             tct = Transcript.objects.get(pk=pk)
-            summary = Synthesis.objects.filter(
-                transcript=pk, output_type=SynthesisType.SUMMARY)
-            if summary.exists():
-                response = Response(status=status.HTTP_200_OK)
-            else:
-                result = tasks.generate_summary(tct)
+            run_generation = False
+
+            with transaction.atomic():
+                synthesis = Synthesis.objects.select_for_update().get(
+                    transcript=tct,
+                    output_type=synthesis_type
+                )
+                if synthesis.status == SynthesisStatus.NOT_STARTED or \
+                   synthesis.status == SynthesisStatus.FAILED:
+                    synthesis.status = SynthesisStatus.IN_PROGRESS
+                    synthesis.save()
+                    run_generation = True
+
+            if run_generation:
+                result = generate_func(tct)
                 response = Response(status=result['status_code'])
+            else:
+                response = Response(status=status.HTTP_200_OK)
+
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
         return response
 
 
-class GenerateConciseView(BaseSynthesizerView):
+class GenerateSummaryView(BaseSynthesisSynthesizerView):
+    """Generate a summary of the transcript"""
     def post(self, request, pk):
-        try:
-            tct = Transcript.objects.get(pk=pk)
-            concise = Synthesis.objects.filter(
-                transcript=pk, output_type=SynthesisType.CONCISE)
-            if concise.exists():
-                response = Response(status=status.HTTP_200_OK)
-            else:
-                result = tasks.generate_concise(tct)
-                response = Response(status=result['status_code'])
-        except Transcript.DoesNotExist:
-            response = Response(status=status.HTTP_404_NOT_FOUND)
+        return self.post_of_type(
+            request, pk, SynthesisType.SUMMARY, tasks.generate_summary)
 
-        return response
+
+class GenerateConciseView(BaseSynthesisSynthesizerView):
+    """Generate a concise version of the transcript"""
+    def post(self, request, pk):
+        return self.post_of_type(
+            request, pk, SynthesisType.CONCISE, tasks.generate_concise)
 
 
 class GenerateEmbedsView(BaseSynthesizerView):
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
-            embeds = Embeds.objects.filter(transcript=pk)
-            if embeds.exists():
-                response = Response(status=status.HTTP_200_OK)
-            else:
+            run_generation = False
+
+            with transaction.atomic():
+                embeds = Embeds.objects.select_for_update().get(transcript=tct)
+                if embeds.status == SynthesisStatus.NOT_STARTED or \
+                   embeds.status == SynthesisStatus.FAILED:
+                    embeds.status = SynthesisStatus.IN_PROGRESS
+                    embeds.save()
+                    run_generation = True
+
+            if run_generation:
                 result = tasks.generate_embeds(tct)
                 if status.is_success(result['status_code']):
                     client.create_task(
@@ -192,6 +229,8 @@ class GenerateEmbedsView(BaseSynthesizerView):
                         timeout_minutes=SYNTHESIS_TASK_TIMEOUT
                     )
                 response = Response(status=result['status_code'])
+            else:
+                response = Response(status=status.HTTP_200_OK)
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
         return response
@@ -229,13 +268,20 @@ class BaseSynthesisView(APIView):
                 transcript=pk,
                 output_type=synthesis_type
             )
-            serializer = SynthesisSerializer(synthesis)
-            response = Response(serializer.data)
+            if synthesis.status == SynthesisStatus.FAILED:
+                response = Response(
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            elif (synthesis.status == SynthesisStatus.NOT_STARTED or
+                  synthesis.status == SynthesisStatus.IN_PROGRESS):
+                response = Response(status=status.HTTP_202_ACCEPTED)
+
+            elif synthesis.status == SynthesisStatus.COMPLETED:
+                serializer = SynthesisSerializer(synthesis)
+                response = Response(serializer.data)
+
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
-        except Synthesis.DoesNotExist:
-            # TODO: Have a way to check if summary in progress
-            response = Response(status=status.HTTP_202_ACCEPTED)
 
         return response
 
@@ -269,20 +315,27 @@ class QueryView(APIView):
         query = request.data.get('query')
         try:
             tct = Transcript.objects.get(pk=pk)
-            Embeds.objects.get(transcript=pk)  # Needed for checking 202
-            query_obj = tasks.run_openai_query(
-                tct, query,
-                Query.QueryLevelChoices.TRANSCRIPT)
-            data = {
-                'query': query,
-                'output': query_obj.output
-            }
-            response = Response(data, status=status.HTTP_201_CREATED)
+            embeds = Embeds.objects.get(transcript=pk)
+
+            if embeds.status == SynthesisStatus.FAILED:
+                response = Response(
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            elif (embeds.status == SynthesisStatus.NOT_STARTED or
+                  embeds.status == SynthesisStatus.IN_PROGRESS):
+                response = Response(status=status.HTTP_202_ACCEPTED)
+
+            elif embeds.status == SynthesisStatus.COMPLETED:
+                query_obj = tasks.run_openai_query(
+                    tct, query,
+                    Query.QueryLevelChoices.TRANSCRIPT)
+                data = {
+                    'query': query,
+                    'output': query_obj.output
+                }
+                response = Response(data, status=status.HTTP_201_CREATED)
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
-        except Embeds.DoesNotExist:
-            # TODO: Have a way to check if summary in progress
-            response = Response(status=status.HTTP_202_ACCEPTED)
 
         return response
 
