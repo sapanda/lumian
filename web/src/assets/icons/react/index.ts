@@ -1,3 +1,4 @@
+import IntegrationsIcon from "./IntegrationsIcon";
 import ProjectsIcon from "./ProjectsIcon";
 
-export { ProjectsIcon };
+export { IntegrationsIcon, ProjectsIcon };

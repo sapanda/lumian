@@ -1,4 +1,4 @@
-import { ProjectsIcon } from "../../assets/icons/react";
+import { IntegrationsIcon, ProjectsIcon } from "../../assets/icons/react";
 
 interface SvgProps {
   width?: number;
@@ -19,5 +19,11 @@ export const SidebarMenu: SidebarMenuItem[] = [
     label: "Projects",
     icon: ProjectsIcon,
     path: "/all-projects",
+  },
+  {
+    id: "2",
+    label: "Integrations",
+    icon: IntegrationsIcon,
+    path: "/integrations",
   },
 ];

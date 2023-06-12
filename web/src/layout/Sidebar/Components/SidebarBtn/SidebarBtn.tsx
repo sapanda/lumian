@@ -64,7 +64,7 @@ export default function SidebarBtn(props: SidebarBtnProps) {
       >
         {item.icon && (
           <ListItemIcon>
-            <SvgIcon component={item.icon} />
+            <SvgIcon component={item.icon} height={24} width={24} />
           </ListItemIcon>
         )}
         <ListItemText
