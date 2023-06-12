@@ -16,8 +16,6 @@ services:
       - VITE_ZOOM_REDIRECT_URL=http://localhost:8002/all-projects
     env_file:
       - ./.env
-    depends_on:
-      - api
 
   api:
     build:
@@ -40,7 +38,6 @@ services:
       - DEBUG=1
     depends_on:
       - db
-      - api_synthesis
       - gcloud-tasks-emulator
 
   api_synthesis:

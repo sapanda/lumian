@@ -132,8 +132,12 @@ def get_mock_settings():
         db_user='',
         openai_completions_api_key='',
         openai_embeddings_api_key='',
-        line_min_size=5,
-        chunk_min_words=20
+        indexed_line_min_chars=5,
+        chunk_min_tokens_summary=28,
+        chunk_min_tokens_query=400,
+        max_input_tokens_summary=2500,
+        max_input_tokens_query=3400,
+        max_input_tokens_metadata=3600,
     )
     return settings
 

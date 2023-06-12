@@ -1,10 +1,17 @@
 import re
+import tiktoken
+from typing import List, Tuple
+
+
+def token_count(input: str) -> int:
+    token_encoding = tiktoken.get_encoding("cl100k_base")
+    return len(token_encoding.encode(input))
 
 
 def split_text_into_multiple_lines_for_speaker(
         text: str,
         line_min_size: int
-) -> 'list[dict]':
+) -> List[dict]:
     """
     Takes in a string `text` and splits it into multiple lines where each
     line is at least `LINE_MIN_SIZE` characters long and ends with a period
@@ -64,23 +71,23 @@ def split_text_into_multiple_lines_for_speaker(
 
 def split_indexed_lines_into_chunks(
         text: str,
-        chunk_min_words: int) -> 'list[list[str]]':
+        chunk_min_tokens: int) -> List[List[str]]:
     """Split indexed lines into chunks"""
     results, cur_results, lines, chunk_size = [], [], text.split("\n"), 0
     n = len(lines)
     for i in range(n):
         line = lines[i]
         cur_results.append(line)
-        chunk_size += len(line.split())
-        if chunk_size > chunk_min_words or i == n - 1:
+        chunk_size += token_count(line)
+        if chunk_size > chunk_min_tokens or i == n - 1:
             results.append(cur_results)
             cur_results, chunk_size = [], 0
     return results
 
 
 def split_indexed_transcript_lines_into_chunks(
-    text: str, interviewee: str, chunk_min_words: int
-) -> 'list[list[str]]':
+    text: str, interviewee: str, chunk_min_tokens: int
+) -> List[List[str]]:
     """Split indexed lines into chunks. No chunk (except the first) should
     start with 'interviewee' name"""
     interviewee = interviewee.lower()
@@ -89,10 +96,9 @@ def split_indexed_transcript_lines_into_chunks(
     for i in range(n):
         line = lines[i]
         cur_results.append(line)
-        words = line.split()
-        chunk_size += len(words)
+        chunk_size += token_count(line)
         if i == n - 1 or (
-            chunk_size > chunk_min_words
+            chunk_size > chunk_min_tokens
             and not (lines[i + 1].split(" ", 1))[1].
                 lower().startswith(interviewee)
         ):
@@ -103,7 +109,7 @@ def split_indexed_transcript_lines_into_chunks(
 
 def split_and_extract_indices(
         input_string: str
-) -> 'list[tuple[str, list[int]]]':
+) -> List[Tuple[str, List[int]]]:
     """Split the lines into sentences and extract indices
     from parenthesis mentioned at the end of indices
     input_string: "Some text (2-3), some more text (10,13).
@@ -126,7 +132,7 @@ def split_and_extract_indices(
     return results
 
 
-def _parse_indices(input_string: str) -> 'list[int]':
+def _parse_indices(input_string: str) -> List[int]:
     """Parse the indices string and generate an equivalent
     integer list representation
     input_string: 1,3-5,9

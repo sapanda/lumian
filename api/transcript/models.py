@@ -45,6 +45,13 @@ class SynthesisType(models.TextChoices):
     CONCISE = 'CS', _('Concise')
 
 
+class SynthesisStatus(models.TextChoices):
+    NOT_STARTED = 'NS', _('Not Started')
+    IN_PROGRESS = 'IP', _('In Progress')
+    COMPLETED = 'C', _('Completed')
+    FAILED = 'F', _('Failed')
+
+
 class Synthesis(models.Model):
     """Model representing final synthesis of a transcript"""
 
@@ -56,21 +63,25 @@ class Synthesis(models.Model):
         Transcript, on_delete=models.CASCADE)
 
     output_type = models.CharField(max_length=2, choices=SynthesisType.choices)
-    output = models.JSONField(blank=True)
-    prompt = models.TextField(max_length=20000, blank=True)
+    output = models.JSONField(blank=True, null=True)
+    prompt = models.TextField(max_length=20000, blank=True, null=True)
     cost = models.DecimalField(
         max_digits=10, decimal_places=4, default=0.0000, editable=False)
+    status = models.CharField(max_length=2, choices=SynthesisStatus.choices,
+                              default=SynthesisStatus.NOT_STARTED)
 
     def get_synthesis_type(self) -> SynthesisType:
         return dict(SynthesisType.choices).get(self.output_type)
 
     @property
     def synthesis(self) -> str:
-        if self.output_type == SynthesisType.SUMMARY:
-            return ''.join([item["text"] for item in self.output])
-        elif self.output_type == SynthesisType.CONCISE:
-            return '\n'.join([item["text"] for item in self.output])
-        return 'Invalid synthesis type'
+        if self.output:
+            if self.output_type == SynthesisType.SUMMARY:
+                return ''.join([item["text"] for item in self.output])
+            elif self.output_type == SynthesisType.CONCISE:
+                return '\n'.join([item["text"] for item in self.output])
+            return 'Invalid synthesis type'
+        return ''
 
     @property
     def citations(self) -> str:
@@ -92,6 +103,8 @@ class Embeds(models.Model):
 
     cost = models.DecimalField(
         max_digits=10, decimal_places=4, default=0.0000, editable=False)
+    status = models.CharField(max_length=2, choices=SynthesisStatus.choices,
+                              default=SynthesisStatus.NOT_STARTED)
 
     def __str__(self):
         return f'{self.transcript}'
@@ -107,7 +120,6 @@ class Query(models.Model):
     class QueryLevelChoices(models.TextChoices):
         PROJECT = 'project', _('Project level queries')
         TRANSCRIPT = 'transcript', _('Transcript level queries')
-        # TODO : add other meeting choices
 
     transcript = models.ForeignKey(
         Transcript, on_delete=models.CASCADE)

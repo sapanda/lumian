@@ -1,6 +1,12 @@
 from decimal import Decimal
+import logging
 from . import synthesis_client
-from .models import Transcript, SynthesisType, Query, Embeds, Synthesis
+from .models import (
+    Transcript, SynthesisType, Query, Embeds, Synthesis, SynthesisStatus
+)
+
+
+logger = logging.getLogger(__name__)
 
 
 def initiate_synthesis(tct: Transcript) -> dict:
@@ -25,60 +31,93 @@ def generate_metadata(tct: Transcript) -> dict:
     return result
 
 
-def _create_synthesis_from_result(tct: Transcript,
-                                  result: dict,
-                                  synthesis_type: SynthesisType) -> Synthesis:
+def _update_synthesis_from_result(tct: Transcript,
+                                  synthesis: Synthesis,
+                                  result: dict) -> None:
     """Create a synthesis object from the result of a synthesis request."""
-    synthesis_obj = None
     if (result['status_code'] < 300):
-        synthesis_obj = Synthesis.objects.create(
-            transcript=tct,
-            output_type=synthesis_type,
-            output=result["output"],
-            prompt=result["prompt"],
-            cost=Decimal(result["cost"])
-        )
-        tct.cost += synthesis_obj.cost
+        synthesis.output = result["output"]
+        synthesis.prompt = result["prompt"]
+        synthesis.cost = Decimal(result["cost"])
+        synthesis.status = SynthesisStatus.COMPLETED
+        synthesis.save()
+
+        tct.cost += synthesis.cost
         tct.save()
-    return synthesis_obj
+    else:
+        synthesis.status = SynthesisStatus.FAILED
+        synthesis.save()
 
 
 def generate_summary(tct: Transcript) -> dict:
     """Generate synthesized summary using the synthesis service"""
-    # TODO: add support for multiple interviewees
-    result = synthesis_client.get_summary_with_citations(
-        transcript_id=tct.id,
-        interviewee=tct.interviewee_names[0]
-    )
-    _create_synthesis_from_result(tct, result, SynthesisType.SUMMARY)
+    try:
+        synthesis = Synthesis.objects.get(
+            transcript=tct,
+            output_type=SynthesisType.SUMMARY
+        )
+        # TODO: add support for multiple interviewees
+        result = synthesis_client.get_summary_with_citations(
+            transcript_id=tct.id,
+            interviewee=tct.interviewee_names[0]
+        )
+        _update_synthesis_from_result(tct, synthesis, result)
+    except Synthesis.DoesNotExist as e:
+        logger.exception(("Synthesis doesn't exist. "
+                          "Summary generation will be skipped."),
+                         exc_info=e)
+        result = {'status_code': 500}
     return result
 
 
 def generate_concise(tct: Transcript) -> dict:
     """Generate concise transcript using the synthesis service"""
-    # TODO: add support for multiple interviewees
-    result = synthesis_client.get_concise_with_citations(
-        transcript_id=tct.id,
-        interviewee=tct.interviewee_names[0]
-    )
-    _create_synthesis_from_result(tct, result, SynthesisType.CONCISE)
+    try:
+        synthesis = Synthesis.objects.get(
+            transcript=tct,
+            output_type=SynthesisType.CONCISE
+        )
+        # TODO: add support for multiple interviewees
+        result = synthesis_client.get_concise_with_citations(
+            transcript_id=tct.id,
+            interviewee=tct.interviewee_names[0]
+        )
+        _update_synthesis_from_result(tct, synthesis, result)
+    except Synthesis.DoesNotExist as e:
+        logger.exception(("Synthesis doesn't exist. "
+                          "Concise generation will be skipped."),
+                         exc_info=e)
+        result = {'status_code': 500}
     return result
 
 
 def generate_embeds(tct: Transcript) -> dict:
     """Generate the embeds for the transcript."""
-    result = synthesis_client.generate_embeds(
-        transcript_id=tct.id,
-        transcript_title=tct.title,
-        interviewee=tct.interviewee_names[0]
-    )
-    if (result['status_code'] < 300):
-        embeds = Embeds.objects.create(
-            transcript=tct,
-            cost=Decimal(result["cost"])
+    try:
+        embeds = Embeds.objects.get(
+            transcript=tct
         )
-        tct.cost += embeds.cost
-        tct.save()
+        # TODO: add support for multiple interviewees
+        result = synthesis_client.generate_embeds(
+            transcript_id=tct.id,
+            transcript_title=tct.title,
+            interviewee=tct.interviewee_names[0]
+        )
+        if (result['status_code'] < 300):
+            embeds.cost = Decimal(result["cost"])
+            embeds.status = SynthesisStatus.COMPLETED
+            embeds.save()
+
+            tct.cost += embeds.cost
+            tct.save()
+        else:
+            embeds.status = SynthesisStatus.FAILED
+            embeds.save()
+    except Embeds.DoesNotExist as e:
+        logger.exception(("Embeds Object doesn't exist. "
+                          "Embeds generation will be skipped."),
+                         exc_info=e)
+        result = {'status_code': 500}
     return result
 
 

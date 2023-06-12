@@ -35,10 +35,14 @@ class Settings(BaseSettings):
     pinecone_dimensions: int
     pinecone_user: str = None
 
-    line_min_size: int = 90
-    chunk_min_words: int = 500
-    context_max_chars: int = 6000
-    examples_dir: str = 'examples'
+    indexed_line_min_chars: int = 90
+    chunk_min_tokens_summary: int = 2000
+    chunk_min_tokens_concise: int = 2000
+    chunk_min_tokens_query: int = 400
+    max_input_tokens_summary: int = 2500
+    max_input_tokens_concise: int = 2500
+    max_input_tokens_query: int = 3400
+    max_input_tokens_metadata: int = 3600
 
     sentry_dsn: str = None
 
