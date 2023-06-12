@@ -90,18 +90,17 @@ export default function useInterview() {
 
       mergedRanges.forEach((range, index) => {
         const [start, end] = range;
+
         const selectedText = originalTranscriptRef?.current
           ?.slice(start, end)
           ?.replaceAll("\n\n", "<br/> <br/>");
 
         if (transcript && selectedText) {
-          transcript = transcript
-            ?.replace(
-              selectedText,
-              `<span style="background-color:#dbeafe;"id="highlight${index}"
-            >${selectedText}</span>`
-            )
-            ?.replaceAll('"\n\n', '"<br/> <br/>');
+          transcript = transcript?.replaceAll('"\n\n', '"<br/> <br/>')?.replace(
+            selectedText,
+            `<span style="background-color:#dbeafe;"id="highlight${index}"
+          >${selectedText}</span>`
+          );
         }
       });
 
