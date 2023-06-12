@@ -120,6 +120,5 @@ OUTPUT: Wil is married (6) with two children - an 8-year-old girl, and a 5-year-
 
 
 INPUT: {query}
-CONTEXT:
-{context}
+CONTEXT: {context}
 OUTPUT: """

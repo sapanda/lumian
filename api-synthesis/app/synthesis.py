@@ -376,7 +376,7 @@ class Synthesis(SynthesisInterface):
             section = match['metadata']['text']
             total_tokens += token_count(section)
             if total_tokens < self.max_input_tokens_query:
-                context = f"{separator}\n{section.strip()}\n"
+                context = f"{context}\n{separator}\n{section.strip()}\n"
         context = f"{context}{separator}\n"
 
         prompt = QUERY_PROMPT_TEMPLATE.format(query=query.strip(),
