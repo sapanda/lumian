@@ -25,9 +25,13 @@ export default function useInterview() {
   const { data: conciseData } = useGetMeetingConciseQuery(
     parseInt(interviewId || "0")
   );
-  const { data: query } = useGetMeetingQuery(
+  const { data: questions } = useGetMeetingQuery(
     parseInt(interviewId || "0"),
     "project"
+  );
+  const { data: query } = useGetMeetingQuery(
+    parseInt(interviewId || "0"),
+    "transcript"
   );
 
   const originalTranscriptRef = useRef<string>("");
@@ -135,6 +139,7 @@ export default function useInterview() {
     summary: summaryData?.output ?? [],
     concise: conciseData?.output ?? [],
     query,
+    questions,
     interviewTitle: interviewData?.title ?? "",
     projectTitle: projectData?.name ?? "",
     projectId,

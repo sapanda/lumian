@@ -12,11 +12,19 @@ interface summaryProps {
 interface SummaryType {
   data: summaryProps[];
 }
-
+interface answerType {
+  text: string;
+  references: [number, number][];
+}
+interface queryProps {
+  query: string;
+  output: answerType[];
+}
 export default function Summary(props: SummaryType) {
   const { data } = props;
   const {
     conversation,
+    questions,
     handleSummaryItemClick,
     citationsCount,
     selectedIndex,
@@ -24,6 +32,7 @@ export default function Summary(props: SummaryType) {
     scrollToNextHighlightedText,
     activeCitationIndex,
   } = useInterview();
+
   return (
     <Stack
       sx={{
@@ -34,62 +43,132 @@ export default function Summary(props: SummaryType) {
     >
       <Paper
         sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "8px",
-          padding: "1rem",
           minWidth: "49%",
           maxWidth: "49%",
-          minHeight: "75vh",
+          padding: "1rem",
           maxHeight: "75vh",
+          minHeight: "75vh",
         }}
       >
-        <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
-          Summary
-        </Typography>
+        <div className="flex flex-col overflow-y-auto max-h-[70vh] min-h-[70vh] gap-5">
+          <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
+            Summary
+          </Typography>
 
-        <div className="min-h-[63vh] max-h-[63vh] overflow-y-auto">
-          {data.map((item, index) => {
-            const regex = /^[a-zA-Z0-9]/;
-            let selectedBgColor = "";
-            if (selectedIndex === index) {
-              selectedBgColor = "bg-blue-200";
-            }
-            if (item.text[0] === " " || !regex.test(item.text[0])) {
+          <div>
+            {data.map((item, index) => {
+              const regex = /^[a-zA-Z0-9]/;
+              let selectedBgColor = "";
+              if (selectedIndex === index) {
+                selectedBgColor = "bg-blue-200";
+              }
+              if (item.text[0] === " " || !regex.test(item.text[0])) {
+                return (
+                  <>
+                    {item.text[0]}
+                    <span
+                      key={index}
+                      className={`text-12-400 ${
+                        item?.references?.length > 0 && "hover:bg-blue-100"
+                      } cursor-pointer ${selectedBgColor}`}
+                      onClick={() =>
+                        item?.references?.length > 0 &&
+                        handleSummaryItemClick(item.references, index)
+                      }
+                    >
+                      {item.text.slice(1)}
+                    </span>
+                  </>
+                );
+              }
+
               return (
-                <>
-                  {item.text[0]}
-                  <span
-                    key={index}
-                    className={`${
-                      item?.references?.length > 0 && "hover:bg-blue-100"
-                    } cursor-pointer ${selectedBgColor}`}
-                    onClick={() =>
-                      item?.references?.length > 0 &&
-                      handleSummaryItemClick(item.references, index)
-                    }
-                  >
-                    {item.text.slice(1)}
-                  </span>
-                </>
+                <span
+                  key={index}
+                  className={`text-12-400 ${
+                    item?.references?.length > 0 && "hover:bg-blue-100"
+                  } cursor-pointer ${selectedBgColor}`}
+                  onClick={() =>
+                    item?.references?.length > 0 &&
+                    handleSummaryItemClick(item.references, index)
+                  }
+                >
+                  {item.text}
+                </span>
               );
-            }
+            })}
+          </div>
 
-            return (
-              <span
-                key={index}
-                className={`${
-                  item?.references?.length > 0 && "hover:bg-blue-100"
-                } cursor-pointer ${selectedBgColor}`}
-                onClick={() =>
-                  item?.references?.length > 0 &&
-                  handleSummaryItemClick(item.references, index)
-                }
-              >
-                {item.text}
-              </span>
-            );
-          })}
+          <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
+            Questions
+          </Typography>
+
+          <div className="flex flex-col gap-4">
+            {questions?.map((item: queryProps, index: number) => {
+              const answer = item?.output;
+              return (
+                <Stack>
+                  <span className="italic text-12-700 ">{item?.query}</span>
+                  <div>
+                    {answer.map((item, queryIndex) => {
+                      const regex = /^[a-zA-Z0-9]/;
+                      let selectedBgColor = "";
+
+                      const answerIndex = queryIndex
+                        ? parseInt(`${queryIndex}${index}`)
+                        : index;
+                      if (
+                        selectedIndex === answerIndex &&
+                        item.references.length > 0
+                      ) {
+                        selectedBgColor = "bg-blue-200";
+                      }
+                      if (item.text[0] === " " || !regex.test(item.text[0])) {
+                        return (
+                          <>
+                            {item.text[0]}
+                            <span
+                              key={index}
+                              className={`text-12-500 ${
+                                item?.references?.length > 0 &&
+                                "hover:bg-blue-100"
+                              } cursor-pointer ${selectedBgColor}`}
+                              onClick={() =>
+                                item?.references?.length > 0 &&
+                                handleSummaryItemClick &&
+                                handleSummaryItemClick(
+                                  item.references,
+                                  answerIndex
+                                )
+                              }
+                            >
+                              {item.text.slice(1)}
+                            </span>
+                          </>
+                        );
+                      }
+
+                      return (
+                        <span
+                          key={index}
+                          className={`text-12-500 ${
+                            item?.references?.length > 0 && "hover:bg-blue-100"
+                          } cursor-pointer ${selectedBgColor}`}
+                          onClick={() =>
+                            item.references.length > 0 &&
+                            handleSummaryItemClick &&
+                            handleSummaryItemClick(item.references, index)
+                          }
+                        >
+                          {item.text}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </Stack>
+              );
+            })}
+          </div>
         </div>
       </Paper>
 

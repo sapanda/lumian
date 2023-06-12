@@ -27,7 +27,10 @@ export default function AnswerBox(props: AnswerBoxProps) {
         const regex = /^[a-zA-Z0-9]/;
         let selectedBgColor = "";
 
-        const answerIndex = queryIndex ? queryIndex + index : index;
+        const answerIndex = queryIndex
+          ? parseInt(`${queryIndex}${index}`)
+          : index;
+
         if (selectedIndex === answerIndex && item.references.length > 0) {
           selectedBgColor = "bg-blue-200";
         }

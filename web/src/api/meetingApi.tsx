@@ -238,7 +238,7 @@ const useGetMeetingQuery = (
   meetingId: number | undefined,
   queryLevel: "project" | "transcript"
 ) => {
-  const queryKey: QueryKey = ["meetingQuery", meetingId];
+  const queryKey: QueryKey = ["meetingQuery", meetingId, queryLevel];
   return useQuery(queryKey, () => getMeetingQuery(meetingId, queryLevel), {
     staleTime: 1000 * 60 * 30, // 30 minutes
     enabled: !!meetingId,
