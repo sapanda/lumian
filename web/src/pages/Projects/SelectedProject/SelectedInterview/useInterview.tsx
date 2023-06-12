@@ -55,7 +55,11 @@ export default function useInterview() {
     );
 
     if (nextHightlightedText) {
-      nextHightlightedText.scrollIntoView();
+      nextHightlightedText.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center",
+      });
       setActiveCitationIndex(circularIndex + 1);
     }
   }
