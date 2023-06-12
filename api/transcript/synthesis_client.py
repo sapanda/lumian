@@ -23,7 +23,7 @@ def save_transcript_for_id(transcript_id: int,
         f"{SYNTHESIS_URL}/transcript/{transcript_id}",
         data=transcript,
         headers={'Content-Type': 'text/plain'})
-    if response.status_code != 204:
+    if response.status_code != 201:
         logger.error(
             f"Could not save transcript with {transcript_id}"
             " on synthesis service")

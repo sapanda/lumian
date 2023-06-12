@@ -53,7 +53,7 @@ if settings.deploy_mode == ModeEnum.development or \
         traces_sample_rate=1.0,
     )
 
-LOG_FORMAT = "[%(levelname)s] %(message)s | %(filename)s %(funcName)s() Line %(lineno)d" # noqa
+LOG_FORMAT = "[%(levelname)s] %(message)s | %(filename)s %(funcName)s() Line %(lineno)d"  # noqa
 LOG_LEVEL = logging.getLevelName(settings.synthesis_log_level)
 logging.basicConfig(format=LOG_FORMAT, level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
@@ -139,9 +139,14 @@ def get_synthesis(
     return Synthesis(
         openai_client=openai_client,
         embeds_client=embeds_client,
-        chunk_min_words=settings.chunk_min_words,
-        context_max_chars=settings.context_max_chars,
-        examples_dir=settings.examples_dir)
+        chunk_min_tokens_summary=settings.chunk_min_tokens_summary,
+        chunk_min_tokens_concise=settings.chunk_min_tokens_concise,
+        chunk_min_tokens_query=settings.chunk_min_tokens_query,
+        max_input_tokens_summary=settings.max_input_tokens_summary,
+        max_input_tokens_concise=settings.max_input_tokens_concise,
+        max_input_tokens_query=settings.max_input_tokens_query,
+        max_input_tokens_metadata=settings.max_input_tokens_metadata
+    )
 
 
 @app.exception_handler(SynthesisAPIException)
@@ -187,7 +192,8 @@ def save_transcript(
     logger.info(f" ---- POST request initiated :  /transcript/{id}")
     """API for saving a transcript"""
     usecases.save_transcript(id=id, transcript=transcript,
-                             line_min_size=settings.line_min_size, repo=repo)
+                             line_min_chars=settings.indexed_line_min_chars,
+                             repo=repo)
     return Response(status_code=status.HTTP_201_CREATED)
 
 
