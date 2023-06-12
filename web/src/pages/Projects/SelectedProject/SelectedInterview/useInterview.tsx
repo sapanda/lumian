@@ -37,7 +37,9 @@ export default function useInterview() {
   const originalTranscriptRef = useRef<string>("");
   const transcriptRef = useRef<HTMLDivElement>(null);
 
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | string | null>(
+    null
+  );
   const [conversation, setConversation] = useState<string>("");
   const [citationsCount, setCitationsCount] = useState<number>(0);
   const [activeCitationIndex, setActiveCitationIndex] = useState<number>(0);
@@ -73,7 +75,7 @@ export default function useInterview() {
   }
 
   const handleSummaryItemClick = useCallback(
-    (ranges: [number, number][], index: number) => {
+    (ranges: [number, number][], index: number | string) => {
       setSelectedIndex(index);
 
       setActiveCitationIndex(0);

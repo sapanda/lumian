@@ -114,9 +114,8 @@ export default function Summary(props: SummaryType) {
                       const regex = /^[a-zA-Z0-9]/;
                       let selectedBgColor = "";
 
-                      const answerIndex = queryIndex
-                        ? parseInt(`${queryIndex}${index}`)
-                        : index;
+                      const answerIndex = `answer-${index}-${queryIndex}`;
+
                       if (
                         selectedIndex === answerIndex &&
                         item.references.length > 0
@@ -157,7 +156,7 @@ export default function Summary(props: SummaryType) {
                           onClick={() =>
                             item.references.length > 0 &&
                             handleSummaryItemClick &&
-                            handleSummaryItemClick(item.references, index)
+                            handleSummaryItemClick(item.references, answerIndex)
                           }
                         >
                           {item.text}
