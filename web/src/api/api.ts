@@ -33,6 +33,16 @@ axiosInstance.interceptors.response.use(
         },
         theme: "colored",
       });
+    } else if (response.status === 204) {
+      const msg = response.statusText;
+      toast.success(msg, {
+        style: {
+          backgroundColor: "#00b300",
+          color: "#fff",
+          fill: "#fff",
+        },
+        theme: "colored",
+      });
     }
     return response;
   },
