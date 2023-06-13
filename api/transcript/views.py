@@ -21,11 +21,10 @@ from rest_framework.views import APIView
 from . import tasks
 from .models import (
     Transcript, SynthesisType, Synthesis, Embeds, Query,
-    SynthesisStatus, StatusChoices
+    SynthesisStatus
 )
 from .serializers import (
-    TranscriptSerializer, SynthesisSerializer, QuerySerializer,
-    StatusSerializer
+    TranscriptSerializer, SynthesisSerializer, QuerySerializer
 )
 from app.settings import SYNTHESIS_TASK_TIMEOUT
 from core.gcloud_client import client
@@ -353,88 +352,30 @@ class QueryView(APIView):
     )
     def get(self, request, pk):
         try:
-            Transcript.objects.get(pk=pk)  # Needed for checking 404
+            transcript = Transcript.objects.get(pk=pk)  # For checking 404
             query_level = request.query_params.get('query_level')
+            if not query_level:
+                return Response('query_level is required (Project,Transcript)',
+                                status.HTTP_406_NOT_ACCEPTABLE)
+
             queryset = Query.objects.filter(
                 transcript=pk,
                 query_level=query_level)
+
+            if query_level == Query.QueryLevelChoices.PROJECT:
+                project = Project.objects.get(id=transcript.project)
+                question_count = len(project.questions)
+                if queryset.count() != question_count:
+                    return Response(status.HTTP_202_ACCEPTED)
+                
             serializer = QuerySerializer(queryset, many=True)
             response = Response(serializer.data, status=status.HTTP_200_OK)
         except Transcript.DoesNotExist:
-            response = Response(status=status.HTTP_404_NOT_FOUND)
-        return response
-
-
-class StatusView(BaseSynthesizerView):
-
-    serializer_class = StatusSerializer
-
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name='id',
-                description='id of the transcript',
-                required=True,
-                type=str),
-            OpenApiParameter(
-                name='type',
-                description='type of the synthesis',
-                required=True,
-                type=str),
-        ]
-    )
-    def get(self, request):
-        try:
-            serializer = self.serializer_class(data=request.query_params)
-            if (not serializer.is_valid()):
-                return Response(serializer.errors,
-                                status.HTTP_406_NOT_ACCEPTABLE)
-
-            pk = serializer.validated_data['id']
-            type = serializer.validated_data['type']
-
-            transcript = Transcript.objects.get(pk=pk)  # precondition
-
-            if (
-                type == StatusChoices.SUMMARY or
-                type == StatusChoices.CONCISE
-            ):
-                synthesis = Synthesis.objects.filter(
-                    transcript=pk,
-                    output_type=SynthesisType.SUMMARY
-                )
-                if synthesis and synthesis.status == SynthesisStatus.COMPLETED:
-                    return Response(status=status.HTTP_200_OK)
-
-            elif type == StatusChoices.QUESTION:
-                project = Project.objects.get(id=transcript.project)
-                questions_count = Query.objects.filter(
-                    transcript=pk,
-                    query_level=Query.QueryLevelChoices.TRANSCRIPT).count()
-                total_questions = len(project.questions)
-                if questions_count == total_questions:
-                    return Response(status=status.HTTP_200_OK)
-
-            elif type == StatusChoices.QUERY:
-                embeds = Embeds.objects.get(transcript=pk)
-                if embeds and embeds.status == SynthesisStatus.COMPLETED:
-                    return Response(status=status.HTTP_200_OK)
-
-            else:
-                return Response(
-                    "type can be (summary, concise, question, query)",
-                    status.HTTP_422_UNPROCESSABLE_ENTITY
-                )
-
-        except Transcript.DoesNotExist:
-            return Response(
+            response = Response(
                 f'Transcript does not exist with id {pk}',
                 status.HTTP_404_NOT_FOUND)
         except Project.DoesNotExist:
-            return Response(
+            response = Response(
                 f'Project does not exist with id {transcript.project}',
                 status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response(str(e), status.HTTP_400_BAD_REQUEST)
-
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        return response

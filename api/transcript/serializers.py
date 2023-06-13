@@ -39,8 +39,3 @@ class QuerySerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Create and return a Transcript Query."""
         return Query.objects.create(**validated_data)
-
-
-class StatusSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    type = serializers.CharField()
