@@ -24,8 +24,7 @@ const getProjects = async () => {
       id: project.id,
       name: project.title,
       date: "Feb 2 to Feb 10",
-      participants: "10",
-      owner: "John Doe",
+      interviews: "10",
     };
   });
   return transformedData;
