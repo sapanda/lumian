@@ -436,5 +436,5 @@ class StatusView(BaseSynthesizerView):
                 status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response(str(e), status.HTTP_400_BAD_REQUEST)
-        
+
         return Response(status=status.HTTP_404_NOT_FOUND)
