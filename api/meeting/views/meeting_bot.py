@@ -55,6 +55,8 @@ class AddBotView(APIView):
             bot_name = serializer.validated_data['bot_name']
             meeting_url = serializer.validated_data['meeting_url']
             project_id = serializer.validated_data['project_id']
+            start_time = serializer.validated_data['start_time']
+            end_time = serializer.validated_data['end_time']
 
             # TODO : Check if a bot is already present for that meeting
 
@@ -64,6 +66,9 @@ class AddBotView(APIView):
                 id=bot['id'],
                 status=MeetingBot.StatusChoices.READY,
                 message="Bot is created and ready to join the call",
+                meeting_url=meeting_url,
+                start_time=start_time,
+                end_time=end_time,
                 transcript=None,
                 project=project
             )
@@ -77,8 +82,8 @@ class AddBotView(APIView):
         except RecallAITimeoutException as e:
             response_data = {"error": str(e)}
             response_status = HTTP_408_REQUEST_TIMEOUT
-        except IntegrityError:
-            response_data = {"error": "Meeting bot already exists"}
+        except IntegrityError as e:
+            response_data = {"error": f"Meeting bot already exists {str(e)}"}
             response_status = HTTP_409_CONFLICT
         except Exception as e:
             logger.error(e)
@@ -114,7 +119,9 @@ class BotStatusChangeView(APIView):
             transcript=transcript_text,
             title=f"Meeting transcript - {meetingbot.id}",
             interviewee_names=["Unknown"],
-            interviewer_names=["Unknown"]
+            interviewer_names=["Unknown"],
+            start_time=meetingbot.start_time,
+            end_time=meetingbot.end_time
         )
 
     def post(self, request):

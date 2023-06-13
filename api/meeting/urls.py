@@ -6,11 +6,6 @@ from meeting.views.meeting_bot import (
     GetBotStatusView,
     ScheduleBotView
 )
-from meeting.views.meeting_app import (
-    OAuthView,
-    OAuthCallbackView,
-    MeetingDetailView
-)
 from meeting.views.meeting_calendar import (
     OAuthRequestView,
     OAuthResponseView,
@@ -27,12 +22,6 @@ urlpatterns = [
           BotStatusChangeView.as_view(), name='webhook-bot-status-change'),
      path('bot/status',
           GetBotStatusView.as_view(), name='get-bot-status'),
-     path('app/oauth-request',
-          OAuthView.as_view(), name='app-oauth-request-url'),
-     path('app/oauth-response',
-          OAuthCallbackView.as_view(), name='app-oauth-response-token'),
-     path('app/meetings',
-          MeetingDetailView.as_view(), name='app-meeting-details'),
      path('calendar/oauth-request',
           OAuthRequestView.as_view(), name='calendar-oauth-request-url'),
      path('calendar/oauth-response',

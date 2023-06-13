@@ -14,6 +14,8 @@ class AddBotSerializer(serializers.Serializer):
     project_id = serializers.IntegerField()
     bot_name = serializers.CharField()
     meeting_url = serializers.CharField()
+    start_time = serializers.DateTimeField()
+    end_time = serializers.DateTimeField()
 
     class Meta:
         model = MeetingBot
