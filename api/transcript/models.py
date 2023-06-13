@@ -143,3 +143,10 @@ class Query(models.Model):
 
     def __str__(self):
         return f'{self.query}'
+
+
+class StatusChoices(models.TextChoices):
+    SUMMARY = 'summary', _('summary status')
+    CONCISE = 'concise', _('concise status')
+    QUESTION = 'question', _('project questions status')
+    QUERY = 'query', _('transcript query status')
