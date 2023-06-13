@@ -6,6 +6,7 @@ import {
   ResetPassword,
   Projects,
   AccountSettings,
+  Integrations,
 } from "../pages";
 
 // Public Routes
@@ -16,6 +17,7 @@ export const HOME = "/";
 export const PRIVACY_POLICY = "/privacy-policy";
 export const TERMS_OF_SERVICES = "/terms-of-services";
 export const ACCOUNT_SETTINGS = "/account-settings";
+export const INTEGRATIONS = "/integrations";
 
 // Private Routes
 export const PROJECTS = {
@@ -90,6 +92,11 @@ export const PRIVATE_ROUTES = [
     exact: true,
   },
 
+  {
+    path: INTEGRATIONS,
+    component: Integrations,
+    exact: true,
+  },
   {
     path: ACCOUNT_SETTINGS,
     component: AccountSettings,

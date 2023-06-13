@@ -25,12 +25,21 @@ export default function useInterview() {
   const { data: conciseData } = useGetMeetingConciseQuery(
     parseInt(interviewId || "0")
   );
-  const { data: query } = useGetMeetingQuery(parseInt(interviewId || "0"));
+  const { data: questions } = useGetMeetingQuery(
+    parseInt(interviewId || "0"),
+    "project"
+  );
+  const { data: query } = useGetMeetingQuery(
+    parseInt(interviewId || "0"),
+    "transcript"
+  );
 
   const originalTranscriptRef = useRef<string>("");
   const transcriptRef = useRef<HTMLDivElement>(null);
 
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | string | null>(
+    null
+  );
   const [conversation, setConversation] = useState<string>("");
   const [citationsCount, setCitationsCount] = useState<number>(0);
   const [activeCitationIndex, setActiveCitationIndex] = useState<number>(0);
@@ -38,7 +47,8 @@ export default function useInterview() {
   const currentRangeLength = useRef<number>(0);
   const { mutateAsync: onAskQuery } = useAskQueryMutation(
     parseInt(interviewId || "0"),
-    userQueryText
+    userQueryText,
+    "project"
   );
   const askQuery = async () => {
     if (!userQueryText) return;
@@ -65,7 +75,7 @@ export default function useInterview() {
   }
 
   const handleSummaryItemClick = useCallback(
-    (ranges: [number, number][], index: number) => {
+    (ranges: [number, number][], index: number | string) => {
       setSelectedIndex(index);
 
       setActiveCitationIndex(0);
@@ -131,6 +141,7 @@ export default function useInterview() {
     summary: summaryData?.output ?? [],
     concise: conciseData?.output ?? [],
     query,
+    questions,
     interviewTitle: interviewData?.title ?? "",
     projectTitle: projectData?.name ?? "",
     projectId,
