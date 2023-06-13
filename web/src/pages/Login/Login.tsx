@@ -63,7 +63,9 @@ export default function Login() {
 
         <div className="flex flex-col items-center justify-center w-1/2 bg-blue-300">
           <div className="flex flex-col items-center justify-center text-center bg-white shadow-2xl rounded-2xl min-w-[170px] min-h-[160px] max-w-[170px]">
-            <p className="text-16-500">Some Promotion Message or Testimonial</p>
+            <p className="text-16-500">
+              Skip note-taking. Focus on what truly matters.
+            </p>
           </div>
         </div>
       </div>
