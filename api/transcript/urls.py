@@ -24,8 +24,6 @@ urlpatterns = [
           views.GenerateEmbedsView.as_view(), name='generate-embeds'),
      path('<int:pk>/generate/answers',
           views.GenerateAnswersView.as_view(), name='generate-answers'),
-     path('generate/status',
-          views.StatusView.as_view(), name='generate-status'),
      path('<int:pk>/summary/',
           views.SummaryView.as_view(), name='summary-detail'),
      path('<int:pk>/concise/',
