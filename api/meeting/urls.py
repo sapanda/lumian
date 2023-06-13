@@ -14,7 +14,8 @@ from meeting.views.meeting_app import (
 from meeting.views.meeting_calendar import (
     OAuthRequestView,
     OAuthResponseView,
-    EventDetailsView
+    EventDetailsView,
+    CalendarStatusView
 )
 
 urlpatterns = [
@@ -38,4 +39,6 @@ urlpatterns = [
           OAuthResponseView.as_view(), name='calendar-oauth-response-token'),
      path('calendar/meetings',
           EventDetailsView.as_view(), name='calendar-meeting-details'),
+     path('calendar/status',
+          CalendarStatusView.as_view(), name='calendar-meeting-details'),
 ]

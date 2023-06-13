@@ -47,4 +47,8 @@ class ScheduleBotSerializer(serializers.Serializer):
     calendar_email = serializers.CharField()
 
 
+class CalendarStatusSerializer(serializers.Serializer):
+    app = serializers.CharField()
+
+
 # TODO : Cleanup Nested serialization
