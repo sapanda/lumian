@@ -3,6 +3,7 @@ import logging
 import openai
 from openai.error import Timeout, RateLimitError
 from retry import retry
+from typing import List, Dict
 
 from .errors import OpenAITimeoutException, OpenAIRateLimitException
 from .interfaces import OpenAIClientInterface
@@ -89,7 +90,7 @@ class OpenAIClient(OpenAIClientInterface):
                            temperature: int = DEFAULT_TEMPERATURE,
                            max_tokens: int = DEFAULT_MAX_TOKENS,
                            ) -> dict:
-        """Execute an OpenAI API request and return the response."""
+        """Execute an OpenAI completion and return the response."""
         try:
             params = self._build_completions_params(
                 temperature=temperature, max_tokens=max_tokens)
@@ -113,6 +114,41 @@ class OpenAIClient(OpenAIClientInterface):
 
             ret_val = {
                 "prompt": prompt,
+                "output": result,
+                "tokens_used": tokens_used,
+                "cost": cost
+            }
+        except Timeout as e:
+            logger.exception("OpenAI Completion Timeout", exc_info=e)
+            raise OpenAITimeoutException(
+                detail="OpenAI could not complete the requests in time")
+        except RateLimitError as e:
+            logger.exception("OpenAI Completion hit Rate Limit", exc_info=e)
+            raise OpenAIRateLimitException(
+                detail="OpenAI rate limit exceeded, please try again later")
+
+        return ret_val
+
+    @retry(OpenAIRateLimitException, tries=RETRY_TRIES,
+           delay=RETRY_DELAY_RATELIMIT, backoff=RETRY_BACKOFF)
+    @retry(OpenAITimeoutException, tries=RETRY_TRIES,
+           delay=RETRY_DELAY_TIMEOUT, backoff=RETRY_BACKOFF)
+    def execute_chat(self, messages: List[Dict[str, str]],
+                     temperature: int = DEFAULT_TEMPERATURE,
+                     max_tokens: int = DEFAULT_MAX_TOKENS,
+                     ) -> dict:
+        """Execute an OpenAI chat and return the response."""
+        try:
+            params = self._build_completions_params(
+                temperature=temperature, max_tokens=max_tokens)
+            response = openai.ChatCompletion.create(
+                messages=messages, **params)
+            result = response["choices"][0]["message"]["content"].strip(" \n")
+            tokens_used = response["usage"]["total_tokens"]
+            cost = self._calculate_cost(tokens_used,
+                                        OpenAIPricing.CHAT)
+            ret_val = {
+                "prompt": messages[-1]["content"],
                 "output": result,
                 "tokens_used": tokens_used,
                 "cost": cost
