@@ -49,8 +49,35 @@ const LabelInputCombo = (props: LabelInputPairProps) => {
         type={type}
         size={size}
         multiline={multiline}
+        sx={{
+          "& .MuiInputBase-input": {
+            padding: "8px 14px",
+          },
+
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "8px",
+            padding: "0",
+            ...(size === "small" && {
+              height: "30px",
+            }),
+
+            ...(multiline && {
+              height: "126px",
+            }),
+
+            "& fieldset": {
+              borderColor: "#CFCECE",
+            },
+            "&:hover fieldset": {
+              borderColor: "#CFCECE",
+            },
+            "&.Mui-focused fieldset": {
+              borderColor: "#CFCECE",
+            },
+          },
+        }}
       />
-      <FormHelperText error={!!error}>{error}</FormHelperText>
+      {!!error && <FormHelperText error={!!error}>{error}</FormHelperText>}
     </Stack>
   );
 };
