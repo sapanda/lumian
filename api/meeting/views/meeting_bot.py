@@ -66,9 +66,9 @@ class AddBotView(APIView):
                     'Bot already present in the meeting',
                     HTTP_202_ACCEPTED
                 )
+            project = Project.objects.get(id=project_id)
 
             bot = add_bot_to_meeting(bot_name, meeting_url)
-            project = Project.objects.get(id=project_id)
             MeetingBot.objects.create(
                 id=bot['id'],
                 status=MeetingBot.StatusChoices.READY,
@@ -161,8 +161,8 @@ class BotStatusChangeView(APIView):
 
             # get the transcript if the status is done
             transcript = None
-            # if status_code == MeetingBot.StatusChoices.DONE:
-            #     transcript = self._create_transcript(bot_id)
+            if status_code == MeetingBot.StatusChoices.DONE:
+                transcript = self._create_transcript(bot_id)
 
             # change status of the bot on each callback
             self._update_bot(bot_id, status_code, status_message, transcript)
@@ -232,29 +232,36 @@ class ScheduleBotView(APIView):
                 calendar_email=calendar_email,
                 calendar_app=MeetingCalendar.CalendarChoices.GOOGLE
             )
+            user = meeting_calendar_details.user
+            project = Project.objects.filter(user=user).first()
             calendar_id = meeting_calendar_details.calendar_id
             events = list_calendar_events(calendar_id, schedule=True)
 
             for event in events:
-                logger.debug(event)
                 bot = add_bot_to_meeting(
                     bot_name='Lumian Notetaker',
                     meeting_url=event['meeting_url'],
                     join_at=event['start_time']
                 )
-                project = Project.objects.get(id=1)
                 MeetingBot.objects.create(
                     id=bot['id'],
                     status=MeetingBot.StatusChoices.READY,
                     message="Bot is created and ready to join the call",
                     transcript=None,
-                    project=project
+                    project=project,
+                    meeting_url=event['meeting_url'],
+                    start_time=event['start_time'],
+                    end_time=event['end_time'],
+                    title=event['title']
                 )
-                logger.info(f"Bot id {bot['id']} Meeting {event['summary']}")
+                logger.info(f"Bot id {bot['id']} Meeting {event['title']}")
 
+        except MeetingCalendar.DoesNotExist:
+            logger.info("MeetingCalendar does not exist")
+            return Response("MeetingCalendar does not exist",
+                            HTTP_202_ACCEPTED)
         except Exception as e:
-            logger.exception("Exception while scheduling bot",
-                             exc_info=str(e))
+            logger.info("Exception while scheduling bot")
             return Response(str(e), HTTP_202_ACCEPTED)
 
         return Response({}, HTTP_201_CREATED)
