@@ -7,7 +7,7 @@ interface LabelInputPairProps {
   label: string;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   value: string;
-  placeholder: string;
+  placeholder: string | string[];
   inputDescription?: string;
   type?: "text" | "password" | "email" | "number" | "tel" | "url";
   size?: "small" | "default";
@@ -27,6 +27,10 @@ const LabelInputCombo = (props: LabelInputPairProps) => {
     size = "default",
     multiline = false,
   } = props;
+
+  let finalPlaceholderText = "";
+  if (Array.isArray(placeholder)) finalPlaceholderText = placeholder.join("\n");
+  else finalPlaceholderText = placeholder;
   return (
     <Stack spacing={2}>
       <InputLabel
@@ -44,7 +48,7 @@ const LabelInputCombo = (props: LabelInputPairProps) => {
       <TextInputL
         onChange={onChange}
         value={value}
-        placeholder={placeholder}
+        placeholder={finalPlaceholderText}
         name={name}
         type={type}
         size={size}
