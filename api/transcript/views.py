@@ -372,7 +372,7 @@ class QueryView(APIView):
                 f'Project does not exist with id {tct.project.id}',
                 status.HTTP_404_NOT_FOUND)
         except Query.DoesNotExist:
-            esponse = Response(
+            response = Response(
                 f'Query does not exist for transcript {pk}',
                 status.HTTP_404_NOT_FOUND)
         return response
