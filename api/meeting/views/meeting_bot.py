@@ -53,12 +53,19 @@ class AddBotView(APIView):
                 return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
 
             bot_name = serializer.validated_data['bot_name']
-            meeting_url = serializer.validated_data['meeting_url']
             project_id = serializer.validated_data['project_id']
+            meeting_url = serializer.validated_data['meeting_url']
             start_time = serializer.validated_data['start_time']
             end_time = serializer.validated_data['end_time']
+            title = serializer.validated_data['title']
 
             # TODO : Check if a bot is already present for that meeting
+
+            if MeetingBot.objects.filter(meeting_url=meeting_url).exists():
+                return Response(
+                    'Bot already present in the meeting',
+                    HTTP_202_ACCEPTED
+                )
 
             bot = add_bot_to_meeting(bot_name, meeting_url)
             project = Project.objects.get(id=project_id)
@@ -69,6 +76,7 @@ class AddBotView(APIView):
                 meeting_url=meeting_url,
                 start_time=start_time,
                 end_time=end_time,
+                title=title,
                 transcript=None,
                 project=project
             )
@@ -189,7 +197,14 @@ class GetBotStatusView(APIView):
 
             bot_id = serializer.validated_data['bot_id']
             bot = MeetingBot.objects.get(id=bot_id)
-            return Response(bot.status)
+            response = {
+                'bot_id': bot.id,
+                'bot_status': bot.status,
+                'meeting_title': bot.title,
+                'meeting_start_time': bot.start_time,
+                'meeting_end_time': bot.end_time
+            }
+            return Response(response)
         except MeetingBot.DoesNotExist:
             response_data = {"error": "Bot does not exist"}
             response_status = HTTP_404_NOT_FOUND
