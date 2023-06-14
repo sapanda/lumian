@@ -72,6 +72,7 @@ function AppBarLabel(
                 outline: "none",
                 color: "black",
                 padding: "4px",
+                minWidth: "max-content",
               }}
               className="text-20-700"
             />
