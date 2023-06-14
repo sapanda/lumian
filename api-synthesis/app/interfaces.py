@@ -1,5 +1,5 @@
 import abc
-from typing import List
+from typing import List, Dict
 from .domains import Transcript, SynthesisResult, EmbedsResult, MetadataResult
 
 
@@ -11,6 +11,14 @@ class OpenAIClientInterface(abc.ABC):
                            max_tokens: int,
                            ) -> dict:
         """Execute OpenAI API completions request and return the response."""
+        pass
+
+    @abc.abstractmethod
+    def execute_chat(self, messages: List[Dict[str, str]],
+                     temperature: int,
+                     max_tokens: int,
+                     ) -> dict:
+        """Execute OpenAI API chat request and return the response."""
         pass
 
     @abc.abstractmethod

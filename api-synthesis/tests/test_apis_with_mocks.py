@@ -1,3 +1,9 @@
+from fastapi.testclient import TestClient
+from fastapi import status
+import json
+import pytest
+from typing import List, Dict
+
 from app.server import (
     app, get_openai_client, get_embeds_client,
     get_transcript_repo, get_settings
@@ -7,10 +13,6 @@ from app.domains import Transcript
 from app.interfaces import (
     OpenAIClientInterface, EmbedsClientInterface, TranscriptRepositoryInterface
 )
-from fastapi.testclient import TestClient
-from fastapi import status
-import json
-import pytest
 
 
 client = TestClient(app)
@@ -31,6 +33,19 @@ class MockOpenAIClient(OpenAIClientInterface):
                            max_tokens: int = 100,
                            ) -> dict:
         tokens_used = len(prompt.split()) * 2
+        cost = tokens_used * 0.000001
+        return {
+            'prompt': 'Have some fun',
+            'output': 'Some text (0). Some other text (1)',
+            'cost': cost,
+            'tokens_used': tokens_used
+        }
+
+    def execute_chat(self, messages: List[Dict[str, str]] = None,
+                     temperature: int = 0,
+                     max_tokens: int = 100,
+                     ) -> dict:
+        tokens_used = len("Have some fun".split()) * 2
         cost = tokens_used * 0.000001
         return {
             'prompt': 'Have some fun',
