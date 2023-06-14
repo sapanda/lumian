@@ -88,6 +88,16 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
+        "transcript": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "project": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
     },
 }
 

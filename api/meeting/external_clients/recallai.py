@@ -47,6 +47,7 @@ def add_bot_to_meeting(bot_name: str, meeting_url: str, join_at: str = None):
     try:
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
+        logger.info(response.json())
         return response.json()
     except HTTPError as e:
         error_msg = f"HTTP error occurred: {e}"

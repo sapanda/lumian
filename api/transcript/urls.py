@@ -29,5 +29,5 @@ urlpatterns = [
      path('<int:pk>/concise/',
           views.ConciseView.as_view(), name='concise-detail'),
      path('<int:pk>/query/',
-          views.QueryView.as_view(), name='query-detail'),
+          views.QueryView.as_view(), name='query-detail')
 ]
