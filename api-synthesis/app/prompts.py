@@ -105,7 +105,6 @@ OUTPUT 2: ###
 QUERY_PROMPT_TEMPLATE = """Answer the query using the provided context, which consists of excerpts from interviews. For each phrase in the output, also specify in parenthesis the exact index of where that information comes from in the source. When listing indexes in parentheses, mention all the locations the info is mentioned, even if repeated. Only answer truthfully and don't include anything not in the original input:
 
 
-INPUT: Tell me about Wil's family.
 CONTEXT:
 ----
 [5] Ben: Can you tell us your living situation?
@@ -116,9 +115,10 @@ CONTEXT:
 [15] Wil: Didn't mention my son - five-year- old boy.
 [16] Wil: But yeah two kids.
 ----
-OUTPUT: Wil is married (6) with two children - an 8-year-old girl, and a 5-year-old boy (7,15-17)
+QUERY: Tell me about Wil's family.
+ANSWER: Wil is married (6) with two children - an 8-year-old girl, and a 5-year-old boy (7,15-17)
 
 
-INPUT: {query}
 CONTEXT: {context}
-OUTPUT: """
+QUERY: {query}
+ANSWER: """
