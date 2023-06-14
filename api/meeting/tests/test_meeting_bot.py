@@ -18,6 +18,13 @@ class AddBotViewTest(APITestCase):
     def setUp(self):
         self.url = reverse('add-bot-to-meeting')
         self.user = create_user()
+        self.data = {
+                'bot_name': 'bot1',
+                'meeting_url': 'http://example.com/meeting',
+                'project_id': 1,
+                "start_time": "2023-06-05T15:00:00+05:30",
+                "end_time": "2023-06-05T15:00:00+05:30"
+               }
 
     def tearDown(self):
         self.user.delete()
@@ -26,14 +33,9 @@ class AddBotViewTest(APITestCase):
     def test_add_bot_success(self, mock_add_bot_to_meeting):
         mock_add_bot_to_meeting.return_value = {'id': 1, 'name': 'bot1'}
         self.project = create_project(self.user)
-        data = {
-                'bot_name': 'bot1',
-                'meeting_url': 'http://example.com/meeting',
-                'project_id': 1
-               }
         self.client.force_authenticate(self.user)
 
-        response = self.client.post(self.url, data, format='json')
+        response = self.client.post(self.url, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(MeetingBot.objects.count(), 1)
 
@@ -46,14 +48,9 @@ class AddBotViewTest(APITestCase):
     @patch('meeting.views.meeting_bot.add_bot_to_meeting')
     def test_add_bot_already_exists(self, mock_add_bot_to_meeting):
         mock_add_bot_to_meeting.side_effect = IntegrityError
-        data = {
-                'bot_name': 'bot1',
-                'meeting_url': 'http://example.com/meeting',
-                'project_id': 1
-               }
         self.client.force_authenticate(self.user)
 
-        response = self.client.post(self.url, data, format='json')
+        response = self.client.post(self.url, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(MeetingBot.objects.count(), 0)
 
@@ -64,28 +61,19 @@ class AddBotViewTest(APITestCase):
                 'Timeout',
                 status.HTTP_408_REQUEST_TIMEOUT
                 )
-        data = {
-                'bot_name': 'bot1',
-                'meeting_url': 'http://example.com/meeting',
-                'project_id': 1
-               }
         self.client.force_authenticate(self.user)
 
-        response = self.client.post(self.url, data, format='json')
+        response = self.client.post(self.url, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_408_REQUEST_TIMEOUT)
         self.assertEqual(MeetingBot.objects.count(), 0)
 
     @patch('meeting.views.meeting_bot.add_bot_to_meeting')
     def test_add_bot_exception(self, mock_add_bot_to_meeting):
         mock_add_bot_to_meeting.side_effect = ValueError('Invalid input')
-        data = {
-                'bot_name': 'bot1',
-                'meeting_url': 'http://example.com/meeting',
-                'project_id': 1
-               }
+
         self.client.force_authenticate(self.user)
 
-        response = self.client.post(self.url, data, format='json')
+        response = self.client.post(self.url, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(MeetingBot.objects.count(), 0)
 

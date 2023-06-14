@@ -362,11 +362,11 @@ class QueryView(APIView):
                 query_level=query_level)
 
             if query_level == Query.QueryLevelChoices.PROJECT:
-                project = Project.objects.get(id=transcript.project)
+                project = Project.objects.get(id=transcript.project.id)
                 question_count = len(project.questions)
                 if queryset.count() != question_count:
                     return Response(status.HTTP_202_ACCEPTED)
-                
+
             serializer = QuerySerializer(queryset, many=True)
             response = Response(serializer.data, status=status.HTTP_200_OK)
         except Transcript.DoesNotExist:
