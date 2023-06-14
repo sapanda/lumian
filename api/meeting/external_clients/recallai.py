@@ -47,7 +47,6 @@ def add_bot_to_meeting(bot_name: str, meeting_url: str, join_at: str = None):
     try:
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
-        logger.info(response.json())
         return response.json()
     except HTTPError as e:
         error_msg = f"HTTP error occurred: {e}"
@@ -152,7 +151,6 @@ def retrieve_calendar(calendar_id):
 def list_calendar_events(calendar_id, schedule=False):
 
     now = datetime.datetime.utcnow()
-    logger.debug(now)
     if schedule:
         time_min = now.isoformat() + 'Z'
         time_max = (now + datetime.timedelta(minutes=30)).isoformat() + 'Z'

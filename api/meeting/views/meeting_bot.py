@@ -1,5 +1,5 @@
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_202_ACCEPTED,
@@ -33,7 +33,7 @@ from meeting.models import MeetingBot, MeetingCalendar
 from meeting.errors import RecallAITimeoutException
 from project.models import Project
 
-from transcript.models import Transcript
+from transcript.models import Transcript, Embeds, Synthesis, SynthesisType
 
 import logging
 logger = logging.getLogger(__name__)
@@ -114,15 +114,28 @@ class BotStatusChangeView(APIView):
         transcript_list = get_meeting_transcript(bot_id)
         transcript_text = generate_transcript_text(transcript_list)
 
-        return Transcript.objects.create(
-            project=meetingbot.project,
-            transcript=transcript_text,
-            title=f"Meeting transcript - {meetingbot.id}",
-            interviewee_names=["Unknown"],
-            interviewer_names=["Unknown"],
-            start_time=meetingbot.start_time,
-            end_time=meetingbot.end_time
-        )
+        with transaction.atomic():
+            tct = Transcript.objects.create(
+                project=meetingbot.project,
+                transcript=transcript_text,
+                title=f"Meeting transcript - {meetingbot.id}",
+                interviewee_names=["Unknown"],
+                interviewer_names=["Unknown"],
+                start_time=meetingbot.start_time,
+                end_time=meetingbot.end_time
+            )
+
+            Synthesis.objects.create(
+                transcript=tct,
+                output_type=SynthesisType.SUMMARY
+            )
+            Synthesis.objects.create(
+                transcript=tct,
+                output_type=SynthesisType.CONCISE
+            )
+            Embeds.objects.create(transcript=tct)
+
+        return tct
 
     def post(self, request):
 
