@@ -161,8 +161,8 @@ class BotStatusChangeView(APIView):
 
             # get the transcript if the status is done
             transcript = None
-            if status_code == MeetingBot.StatusChoices.DONE:
-                transcript = self._create_transcript(bot_id)
+            # if status_code == MeetingBot.StatusChoices.DONE:
+            #     transcript = self._create_transcript(bot_id)
 
             # change status of the bot on each callback
             self._update_bot(bot_id, status_code, status_message, transcript)
