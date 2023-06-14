@@ -303,6 +303,7 @@ class TranscriptAPITests(APITestCase):
         """Test that the query GET request works with empty results."""
         tpt = create_transcript(project=self.project)
         url = query_url(tpt.id)
+        url = f"{url}?query_level=transcript"
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 0)
@@ -310,6 +311,7 @@ class TranscriptAPITests(APITestCase):
     def test_query_list_invalid_transcript(self, patched_signal):
         """Test that the query GET request fails with invalid transcript."""
         url = query_url(10000000)
+        url = f"{url}?query_level=transcript"
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -364,6 +366,7 @@ class EndToEndQueryTests(APITestCase):
         self.client.post(url, {'query': 'Where does Jason live?'})
         self.client.post(url, {'query': 'Describe Jason\'s family?'})
 
+        url = f"{url}?query_level=transcript"
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 2)

@@ -12,7 +12,8 @@ class TranscriptSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transcript
         fields = ['id', 'project', 'title', 'interviewee_names',
-                  'interviewer_names', 'transcript']
+                  'interviewer_names', 'transcript',
+                  'start_time', 'end_time']
 
     def create(self, validated_data):
         """Create and return a transcript."""
