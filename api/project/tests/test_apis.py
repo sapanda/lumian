@@ -80,7 +80,7 @@ class PrivateAPITests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 3)
         self.assertFalse(any(item['id'] == other_project.id
-                             for item in res.data["projects"]),
+                             for item in res.data),
                          "Wrong project returned for user")
 
     def test_patch_project_success(self):
