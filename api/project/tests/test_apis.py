@@ -78,7 +78,7 @@ class PrivateAPITests(APITestCase):
         res = self.client.get(PROJECT_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data["projects"]), 3)
+        self.assertEqual(len(res.data), 3)
         self.assertFalse(any(item['id'] == other_project.id
                              for item in res.data["projects"]),
                          "Wrong project returned for user")
