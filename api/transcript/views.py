@@ -361,12 +361,6 @@ class QueryView(APIView):
                 transcript=pk,
                 query_level=query_level)
 
-            if query_level == Query.QueryLevelChoices.PROJECT:
-                project = Project.objects.get(id=tct.project.id)
-                question_count = len(project.questions)
-                if queryset.count() != question_count:
-                    return Response(status.HTTP_202_ACCEPTED)
-
             serializer = QuerySerializer(queryset, many=True)
             response = Response(serializer.data, status=status.HTTP_200_OK)
         except Transcript.DoesNotExist:
@@ -376,5 +370,9 @@ class QueryView(APIView):
         except Project.DoesNotExist:
             response = Response(
                 f'Project does not exist with id {tct.project.id}',
+                status.HTTP_404_NOT_FOUND)
+        except Query.DoesNotExist:
+            esponse = Response(
+                f'Query does not exist for transcript {pk}',
                 status.HTTP_404_NOT_FOUND)
         return response
