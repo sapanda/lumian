@@ -54,7 +54,7 @@ export default function AllProjects() {
     <PrivateContainer
       appBar={
         <PrivateAppbar title="Projects" icon={projects_icon}>
-          <div className="flex items-center justify-end w-full gap-5 px-10 py-5">
+          <div className="flex items-center justify-end w-full gap-5 px-10">
             <Button variant="contained" onClick={() => connectApp()}>
               Connect App
             </Button>

@@ -53,17 +53,24 @@ export default function SidebarBtn(props: SidebarBtnProps) {
     <ListItem
       sx={{
         padding: "4px 8px",
+        width: "100%",
       }}
       onClick={onClick}
     >
       <ListItemButton
         sx={{
           borderRadius: "6px",
+          display: "flex",
+          gap: "8px",
           ...(isBackgroundWhite ? whiteBgBtnStyle : nonWhiteBgBtnStyle),
         }}
       >
         {item.icon && (
-          <ListItemIcon>
+          <ListItemIcon
+            sx={{
+              minWidth: "unset",
+            }}
+          >
             <SvgIcon component={item.icon} height={24} width={24} />
           </ListItemIcon>
         )}

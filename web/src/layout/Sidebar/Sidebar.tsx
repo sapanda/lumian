@@ -9,7 +9,7 @@ import { AccountMenu, SidebarBtn } from "./Components";
 import { Stack } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-const drawerWidth = 240;
+const drawerWidth = 180;
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -24,12 +24,17 @@ export default function Sidebar() {
           boxSizing: "border-box",
           background: "#051D34",
           color: theme.palette.primary.contrastText,
+          padding: "0 12px",
         },
       }}
       variant="permanent"
       anchor="left"
     >
-      <Toolbar>
+      <Toolbar
+        sx={{
+          padding: "18px 0!important",
+        }}
+      >
         <img src="/lumian.svg" alt="Lumian" />
         <Typography
           variant="h4"
@@ -43,10 +48,13 @@ export default function Sidebar() {
       <Divider
         sx={{
           backgroundColor: theme.palette.primary.light,
-          margin: "0 16px",
         }}
       />
-      <List>
+      <List
+        sx={{
+          marginTop: "22px",
+        }}
+      >
         {SidebarMenu.map((item) => (
           <SidebarBtn
             item={item}
@@ -55,7 +63,12 @@ export default function Sidebar() {
           />
         ))}
       </List>
-      <Divider />
+      <Divider
+        sx={{
+          marginTop: "22px",
+          backgroundColor: theme.palette.primary.light,
+        }}
+      />
 
       <Stack
         sx={{
@@ -65,11 +78,7 @@ export default function Sidebar() {
         }}
       >
         <List>
-          <Stack
-            sx={{
-              padding: "8px 16px",
-            }}
-          >
+          <Stack>
             <AccountMenu />
           </Stack>
         </List>

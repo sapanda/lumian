@@ -4,6 +4,7 @@ import email_icon from "./email_icon.svg";
 import google_calendar__icon from "./google_calendar__icon.svg";
 import integrations__icon from "./integrations__icon.svg";
 import lock_icon from "./lock_icon.svg";
+import navigate_next__icon from "./navigate_next__icon.svg";
 import outlook_calendar__icon from "./outlook_calendar__icon.svg";
 import profile_icon from "./profile_icon.svg";
 import projects_icon from "./projects_icon.svg";
@@ -17,6 +18,7 @@ export {
   integrations__icon,
   outlook_calendar__icon,
   lock_icon,
+  navigate_next__icon,
   profile_icon,
   projects_icon,
   settings_icon,
