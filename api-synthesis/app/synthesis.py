@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 from typing import List
@@ -380,12 +381,9 @@ class Synthesis(SynthesisInterface):
                 context = f"{context}\n{separator}\n{section.strip()}"
         context = f"{context}\n{separator}"
 
-        messages = QUERY_MESSAGE_TEMPLATE
+        messages = copy.deepcopy(QUERY_MESSAGE_TEMPLATE)
         messages[-1]["content"] = messages[-1]["content"].format(
             query=query.strip(),
             context=context)
-
-        logger.info(json.dumps(messages))
-        print(json.dumps(messages))
 
         return self.openai_client.execute_chat(messages)
