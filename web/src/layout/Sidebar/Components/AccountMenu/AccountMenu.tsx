@@ -8,13 +8,13 @@ import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 
 import { Stack } from "@mui/material";
-import { NavigateNext } from "@mui/icons-material";
 import useAuth from "../../../../hooks/useAuth";
 import { SidebarBtn } from "..";
 import { useNavigate } from "react-router-dom";
 import { ACCOUNT_SETTINGS } from "../../../../router/routes.constant";
 import theme from "../../../../theme/theme";
 import { useGetMeQuery } from "../../../../api/userApi";
+import { navigate_next__icon } from "../../../../assets/icons/svg";
 
 export const AccountMenu = () => {
   const navigate = useNavigate();
@@ -31,13 +31,20 @@ export const AccountMenu = () => {
   const { data: user } = useGetMeQuery();
   return (
     <React.Fragment>
+      <Divider
+        sx={{
+          marginBottom: "16px",
+          backgroundColor: theme.palette.primary.light,
+        }}
+      />
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
           cursor: "pointer",
-          borderRadius: "6px",
-          padding: "8px 16px",
+          borderRadius: "4px",
+          padding: "8px",
+          maxWidth: "154px",
           "&:hover": {
             backgroundColor: "rgba(143, 143, 143, 0.13)",
           },
@@ -50,6 +57,7 @@ export const AccountMenu = () => {
             sx={{
               fontWeight: 500,
               color: theme.palette.primary.contrastText,
+              maxWidth: "150px",
             }}
           >
             {user?.name}
@@ -59,6 +67,8 @@ export const AccountMenu = () => {
             sx={{
               fontWeight: 500,
               color: theme.palette.primary.contrastText,
+              maxWidth: "150px",
+              wordBreak: "break-all",
             }}
           >
             {user?.email}
@@ -67,12 +77,22 @@ export const AccountMenu = () => {
         <Tooltip title="Account settings">
           <IconButton
             size="small"
-            sx={{ ml: 2 }}
+            sx={{
+              ml: 2,
+              height: "10px",
+              width: "10px",
+              padding: "0px",
+              marginLeft: "0!important",
+              "& svg": {
+                width: "10px",
+                height: "10px",
+              },
+            }}
             aria-controls={open ? "account-menu" : undefined}
             aria-haspopup="true"
             aria-expanded={open ? "true" : undefined}
           >
-            <NavigateNext sx={{ width: 32, height: 32, color: "#fff" }} />
+            <img src={navigate_next__icon} alt="navigate_next" />
           </IconButton>
         </Tooltip>
       </Box>

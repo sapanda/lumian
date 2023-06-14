@@ -1,4 +1,4 @@
-import { InputAdornment, TextField } from "@mui/material";
+import { InputAdornment, SxProps, TextField } from "@mui/material";
 
 interface TextInputLProps {
   name?: string;
@@ -17,6 +17,7 @@ interface TextInputLProps {
   placeholder?: string;
   size?: "small" | "default";
   multiline?: boolean;
+  sx?: SxProps;
 }
 export default function TextInputL(props: TextInputLProps) {
   const {
@@ -27,6 +28,7 @@ export default function TextInputL(props: TextInputLProps) {
     type,
     placeholder,
     name,
+    sx,
     size = "default",
     multiline = false,
   } = props;
@@ -56,6 +58,8 @@ export default function TextInputL(props: TextInputLProps) {
             borderColor: "#707070",
           },
         },
+
+        ...sx,
       }}
       InputProps={{
         startAdornment: (
