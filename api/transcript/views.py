@@ -351,10 +351,10 @@ class QueryView(APIView):
     )
     def get(self, request, pk):
         try:
-            transcript = Transcript.objects.get(pk=pk)  # For checking 404
+            tct = Transcript.objects.get(pk=pk)  # For checking 404
             query_level = request.query_params.get('query_level')
             if not query_level:
-                return Response('query_level is required (Project,Transcript)',
+                return Response('query_level is required (project,transcript)',
                                 status.HTTP_406_NOT_ACCEPTABLE)
 
             queryset = Query.objects.filter(
@@ -362,7 +362,7 @@ class QueryView(APIView):
                 query_level=query_level)
 
             if query_level == Query.QueryLevelChoices.PROJECT:
-                project = Project.objects.get(id=transcript.project.id)
+                project = Project.objects.get(id=tct.project.id)
                 question_count = len(project.questions)
                 if queryset.count() != question_count:
                     return Response(status.HTTP_202_ACCEPTED)
@@ -375,6 +375,6 @@ class QueryView(APIView):
                 status.HTTP_404_NOT_FOUND)
         except Project.DoesNotExist:
             response = Response(
-                f'Project does not exist with id {transcript.project}',
+                f'Project does not exist with id {tct.project.id}',
                 status.HTTP_404_NOT_FOUND)
         return response
