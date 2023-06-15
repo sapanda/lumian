@@ -38,7 +38,7 @@ interface rowType {
 
 export default function AllProjects() {
   const navigate = useNavigate();
-  const { allProjects, isFetching, isLoading } = useProjects();
+  const { allProjects } = useProjects();
 
   function onCellClick(row: rowType) {
     const projectId = row.id;
