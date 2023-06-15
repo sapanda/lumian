@@ -26,6 +26,7 @@ from .models import (
 from .serializers import (
     TranscriptSerializer, SynthesisSerializer, QuerySerializer
 )
+from .repository import create_synthesis_entry
 from app.settings import SYNTHESIS_TASK_TIMEOUT
 from core.gcloud_client import client
 from project.models import Project
@@ -63,15 +64,7 @@ class TranscriptView(viewsets.ModelViewSet):
         #       are unique even if deleted.
         with transaction.atomic():
             tct = serializer.save()
-            Synthesis.objects.create(
-                transcript=tct,
-                output_type=SynthesisType.SUMMARY
-            )
-            Synthesis.objects.create(
-                transcript=tct,
-                output_type=SynthesisType.CONCISE
-            )
-            Embeds.objects.create(transcript=tct)
+            create_synthesis_entry(tct)
 
     @extend_schema(parameters=[
         OpenApiParameter(
@@ -118,6 +111,7 @@ class InitiateSynthesizerView(BaseSynthesizerView):
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
+            return Response()
             result = tasks.initiate_synthesis(tct)
             status_code = result['status_code']
             if status.is_success(status_code):

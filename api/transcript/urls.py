@@ -8,7 +8,7 @@ from transcript import views
 app_name = 'transcript'
 
 router = DefaultRouter()
-router.register('', views.TranscriptView)
+router.register('', views.TranscriptView, basename='transcript')
 
 urlpatterns = [
      path('', include(router.urls)),
