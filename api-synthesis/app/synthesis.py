@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 from typing import List
@@ -16,7 +17,7 @@ from .prompts import (
     SUMMARY_CHUNK_PROMPT_TEMPLATE,
     SUMMARY_PROMPT_TEMPLATE,
     CONCISE_PROMPT_TEMPLATE,
-    QUERY_PROMPT_TEMPLATE,
+    QUERY_MESSAGE_TEMPLATE,
 )
 from .utils import (
     token_count,
@@ -364,22 +365,25 @@ class Synthesis(SynthesisInterface):
 
     def _openai_query(self, query: str, search_results: dict) -> dict:
         """Run a query against chosen sections of a transcript."""
-        base_prompt = QUERY_PROMPT_TEMPLATE.format(query=query.strip(),
-                                                   context="")
+        base_prompt = "".join(message["content"]
+                              for message in QUERY_MESSAGE_TEMPLATE)
+        total_tokens = token_count(base_prompt)
+        total_tokens += token_count(query.strip())
 
         # Build the context string, but ensure OpenAI Completion
         # input token count doesn't exceed self.max_input_tokens_query
-        total_tokens = token_count(base_prompt)
         context = ""
         separator = "-" * 4
         for match in search_results['matches']:
             section = match['metadata']['text']
             total_tokens += token_count(section)
             if total_tokens < self.max_input_tokens_query:
-                context = f"{context}\n{separator}\n{section.strip()}\n"
-        context = f"{context}{separator}\n"
+                context = f"{context}\n{separator}\n{section.strip()}"
+        context = f"{context}\n{separator}"
 
-        prompt = QUERY_PROMPT_TEMPLATE.format(query=query.strip(),
-                                              context=context.strip())
+        messages = copy.deepcopy(QUERY_MESSAGE_TEMPLATE)
+        messages[-1]["content"] = messages[-1]["content"].format(
+            query=query.strip(),
+            context=context)
 
-        return self.openai_client.execute_completion(prompt)
+        return self.openai_client.execute_chat(messages)
