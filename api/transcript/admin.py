@@ -8,8 +8,9 @@ from project.models import Project
 
 from core.admin import ReadOnlyInline
 from transcript.models import (
-    Transcript, Synthesis, Embeds, Query, SynthesisType
+    Transcript, Synthesis, Embeds, Query
 )
+from transcript.repository import create_synthesis_entry
 
 
 class TranscriptForm(forms.ModelForm):
@@ -81,15 +82,8 @@ class TranscriptAdmin(admin.ModelAdmin):
 
             with transaction.atomic():
                 obj.save()
-                Synthesis.objects.create(
-                    transcript=obj,
-                    output_type=SynthesisType.SUMMARY
-                )
-                Synthesis.objects.create(
-                    transcript=obj,
-                    output_type=SynthesisType.CONCISE
-                )
-                Embeds.objects.create(transcript=obj)
+                create_synthesis_entry()
+
         else:
             obj.save()
 

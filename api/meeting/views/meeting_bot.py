@@ -33,7 +33,8 @@ from meeting.models import MeetingBot, MeetingCalendar
 from meeting.errors import RecallAITimeoutException
 from project.models import Project
 
-from transcript.models import Transcript, Embeds, Synthesis, SynthesisType
+from transcript.models import Transcript
+from transcript.repository import create_synthesis_entry
 
 import logging
 logger = logging.getLogger(__name__)
@@ -133,15 +134,7 @@ class BotStatusChangeView(APIView):
                 end_time=meetingbot.end_time
             )
 
-            Synthesis.objects.create(
-                transcript=tct,
-                output_type=SynthesisType.SUMMARY
-            )
-            Synthesis.objects.create(
-                transcript=tct,
-                output_type=SynthesisType.CONCISE
-            )
-            Embeds.objects.create(transcript=tct)
+            create_synthesis_entry(tct)
 
         return tct
 
