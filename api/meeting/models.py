@@ -22,7 +22,6 @@ class MeetingBot(models.Model):
     meeting_url = models.TextField()
     start_time = models.DateTimeField(null=True, blank=True, default=None)
     end_time = models.DateTimeField(null=True, blank=True, default=None)
-    title = models.CharField(max_length=512, default='Meeting')
     transcript = models.ForeignKey(
         "transcript.Transcript",
         on_delete=models.CASCADE,

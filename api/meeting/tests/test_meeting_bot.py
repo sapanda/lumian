@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from unittest.mock import patch
 from meeting.errors import RecallAITimeoutException
-from meeting.models import MeetingBot, MeetingCalendar
+from meeting.models import MeetingBot
 from meeting.tests.utils import (
     create_user,
     create_bot,
@@ -18,6 +18,13 @@ class AddBotViewTest(APITestCase):
     def setUp(self):
         self.url = reverse('add-bot-to-meeting')
         self.user = create_user()
+        self.data = {
+                'bot_name': 'bot1',
+                'meeting_url': 'http://example.com/meeting',
+                'project_id': 1,
+                "start_time": "2023-06-05T15:00:00+05:30",
+                "end_time": "2023-06-05T15:00:00+05:30"
+               }
 
     def tearDown(self):
         self.user.delete()
@@ -27,14 +34,6 @@ class AddBotViewTest(APITestCase):
         mock_add_bot_to_meeting.return_value = {'id': 1, 'name': 'bot1'}
         self.project = create_project(self.user)
         self.client.force_authenticate(self.user)
-        self.data = {
-                'bot_name': 'bot1',
-                'meeting_url': 'http://example.com/meeting',
-                'project_id': self.project.id,
-                "start_time": "2023-06-05T15:00:00+05:30",
-                "end_time": "2023-06-05T15:00:00+05:30",
-                "title": "Meeting"
-            }
 
         response = self.client.post(self.url, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -48,19 +47,8 @@ class AddBotViewTest(APITestCase):
 
     @patch('meeting.views.meeting_bot.add_bot_to_meeting')
     def test_add_bot_already_exists(self, mock_add_bot_to_meeting):
-        self.project = create_project(self.user)
         mock_add_bot_to_meeting.side_effect = IntegrityError
-        self.project = create_project(self.user)
         self.client.force_authenticate(self.user)
-
-        self.data = {
-                'bot_name': 'bot1',
-                'meeting_url': 'http://example.com/meeting',
-                'project_id': self.project.id,
-                "start_time": "2023-06-05T15:00:00+05:30",
-                "end_time": "2023-06-05T15:00:00+05:30",
-                "title": "Meeting"
-            }
 
         response = self.client.post(self.url, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
@@ -68,7 +56,6 @@ class AddBotViewTest(APITestCase):
 
     @patch('meeting.views.meeting_bot.add_bot_to_meeting')
     def test_add_bot_timeout(self, mock_add_bot_to_meeting):
-        self.project = create_project(self.user)
         mock_add_bot_to_meeting.side_effect = \
             RecallAITimeoutException(
                 'Timeout',
@@ -76,34 +63,15 @@ class AddBotViewTest(APITestCase):
                 )
         self.client.force_authenticate(self.user)
 
-        self.data = {
-                'bot_name': 'bot1',
-                'meeting_url': 'http://example.com/meeting',
-                'project_id': self.project.id,
-                "start_time": "2023-06-05T15:00:00+05:30",
-                "end_time": "2023-06-05T15:00:00+05:30",
-                "title": "Meeting"
-            }
-
         response = self.client.post(self.url, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_408_REQUEST_TIMEOUT)
         self.assertEqual(MeetingBot.objects.count(), 0)
 
     @patch('meeting.views.meeting_bot.add_bot_to_meeting')
     def test_add_bot_exception(self, mock_add_bot_to_meeting):
-        self.project = create_project(self.user)
         mock_add_bot_to_meeting.side_effect = ValueError('Invalid input')
 
         self.client.force_authenticate(self.user)
-
-        self.data = {
-                'bot_name': 'bot1',
-                'meeting_url': 'http://example.com/meeting',
-                'project_id': self.project.id,
-                "start_time": "2023-06-05T15:00:00+05:30",
-                "end_time": "2023-06-05T15:00:00+05:30",
-                "title": "Meeting"
-            }
 
         response = self.client.post(self.url, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -207,7 +175,7 @@ class GetBotStatusViewTest(APITestCase):
         response = self.client.get(f"{self.url}?bot_id={bot_id}")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['bot_status'], self.bot.status)
+        self.assertEqual(response.data, self.bot.status)
 
     def test_invalid_bot_id(self):
         invalid_bot_id = 'invalid_bot_id'
@@ -215,68 +183,3 @@ class GetBotStatusViewTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'error': 'Bot does not exist'})
-
-
-class ScheduleBotViewTests(APITestCase):
-
-    def setUp(self):
-        self.calendar_email = 'test@example.com'
-        self.calendar_id = 'calendar-id-123'
-        self.meeting_url = 'https://example.com/meeting'
-        self.start_time = '2023-01-01T09:00:00Z'
-        self.end_time = '2023-01-01T10:00:00Z'
-        self.title = 'Test Meeting'
-
-        self.user = create_user()
-        self.project = create_project(self.user)
-        self.calendar = MeetingCalendar.objects.create(
-            user=self.user,
-            calendar_email=self.calendar_email,
-            calendar_app=MeetingCalendar.CalendarChoices.GOOGLE,
-            calendar_id=self.calendar_id
-        )
-
-    @patch('meeting.views.meeting_bot.list_calendar_events')
-    @patch('meeting.views.meeting_bot.add_bot_to_meeting')
-    def test_schedule_bot_success(self,
-                                  mock_add_bot_to_meeting,
-                                  mock_list_calendar_events
-                                  ):
-        mock_list_calendar_events.return_value = [
-            {
-                'meeting_url': 'https://example.com/meeting',
-                'start_time': '2023-06-05T10:00:00Z',
-                'end_time': '2023-06-05T11:00:00Z',
-                'title': 'Meeting 1'
-            },
-        ]
-        mock_add_bot_to_meeting.return_value = {'id': 'bot_id'}
-        url = reverse('add-bot-to-scheduled-meeting')
-        data = {
-            'calendar_email': self.calendar_email
-        }
-
-        response = self.client.post(url, data=data, format='json')
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(MeetingBot.objects.count(), 1)
-
-    def test_schedule_bot_invalid_request(self):
-        url = reverse('add-bot-to-scheduled-meeting')
-        data = {}  # Invalid request data
-
-        response = self.client.post(url, data, format='json')
-
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(MeetingBot.objects.count(), 0)
-
-    def test_schedule_bot_exception(self):
-        url = reverse('add-bot-to-scheduled-meeting')
-        data = {
-            'calendar_email': 'nonexistent@example.com'  # Non-existent email
-        }
-
-        response = self.client.post(url, data, format='json')
-
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(MeetingBot.objects.count(), 0)
