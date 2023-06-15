@@ -82,7 +82,7 @@ class TranscriptAdmin(admin.ModelAdmin):
 
             with transaction.atomic():
                 obj.save()
-                create_synthesis_entry()
+                create_synthesis_entry(obj)
 
         else:
             obj.save()

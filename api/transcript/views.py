@@ -111,7 +111,6 @@ class InitiateSynthesizerView(BaseSynthesizerView):
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
-            return Response()
             result = tasks.initiate_synthesis(tct)
             status_code = result['status_code']
             if status.is_success(status_code):
