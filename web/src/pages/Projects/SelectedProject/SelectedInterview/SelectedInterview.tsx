@@ -146,6 +146,7 @@ export default function SelectedInterview() {
           </div>
         </PrivateAppbar>
       }
+      disableLoader
     >
       <TabNav
         tabs={[

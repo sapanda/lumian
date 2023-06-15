@@ -9,7 +9,7 @@ interface AnswerBoxProps {
     references: [number, number][],
     index: number
   ) => void;
-  selectedIndex?: number | null | undefined;
+  selectedIndex?: number | null | undefined | string;
   queryIndex?: number;
 }
 
