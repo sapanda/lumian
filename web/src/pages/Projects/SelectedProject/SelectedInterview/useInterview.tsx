@@ -45,7 +45,7 @@ export default function useInterview() {
   const [activeCitationIndex, setActiveCitationIndex] = useState<number>(0);
   const [userQueryText, setUserQueryText] = useState<string>("");
   const currentRangeLength = useRef<number>(0);
-  const { mutateAsync: onAskQuery } = useAskQueryMutation(
+  const { mutateAsync: onAskQuery, isLoading: isAsking } = useAskQueryMutation(
     parseInt(interviewId || "0"),
     userQueryText,
     "project"
@@ -158,5 +158,6 @@ export default function useInterview() {
     setUserQueryText,
     refreshInterviewData,
     refreshInterviewList,
+    isAsking,
   };
 }

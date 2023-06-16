@@ -19,11 +19,11 @@ def generate_metadata(tct: Transcript) -> dict:
     """Generate the metadata for the transcript."""
     result = synthesis_client.get_transcript_metadata(transcript_id=tct.id)
     if (result["status_code"] < 300):
-        if result["title"]:
+        if result.get("title"):
             tct.title = result["title"]
-        if result["interviewees"]:
+        if result.get("interviewees"):
             tct.interviewee_names = result["interviewees"]
-        if result["interviewers"]:
+        if result.get("interviewers"):
             tct.interviewer_names = result["interviewers"]
         tct.metadata_generated = True
         tct.cost += Decimal(result["cost"])

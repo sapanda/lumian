@@ -8,7 +8,7 @@ from transcript import views
 app_name = 'transcript'
 
 router = DefaultRouter()
-router.register('', views.TranscriptView)
+router.register('', views.TranscriptView, basename='transcript')
 
 urlpatterns = [
      path('', include(router.urls)),
@@ -29,5 +29,5 @@ urlpatterns = [
      path('<int:pk>/concise/',
           views.ConciseView.as_view(), name='concise-detail'),
      path('<int:pk>/query/',
-          views.QueryView.as_view(), name='query-detail'),
+          views.QueryView.as_view(), name='query-detail')
 ]

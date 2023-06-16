@@ -151,7 +151,6 @@ def retrieve_calendar(calendar_id):
 def list_calendar_events(calendar_id, schedule=False):
 
     now = datetime.datetime.utcnow()
-    logger.debug(now)
     if schedule:
         time_min = now.isoformat() + 'Z'
         time_max = (now + datetime.timedelta(minutes=30)).isoformat() + 'Z'
@@ -182,7 +181,7 @@ def list_calendar_events(calendar_id, schedule=False):
             event['meeting_url'] = result['raw']['location']
             event['start_time'] = result['raw']['start']['dateTime']
             event['end_time'] = result['raw']['end']['dateTime']
-            event['summary'] = result['raw']['summary']
+            event['title'] = result['raw']['summary']
 
             # TODO : Check if meeting has been finished already
             events.append(event)

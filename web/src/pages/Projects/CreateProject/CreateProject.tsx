@@ -50,8 +50,10 @@ export default function CreateProject() {
             inputDescription="These are the questions you’d like us to answer for you. List each question on a new line."
             onChange={handleChange}
             value={state.questions}
-            placeholder="What are the main themes around financial priorities that the interviewees expect to have at retirement?
-            Are interviewees with lower debt levels more likely to contribute to their 401(k)?"
+            placeholder={[
+              "What are the main themes around financial priorities that the interviewees expect to have at retirement?",
+              "Are interviewees with lower debt levels more likely to contribute to their 401(k)?",
+            ]}
             name="questions"
             error={errors.questions}
             size="small"
