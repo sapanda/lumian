@@ -38,7 +38,7 @@ interface rowType {
 
 export default function AllProjects() {
   const navigate = useNavigate();
-  const { allProjects, isFetching, isLoading } = useProjects();
+  const { allProjects } = useProjects();
 
   function onCellClick(row: rowType) {
     const projectId = row.id;
@@ -68,7 +68,6 @@ export default function AllProjects() {
         </PrivateAppbar>
       }
     >
-      {(isFetching || isLoading) && <div>Loading...</div>}
       {allProjects?.length === 0 && <GetStarted />}
       {allProjects?.length > 0 && (
         <div className="flex flex-col py-10 px-[132px]">
