@@ -6,6 +6,7 @@ import QuestionBox from "./QuestionBox/QuestionBox";
 import AnswerBox from "./AnswerBox/AnswerBox";
 import { ChatLoader, QueryInput } from "../../../../../components/atoms";
 import useInterview from "../useInterview";
+import { useEffect } from "react";
 
 interface answerType {
   text: string;
@@ -31,6 +32,12 @@ export default function Query() {
     isAsking,
   } = useInterview();
 
+  useEffect(() => {
+    const element = document.getElementById("questions-container");
+    if (element) {
+      element.scrollTop = element.scrollHeight;
+    }
+  }, [query, isAsking]);
   return (
     <Stack
       sx={{
@@ -60,7 +67,10 @@ export default function Query() {
           </div>
         ) : (
           <>
-            <div className="flex flex-col flex-1 w-full gap-4 p-2 overflow-y-auto">
+            <div
+              className="flex flex-col flex-1 w-full gap-4 p-2 overflow-y-auto"
+              id="questions-container"
+            >
               <AnswerBox
                 answer={[
                   {
@@ -99,7 +109,9 @@ export default function Query() {
                   setUserQueryText(e.target.value);
                 }}
                 value={userQueryText}
-                onSend={askQuery}
+                onSend={() => {
+                  askQuery();
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
