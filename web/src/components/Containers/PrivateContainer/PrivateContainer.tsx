@@ -10,9 +10,10 @@ import { useIsFetching, useIsMutating } from "@tanstack/react-query";
 interface PrivateContainerProps {
   children: React.ReactNode;
   appBar: React.ReactNode;
+  disableLoader?: boolean;
 }
 export default function PrivateContainer(props: PrivateContainerProps) {
-  const { children, appBar } = props;
+  const { children, appBar, disableLoader } = props;
   const { isAuthenticated, handleLogout } = useAuth();
   const isFetching = useIsFetching();
   const isMutating = useIsMutating();
@@ -37,12 +38,14 @@ export default function PrivateContainer(props: PrivateContainerProps) {
         <Toolbar />
         {children}
       </Box>
-      <Backdrop
-        sx={{ zIndex: (theme) => theme.zIndex.drawer + 999 }}
-        open={isFetching > 0 || isMutating > 0}
-      >
-        <CircularProgress color="primary" />
-      </Backdrop>
+      {!disableLoader && (
+        <Backdrop
+          sx={{ zIndex: (theme) => theme.zIndex.drawer + 999 }}
+          open={isFetching > 0 || isMutating > 0}
+        >
+          <CircularProgress color="primary" />
+        </Backdrop>
+      )}
     </Box>
   );
 }
