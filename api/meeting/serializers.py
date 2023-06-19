@@ -14,6 +14,9 @@ class AddBotSerializer(serializers.Serializer):
     project_id = serializers.IntegerField()
     bot_name = serializers.CharField()
     meeting_url = serializers.CharField()
+    start_time = serializers.DateTimeField()
+    end_time = serializers.DateTimeField()
+    title = serializers.CharField()
 
     class Meta:
         model = MeetingBot
@@ -45,6 +48,10 @@ class MeetingDetailsSerializer(serializers.Serializer):
 
 class ScheduleBotSerializer(serializers.Serializer):
     calendar_email = serializers.CharField()
+
+
+class CalendarStatusSerializer(serializers.Serializer):
+    app = serializers.CharField()
 
 
 # TODO : Cleanup Nested serialization

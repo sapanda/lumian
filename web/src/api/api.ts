@@ -2,6 +2,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 const baseApiUrl = import.meta.env.VITE_API_URL as string;
+
 const axiosInstance = axios.create({
   baseURL: baseApiUrl,
   headers: {
@@ -24,15 +25,28 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
   (response) => {
-    if (response.status === 201) {
-      toast.success(response.statusText, {
-        style: {
-          backgroundColor: "#00b300",
-          color: "#fff",
-          fill: "#fff",
-        },
-        theme: "colored",
-      });
+    const showToast = !!response.config.headers["showToast"];
+    if (showToast) {
+      if (response.status === 201) {
+        toast.success(response.statusText, {
+          style: {
+            backgroundColor: "#00b300",
+            color: "#fff",
+            fill: "#fff",
+          },
+          theme: "colored",
+        });
+      } else if (response.status === 204) {
+        const msg = response.statusText;
+        toast.success(msg, {
+          style: {
+            backgroundColor: "#00b300",
+            color: "#fff",
+            fill: "#fff",
+          },
+          theme: "colored",
+        });
+      }
     }
     return response;
   },

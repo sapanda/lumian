@@ -1,5 +1,7 @@
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.contrib.auth import get_user_model
 from rest_framework.status import (
+    HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_406_NOT_ACCEPTABLE,
     HTTP_400_BAD_REQUEST,
@@ -33,6 +35,7 @@ from meeting.serializers import (
     OAuthSerializer,
     OauthCallbackSerializer,
     MeetingDetailsSerializer,
+    CalendarStatusSerializer
 )
 
 import logging
@@ -132,3 +135,39 @@ class EventDetailsView(APIView):
 
         logger.error(f"-- Exception : {message} --")
         return Response(message, status_code)
+
+
+class CalendarStatusView(APIView):
+
+    serializer_class = CalendarStatusSerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='app',
+                description='calendar app (google, outlook)',
+                required=True,
+                type=str),
+        ]
+    )
+    def get(self, request):
+
+        try:
+            serializer = self.serializer_class(data=request.query_params)
+            if (not serializer.is_valid()):
+                return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
+            calendar = MeetingCalendar.objects.get(
+                user=request.user,
+                calendar_app=serializer.validated_data['app']
+            )
+            if calendar.exists():
+                return Response(status=HTTP_200_OK)
+
+        except MeetingCalendar.DoesNotExist:
+            response_data = "Calendar integration doesn't exist for this user"
+            response_status = HTTP_404_NOT_FOUND
+        except Exception as e:
+            response_data = str(e)
+            response_status = HTTP_400_BAD_REQUEST
+
+        return Response(response_data, response_status)

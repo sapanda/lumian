@@ -20,11 +20,13 @@ from rest_framework.views import APIView
 
 from . import tasks
 from .models import (
-    Transcript, SynthesisType, Synthesis, Embeds, Query, SynthesisStatus
+    Transcript, SynthesisType, Synthesis, Embeds, Query,
+    SynthesisStatus
 )
 from .serializers import (
     TranscriptSerializer, SynthesisSerializer, QuerySerializer
 )
+from .repository import create_synthesis_entry
 from app.settings import SYNTHESIS_TASK_TIMEOUT
 from core.gcloud_client import client
 from project.models import Project
@@ -62,15 +64,7 @@ class TranscriptView(viewsets.ModelViewSet):
         #       are unique even if deleted.
         with transaction.atomic():
             tct = serializer.save()
-            Synthesis.objects.create(
-                transcript=tct,
-                output_type=SynthesisType.SUMMARY
-            )
-            Synthesis.objects.create(
-                transcript=tct,
-                output_type=SynthesisType.CONCISE
-            )
-            Embeds.objects.create(transcript=tct)
+            create_synthesis_entry(tct)
 
     @extend_schema(parameters=[
         OpenApiParameter(
@@ -350,13 +344,28 @@ class QueryView(APIView):
     )
     def get(self, request, pk):
         try:
-            Transcript.objects.get(pk=pk)  # Needed for checking 404
+            tct = Transcript.objects.get(pk=pk)  # For checking 404
             query_level = request.query_params.get('query_level')
+            if not query_level:
+                return Response('query_level is required (project,transcript)',
+                                status.HTTP_406_NOT_ACCEPTABLE)
+
             queryset = Query.objects.filter(
                 transcript=pk,
                 query_level=query_level)
+
             serializer = QuerySerializer(queryset, many=True)
             response = Response(serializer.data, status=status.HTTP_200_OK)
         except Transcript.DoesNotExist:
-            response = Response(status=status.HTTP_404_NOT_FOUND)
+            response = Response(
+                f'Transcript does not exist with id {pk}',
+                status.HTTP_404_NOT_FOUND)
+        except Project.DoesNotExist:
+            response = Response(
+                f'Project does not exist with id {tct.project.id}',
+                status.HTTP_404_NOT_FOUND)
+        except Query.DoesNotExist:
+            response = Response(
+                f'Query does not exist for transcript {pk}',
+                status.HTTP_404_NOT_FOUND)
         return response

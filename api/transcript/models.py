@@ -33,6 +33,8 @@ class Transcript(models.Model):
     transcript = models.TextField(
         max_length=100000, blank=True, null=True)
     metadata_generated = models.BooleanField(default=False)
+    start_time = models.DateTimeField(null=True, blank=True, default=None)
+    end_time = models.DateTimeField(null=True, blank=True, default=None)
     cost = models.DecimalField(
         max_digits=10, decimal_places=4, default=0.0000)
 

@@ -1,7 +1,12 @@
+import { useState } from "react";
 import { Paper, Stack, Typography } from "@mui/material";
 import theme from "../../../../../theme/theme";
 import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import useInterview from "../useInterview";
+import {
+  copied_toast__icon,
+  copy__icon,
+} from "../../../../../assets/icons/svg";
 
 interface summaryProps {
   text: string;
@@ -22,6 +27,10 @@ interface queryProps {
 }
 export default function Summary(props: SummaryType) {
   const { data } = props;
+  const [copiedState, setCopiedState] = useState({
+    showSummaryCopied: false,
+    showQuestionCopied: false,
+  });
   const {
     conversation,
     questions,
@@ -32,6 +41,27 @@ export default function Summary(props: SummaryType) {
     scrollToNextHighlightedText,
     activeCitationIndex,
   } = useInterview();
+
+  function onCopyClick(copyType: "summary" | "question") {
+    if (copyType === "summary") {
+      const element = document.getElementById("summary");
+      const innerText = element?.innerText;
+      innerText && navigator.clipboard.writeText(innerText);
+
+      setCopiedState({ ...copiedState, showSummaryCopied: true });
+      setTimeout(() => {
+        setCopiedState({ ...copiedState, showSummaryCopied: false });
+      }, 1000);
+    } else {
+      const element = document.getElementById("questions");
+      const innerText = element?.innerText;
+      innerText && navigator.clipboard.writeText(innerText);
+      setCopiedState({ ...copiedState, showQuestionCopied: true });
+      setTimeout(() => {
+        setCopiedState({ ...copiedState, showQuestionCopied: false });
+      }, 1000);
+    }
+  }
 
   return (
     <Stack
@@ -51,11 +81,27 @@ export default function Summary(props: SummaryType) {
         }}
       >
         <div className="flex flex-col overflow-y-auto max-h-[70vh] min-h-[70vh] gap-5">
-          <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
-            Summary
-          </Typography>
+          <div className="flex">
+            <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
+              Summary
+            </Typography>
+            <img
+              src={copy__icon}
+              alt="copy"
+              className="ml-2 cursor-pointer"
+              onClick={() => onCopyClick("summary")}
+            />
+            <img
+              src={copied_toast__icon}
+              alt="copy"
+              className="transition-opacity duration-500 ease-in-out"
+              style={{
+                opacity: copiedState.showSummaryCopied ? 1 : 0,
+              }}
+            />
+          </div>
 
-          <div>
+          <div id="summary">
             {data.map((item, index) => {
               const regex = /^[a-zA-Z0-9]/;
               let selectedBgColor = "";
@@ -99,11 +145,27 @@ export default function Summary(props: SummaryType) {
             })}
           </div>
 
-          <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
-            Questions
-          </Typography>
+          <div className="flex">
+            <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
+              Questions
+            </Typography>
+            <img
+              src={copy__icon}
+              alt="copy"
+              className="mx-2 cursor-pointer"
+              onClick={() => onCopyClick("question")}
+            />
+            <img
+              src={copied_toast__icon}
+              alt="copy"
+              className="transition-opacity duration-500 ease-in-out"
+              style={{
+                opacity: copiedState.showQuestionCopied ? 1 : 0,
+              }}
+            />
+          </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4" id="questions">
             {questions?.map((item: queryProps, index: number) => {
               const answer = item?.output;
               return (
@@ -114,9 +176,8 @@ export default function Summary(props: SummaryType) {
                       const regex = /^[a-zA-Z0-9]/;
                       let selectedBgColor = "";
 
-                      const answerIndex = queryIndex
-                        ? parseInt(`${queryIndex}${index}`)
-                        : index;
+                      const answerIndex = `answer-${index}-${queryIndex}`;
+
                       if (
                         selectedIndex === answerIndex &&
                         item.references.length > 0
@@ -157,7 +218,7 @@ export default function Summary(props: SummaryType) {
                           onClick={() =>
                             item.references.length > 0 &&
                             handleSummaryItemClick &&
-                            handleSummaryItemClick(item.references, index)
+                            handleSummaryItemClick(item.references, answerIndex)
                           }
                         >
                           {item.text}

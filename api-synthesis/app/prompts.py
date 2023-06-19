@@ -4,6 +4,9 @@ from pydantic import BaseModel, Field
 from typing import List
 
 
+####################
+# Metadata Prompts
+####################
 class Metadata(BaseModel):
     title: str = Field(description="The title of the interview")
     interviewer_names: List[str] = Field(
@@ -25,7 +28,9 @@ Summaries: ###
 ###
 """
 
-
+####################
+# Summary Prompts
+####################
 SUMMARY_CHUNK_PROMPT_TEMPLATE = """The following is a section of an interview transcript. Please provide a summary. For each phrase in the output, also specify in parenthesis the exact index of where that information comes from in the source. When listing indexes in parentheses, mention all the locations the info is mentioned, even if repeated. Only answer truthfully and don't include anything not in the original input:
 
 INPUT 1: ###
@@ -70,6 +75,9 @@ OUTPUT 2: ###
 ###
 """
 
+####################
+# Concise Prompts
+####################
 CONCISE_PROMPT_TEMPLATE = """The following is a section of an interview transcript. Please clean it up but still in dialogue form. The speaker name should always be preserved. Do not add any details not present in the original transcript. For each phrase in the output, also specify in parenthesis the exact index of where that information comes from in the source. When listing indexes in parentheses, mention all the locations the info is mentioned, even if repeated. Only answer truthfully and don't include anything not in the original input:
 
 INPUT 1: ###
@@ -102,11 +110,12 @@ OUTPUT 2: ###
 ###
 """
 
-QUERY_PROMPT_TEMPLATE = """Answer the query using the provided context, which consists of excerpts from interviews. For each phrase in the output, also specify in parenthesis the exact index of where that information comes from in the source. When listing indexes in parentheses, mention all the locations the info is mentioned, even if repeated. Only answer truthfully and don't include anything not in the original input:
+####################
+# Query Prompts
+####################
+QUERY_MESSAGE_SYSTEM = """You are a helpful assistant that provides detailed answers to user queries using the provided context, which consists of excerpts from interviews. For each phrase in the output, also specify in parenthesis the exact index of where that information comes from in the source. When listing indexes in parentheses, mention all the locations the info is mentioned, even if repeated. Only answer truthfully and don't include anything not in the original input."""
 
-
-INPUT: Tell me about Wil's family.
-CONTEXT:
+QUERY_MESSAGE_USER_EXAMPLE = """CONTEXT:
 ----
 [5] Ben: Can you tell us your living situation?
 [6] Wil: Yeah I'm married with two kids.
@@ -116,9 +125,31 @@ CONTEXT:
 [15] Wil: Didn't mention my son - five-year- old boy.
 [16] Wil: But yeah two kids.
 ----
-OUTPUT: Wil is married (6) with two children - an 8-year-old girl, and a 5-year-old boy (7,15-17)
+QUERY: Tell me about Wil's family.
+ANSWER: """
 
+QUERY_MESSAGE_ASSISTANT_EXAMPLE = """Wil is married (6) with two children - an 8-year-old girl, and a 5-year-old boy (7,15-17)"""
 
-INPUT: {query}
-CONTEXT: {context}
-OUTPUT: """
+QUERY_PROMPT_TEMPLATE = """CONTEXT: {context}
+QUERY: {query}
+ANSWER: """
+
+QUERY_MESSAGE_TEMPLATE = \
+    [
+        {
+            "role": "system",
+            "content": QUERY_MESSAGE_SYSTEM
+        },
+        {
+            "role": "user",
+            "content": QUERY_MESSAGE_USER_EXAMPLE
+        },
+        {
+            "role": "assistant",
+            "content": QUERY_MESSAGE_ASSISTANT_EXAMPLE
+        },
+        {
+            "role": "user",
+            "content": QUERY_PROMPT_TEMPLATE
+        }
+    ]

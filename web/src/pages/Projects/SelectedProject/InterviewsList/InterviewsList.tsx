@@ -86,7 +86,7 @@ export default function InterviewsList() {
           isTitleEditable
           onEditEnd={(newTitle: string) => onEditEnd(newTitle)}
         >
-          <div className="flex items-center justify-end w-full gap-5 px-10 py-5">
+          <div className="flex items-center justify-end w-full gap-5 px-10">
             <Typography variant="body1">Feb 2 to Feb 10</Typography>
             <Button
               variant="contained"

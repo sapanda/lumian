@@ -2,7 +2,7 @@ import { AppBar, IconButton, Stack, Toolbar, Typography } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const drawerWidth = 240;
+const drawerWidth = 180;
 
 interface PrivateAppbarProps {
   breadcrumb?: {
@@ -72,6 +72,7 @@ function AppBarLabel(
                 outline: "none",
                 color: "black",
                 padding: "4px",
+                minWidth: "max-content",
               }}
               className="text-20-700"
             />

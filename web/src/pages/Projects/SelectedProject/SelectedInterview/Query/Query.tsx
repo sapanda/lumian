@@ -4,7 +4,7 @@ import theme from "../../../../../theme/theme";
 import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import QuestionBox from "./QuestionBox/QuestionBox";
 import AnswerBox from "./AnswerBox/AnswerBox";
-import { QueryInput } from "../../../../../components/atoms";
+import { ChatLoader, QueryInput } from "../../../../../components/atoms";
 import useInterview from "../useInterview";
 
 interface answerType {
@@ -28,6 +28,7 @@ export default function Query() {
     handleSummaryItemClick,
     selectedIndex,
     askQuery,
+    isAsking,
   } = useInterview();
 
   return (
@@ -76,6 +77,11 @@ export default function Query() {
               </Stack>
             );
           })}
+          {isAsking && (
+            <div className="flex w-full">
+              <ChatLoader />
+            </div>
+          )}
         </div>
         <div className="flex flex-col w-full p-2">
           <QueryInput

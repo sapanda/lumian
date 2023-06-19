@@ -1,5 +1,6 @@
+import ChatLoader from "./ChatLoader";
 import DescriptionText from "./DescriptionText";
 import QueryInput from "./QueryInput";
 import TextInputL from "./TextInputL";
 
-export { DescriptionText, QueryInput, TextInputL };
+export { ChatLoader, DescriptionText, QueryInput, TextInputL };

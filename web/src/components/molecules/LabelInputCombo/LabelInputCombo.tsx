@@ -7,7 +7,7 @@ interface LabelInputPairProps {
   label: string;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   value: string;
-  placeholder: string;
+  placeholder: string | string[];
   inputDescription?: string;
   type?: "text" | "password" | "email" | "number" | "tel" | "url";
   size?: "small" | "default";
@@ -27,6 +27,10 @@ const LabelInputCombo = (props: LabelInputPairProps) => {
     size = "default",
     multiline = false,
   } = props;
+
+  let finalPlaceholderText = "";
+  if (Array.isArray(placeholder)) finalPlaceholderText = placeholder.join("\n");
+  else finalPlaceholderText = placeholder;
   return (
     <Stack spacing={2}>
       <InputLabel
@@ -44,13 +48,40 @@ const LabelInputCombo = (props: LabelInputPairProps) => {
       <TextInputL
         onChange={onChange}
         value={value}
-        placeholder={placeholder}
+        placeholder={finalPlaceholderText}
         name={name}
         type={type}
         size={size}
         multiline={multiline}
+        sx={{
+          "& .MuiInputBase-input": {
+            padding: "8px 14px",
+          },
+
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "8px",
+            padding: "0",
+            ...(size === "small" && {
+              height: "30px",
+            }),
+
+            ...(multiline && {
+              height: "126px",
+            }),
+
+            "& fieldset": {
+              borderColor: "#CFCECE",
+            },
+            "&:hover fieldset": {
+              borderColor: "#CFCECE",
+            },
+            "&.Mui-focused fieldset": {
+              borderColor: "#CFCECE",
+            },
+          },
+        }}
       />
-      <FormHelperText error={!!error}>{error}</FormHelperText>
+      {!!error && <FormHelperText error={!!error}>{error}</FormHelperText>}
     </Stack>
   );
 };

@@ -168,6 +168,7 @@ const askQuery = async (
       headers: {
         "Content-Type": `multipart/form-data; boundary=${boundary}`,
         accept: "application/json",
+        showToast: false,
       },
     }
   );
