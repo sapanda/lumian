@@ -121,11 +121,11 @@ class EventDetailsView(APIView):
             events = list_calendar_events(meeting_calendar_details.calendar_id)
             for event in events:
                 meeting_url = event['meeting_url']
-                bot = MeetingBot.objects.filter(meeting_url=meeting_url)
-                if bot.exists():
+                try:
+                    bot = MeetingBot.objects.get(meeting_url=meeting_url)
                     event['bot_added'] = True
                     event['bot_status'] = bot.status
-                else:
+                except MeetingBot.DoesNotExist:
                     event['bot_added'] = False
             return Response(events)
 
