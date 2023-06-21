@@ -82,7 +82,7 @@ class AddBotView(APIView):
                 project=project
             )
 
-            response_data = bot['id']
+            response_data = 'Bot Added to the Meeting'
             response_status = HTTP_201_CREATED
 
         except Project.DoesNotExist:
