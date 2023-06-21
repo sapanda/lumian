@@ -142,6 +142,8 @@ class EventDetailsView(APIView):
 class CalendarStatusView(APIView):
 
     serializer_class = CalendarStatusSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
         parameters=[
