@@ -1,6 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Backdrop, CircularProgress, Stack, Typography } from "@mui/material";
-import useAuth from "../../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { PROJECTS } from "../../../router/routes.constant";
 import { useIsFetching, useIsMutating } from "@tanstack/react-query";
@@ -12,17 +11,28 @@ interface PublicContainerProps {
 }
 export default function PublicContainer(props: PublicContainerProps) {
   const { children, bodyStyles, align } = props;
-  const { isAuthenticated } = useAuth();
+
   const navigate = useNavigate();
   const isFetching = useIsFetching();
   const isMutating = useIsMutating();
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    const token = localStorage.getItem("token");
+    const authenticated = !!token; // Check if token exists
+
+    setIsAuthReady(true);
+
+    if (authenticated) {
       navigate(PROJECTS.default);
     }
-  }, [isAuthenticated, navigate]);
+  }, [navigate]);
+
   const isLoading = isFetching > 0 || isMutating > 0;
+  if (!isAuthReady) {
+    // Render loading state or placeholder while verifying authentication status
+    return <div></div>;
+  }
   return (
     <Stack
       sx={{
