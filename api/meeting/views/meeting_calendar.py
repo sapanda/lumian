@@ -89,7 +89,8 @@ class OAuthResponseView(APIView):
                 calendar_app=MeetingCalendar.CalendarChoices.GOOGLE,
                 defaults=defaults
             )
-            return Response(HTTP_201_CREATED)
+            return Response("Calendar successfully integrated",
+                            HTTP_201_CREATED)
 
         except GoogleAPIException as e:
             message = str(e)
@@ -163,7 +164,7 @@ class CalendarStatusView(APIView):
                 user=request.user,
                 calendar_app=serializer.validated_data['app']
             )
-            return Response(HTTP_200_OK)
+            return Response('Calendar Integrated', HTTP_200_OK)
         except MeetingCalendar.DoesNotExist:
             response_data = "Calendar integration doesn't exist for this user"
             response_status = HTTP_404_NOT_FOUND
