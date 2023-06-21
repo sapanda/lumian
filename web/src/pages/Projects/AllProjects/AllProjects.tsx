@@ -7,7 +7,12 @@ import { PrivateAppbar } from "../../../layout";
 import { PROJECTS } from "../../../router/routes.constant";
 import { useNavigate } from "react-router-dom";
 import useProjects from "../useProjects";
-import { connectApp } from "../../../api/meetingApi";
+import {
+  connectApp,
+  useCalendarStatusQuery,
+  useSendAccessTokenMutation,
+} from "../../../api/meetingApi";
+import { useEffect, useRef } from "react";
 
 const columns = [
   {
@@ -39,7 +44,12 @@ interface rowType {
 export default function AllProjects() {
   const navigate = useNavigate();
   const { allProjects } = useProjects();
+  const { status } = useCalendarStatusQuery();
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get("code");
+  const { mutateAsync: sendAccessToken } = useSendAccessTokenMutation();
+  const apiCalledFlag = useRef<boolean>(false);
   function onCellClick(row: rowType) {
     const projectId = row.id;
 
@@ -49,15 +59,23 @@ export default function AllProjects() {
       PROJECTS.SELECTED_PROJECT.default.replace(":projectId", `${projectId}`)
     );
   }
+  useEffect(() => {
+    if (code && !apiCalledFlag.current) {
+      apiCalledFlag.current = true;
+      sendAccessToken(code);
+    }
+  }, [code, sendAccessToken]);
 
   return (
     <PrivateContainer
       appBar={
         <PrivateAppbar title="Projects" icon={projects_icon}>
           <div className="flex items-center justify-end w-full gap-5 px-10">
-            <Button variant="contained" onClick={() => connectApp()}>
-              Connect App
-            </Button>
+            {status !== "loading" && status !== "success" && (
+              <Button variant="contained" onClick={() => connectApp()}>
+                Connect App
+              </Button>
+            )}
             <Button
               variant="contained"
               onClick={() => navigate(PROJECTS.CREATE_PROJECT)}

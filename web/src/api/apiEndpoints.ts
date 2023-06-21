@@ -25,6 +25,9 @@ const meetingEndPoints = {
   oauthUrl: "api/meeting/calendar/oauth-request",
   initiateTranscription: "api/meeting/initiate-transcription",
   accessToken: "api/meeting/calendar/oauth-response",
+  calendarStatus: "api/meeting/calendar/status?app=google",
+  meetingsList: "api/meeting/calendar/meetings",
+  addBotToMeeting: "/api/meeting/bot/add",
 };
 
 export {
