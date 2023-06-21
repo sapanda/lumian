@@ -7,6 +7,7 @@ from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
+    HTTP_408_REQUEST_TIMEOUT,
     HTTP_412_PRECONDITION_FAILED
 )
 from rest_framework.views import APIView
@@ -28,7 +29,7 @@ from meeting.external_clients.google import (
 )
 from meeting.external_clients.recallai import (
     create_calendar,
-    retrieve_calendar,
+    # retrieve_calendar,
     list_calendar_events
 )
 from meeting.serializers import (
@@ -55,10 +56,10 @@ class OAuthRequestView(APIView):
             return Response(url)
         except GoogleAPIException as e:
             logger.error(f"---Exception : {str(e)} --")
-            return Response(str(e), HTTP_401_UNAUTHORIZED)
+            return Response(str(e), HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"-- Exception : {str(e)} --")
-            return Response(str(e), HTTP_400_BAD_REQUEST)
+            return Response(str(e), HTTP_404_NOT_FOUND)
 
 
 class OAuthResponseView(APIView):
@@ -95,7 +96,7 @@ class OAuthResponseView(APIView):
             status_code = HTTP_412_PRECONDITION_FAILED
         except RecallAITimeoutException as e:
             message = str(e)
-            status_code = HTTP_401_UNAUTHORIZED
+            status_code = HTTP_408_REQUEST_TIMEOUT
         except Exception as e:
             message = str(e)
             status_code = HTTP_400_BAD_REQUEST
@@ -128,7 +129,7 @@ class EventDetailsView(APIView):
             status_code = HTTP_406_NOT_ACCEPTABLE
         except RecallAITimeoutException as e:
             message = str(e)
-            status_code = HTTP_401_UNAUTHORIZED
+            status_code = HTTP_408_REQUEST_TIMEOUT
         except Exception as e:
             message = f" Error occurred: {str(e)}"
             status_code = HTTP_400_BAD_REQUEST
