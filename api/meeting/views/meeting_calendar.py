@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
+    HTTP_202_ACCEPTED,
     HTTP_406_NOT_ACCEPTABLE,
     HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
@@ -75,6 +76,15 @@ class OAuthResponseView(APIView):
                 return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
 
             user = request.user
+            calendar = MeetingCalendar.objects.filter(
+                user=request.user,
+                calendar_app=serializer.validated_data['app']
+            )
+            if calendar.exists():
+                return Response(
+                    "Calendar already integrated",
+                    HTTP_202_ACCEPTED
+                )
             code = serializer.validated_data['code']
             _, refresh_token = google_api.get_access_token(code)
             calendar_id = create_calendar(refresh_token)
