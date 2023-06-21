@@ -77,16 +77,14 @@ class OAuthResponseView(APIView):
             user = request.user
             code = serializer.validated_data['code']
             _, refresh_token = google_api.get_access_token(code)
-            logger.debug("Came to create calendar")
             calendar_id = create_calendar(refresh_token)
-            logger.debug("Calendar created and now going to fetch email")
-            calendar_email = retrieve_calendar(calendar_id)
+            # calendar_email = retrieve_calendar(calendar_id)
             defaults = {
                 'calendar_id': calendar_id,
             }
             MeetingCalendar.objects.update_or_create(
                 user=user,
-                calendar_email=calendar_email,
+                calendar_email=f'placeholder-{user.id}@gmail.com',
                 calendar_app=MeetingCalendar.CalendarChoices.GOOGLE,
                 defaults=defaults
             )
