@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
+    HTTP_202_ACCEPTED,
     HTTP_406_NOT_ACCEPTABLE,
     HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
