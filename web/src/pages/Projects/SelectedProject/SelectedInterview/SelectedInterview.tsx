@@ -16,8 +16,6 @@ import { useNavigate } from "react-router-dom";
 
 export default function SelectedInterview() {
   const {
-    summary,
-    concise,
     interviewTitle,
     projectTitle,
     projectId,
@@ -152,11 +150,11 @@ export default function SelectedInterview() {
         tabs={[
           {
             name: "Summary",
-            component: <Summary data={summary} />,
+            component: <Summary />,
           },
           {
             name: "Concise",
-            component: <Concise data={concise} />,
+            component: <Concise />,
           },
           {
             name: "Query",

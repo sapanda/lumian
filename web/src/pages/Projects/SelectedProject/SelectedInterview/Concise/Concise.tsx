@@ -1,4 +1,4 @@
-import { Paper, Typography } from "@mui/material";
+import { CircularProgress, Paper } from "@mui/material";
 import theme from "../../../../../theme/theme";
 import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import useInterview from "../useInterview";
@@ -9,13 +9,9 @@ interface conciseProps {
   [key: string]: string | number | Array<Array<number>>;
 }
 
-interface conciseType {
-  data: conciseProps[];
-}
-
-export default function Concise(props: conciseType) {
-  const { data } = props;
+export default function Concise() {
   const {
+    concise,
     conversation,
     handleSummaryItemClick,
     citationsCount,
@@ -38,20 +34,45 @@ export default function Concise(props: conciseType) {
           maxHeight: "75vh",
         }}
       >
-        <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
-          Concise
-        </Typography>
-        <div className="overflow-y-auto">
-          {data.map((item, index) => {
-            const regex = /^[a-zA-Z0-9]/;
-            let selectedBgColor = "";
-            if (selectedIndex === index) {
-              selectedBgColor = "bg-blue-200";
-            }
-            if (item.text[0] === " " || !regex.test(item.text[0])) {
+        {!concise ? (
+          <div className="flex items-center gap-5">
+            <CircularProgress />
+            <span className="italic text-gray-500 text-12-400">
+              Concise transcript generation will take a few minutes...
+            </span>
+          </div>
+        ) : (
+          <div className="overflow-y-auto">
+            {concise?.map((item: conciseProps, index: number) => {
+              const regex = /^[a-zA-Z0-9]/;
+              let selectedBgColor = "";
+              if (selectedIndex === index) {
+                selectedBgColor = "bg-blue-200";
+              }
+              if (item.text[0] === " " || !regex.test(item.text[0])) {
+                return (
+                  <>
+                    {item.text[0]}
+                    <span
+                      key={index}
+                      className={`${
+                        item?.references?.length > 0 && "hover:bg-blue-100"
+                      } cursor-pointer ${selectedBgColor}`}
+                      onClick={() =>
+                        item?.references?.length > 0 &&
+                        handleSummaryItemClick(item.references, index)
+                      }
+                    >
+                      {item.text.slice(1)}
+                    </span>
+                    <br />
+                    <br />
+                  </>
+                );
+              }
+
               return (
                 <>
-                  {item.text[0]}
                   <span
                     key={index}
                     className={`${
@@ -62,34 +83,15 @@ export default function Concise(props: conciseType) {
                       handleSummaryItemClick(item.references, index)
                     }
                   >
-                    {item.text.slice(1)}
+                    {item.text}
                   </span>
                   <br />
                   <br />
                 </>
               );
-            }
-
-            return (
-              <>
-                <span
-                  key={index}
-                  className={`${
-                    item?.references?.length > 0 && "hover:bg-blue-100"
-                  } cursor-pointer ${selectedBgColor}`}
-                  onClick={() =>
-                    item?.references?.length > 0 &&
-                    handleSummaryItemClick(item.references, index)
-                  }
-                >
-                  {item.text}
-                </span>
-                <br />
-                <br />
-              </>
-            );
-          })}
-        </div>
+            })}
+          </div>
+        )}
       </Paper>
 
       <Paper
