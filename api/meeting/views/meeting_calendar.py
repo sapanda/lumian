@@ -3,7 +3,6 @@ from django.contrib.auth import get_user_model
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
-    HTTP_202_ACCEPTED,
     HTTP_406_NOT_ACCEPTABLE,
     HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
@@ -23,7 +22,7 @@ from meeting.errors import (
     GoogleAPIException,
     RecallAITimeoutException
 )
-from meeting.models import MeetingCalendar
+from meeting.models import MeetingCalendar, MeetingBot
 from meeting.external_clients.google import (
     google_api
 )
@@ -120,6 +119,13 @@ class EventDetailsView(APIView):
             )
 
             events = list_calendar_events(meeting_calendar_details.calendar_id)
+            for event in events:
+                meeting_url = event['meeting_url']
+                bot = MeetingBot.objects.filter(meeting_url=meeting_url)
+                if bot.exists():
+                    event['bot_added'] = True
+                else:
+                    event['bot_added'] = False
             return Response(events)
 
         except MeetingCalendar.DoesNotExist:
