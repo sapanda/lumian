@@ -77,7 +77,9 @@ class OAuthResponseView(APIView):
             user = request.user
             code = serializer.validated_data['code']
             _, refresh_token = google_api.get_access_token(code)
+            logger.debug("Came to create calendar")
             calendar_id = create_calendar(refresh_token)
+            logger.debug("Calendar created and now going to fetch email")
             calendar_email = retrieve_calendar(calendar_id)
             defaults = {
                 'calendar_id': calendar_id,
@@ -156,13 +158,11 @@ class CalendarStatusView(APIView):
             serializer = self.serializer_class(data=request.query_params)
             if (not serializer.is_valid()):
                 return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
-            calendar = MeetingCalendar.objects.get(
+            MeetingCalendar.objects.get(
                 user=request.user,
                 calendar_app=serializer.validated_data['app']
             )
-            if calendar.exists():
-                return Response(status=HTTP_200_OK)
-
+            return Response(HTTP_200_OK)
         except MeetingCalendar.DoesNotExist:
             response_data = "Calendar integration doesn't exist for this user"
             response_status = HTTP_404_NOT_FOUND

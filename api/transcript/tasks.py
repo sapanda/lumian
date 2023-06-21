@@ -125,6 +125,7 @@ def generate_answers(tct: Transcript) -> 'list[dict]':
     questions = tct.project.questions
     query_objects = []
     for question in questions:
+        # TODO: What if some question fails
         query_obj = run_openai_query(
             tct, question,
             Query.QueryLevelChoices.PROJECT)
