@@ -21,6 +21,7 @@ import {
 import { updateProject } from "../../../../api/projectApi";
 import { PROJECTS } from "../../../../router/routes.constant";
 import { useNavigate } from "react-router-dom";
+import TranscribeModal from "./TranscribeModal";
 
 export default function InterviewsList() {
   const {
@@ -34,6 +35,8 @@ export default function InterviewsList() {
 
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [transcribeModalOpen, setTranscribeModalOpen] =
+    useState<boolean>(false);
   const [pickedFiles, setPickedFiles] = useState<File[]>([]);
   const transcriptRef = useRef<string>("");
   const { mutateAsync: createInterview } =
@@ -87,7 +90,7 @@ export default function InterviewsList() {
             <Typography variant="body1">Feb 2 to Feb 10</Typography>
             <Button
               variant="contained"
-              onClick={() => startTranscribe(parseInt(projectId || "0"))}
+              onClick={() => setTranscribeModalOpen(true)}
             >
               Transcribe
             </Button>
@@ -193,6 +196,11 @@ export default function InterviewsList() {
           </div>
         </div>
       </ModalL>
+      <TranscribeModal
+        modalOpen={transcribeModalOpen}
+        setModalOpen={setTranscribeModalOpen}
+        projectId={projectId}
+      />
     </PrivateContainer>
   );
 }
