@@ -6,7 +6,7 @@ import {
 } from "../../assets/icons/svg";
 import { PrivateContainer } from "../../components/Containers";
 import { PrivateAppbar } from "../../layout";
-import { useCalendarStatusQuery } from "../../api/meetingApi";
+import { connectApp, useCalendarStatusQuery } from "../../api/meetingApi";
 
 interface IntegrationAppCardProps {
   name: string;
@@ -38,6 +38,7 @@ const BTN_VARIANT_MAP: BtnVariantMapType = {
 };
 const IntegrationAppCard = (props: IntegrationAppCardProps) => {
   const { name, icon, desc, status } = props;
+
   return (
     <div className="flex flex-col p-6 min-w-[180px] max-w-[180px] rounded-lg border border-[#CFCECE] max-h-[330px] justify-center gap-6">
       <img src={icon} alt={name} className="w-full h-full" />
@@ -50,6 +51,9 @@ const IntegrationAppCard = (props: IntegrationAppCardProps) => {
         variant={BTN_VARIANT_MAP[status].variant}
         color={BTN_VARIANT_MAP[status].color}
         disabled={BTN_VARIANT_MAP[status].disabled}
+        onClick={() => {
+          connectApp();
+        }}
       >
         {STATUS_MAP[status]}
       </Button>
