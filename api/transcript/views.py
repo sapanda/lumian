@@ -17,6 +17,10 @@ from rest_framework import (
 )
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.exceptions import (
+    NotFound,
+    ValidationError
+)
 
 from . import tasks
 from .models import (
@@ -345,17 +349,27 @@ class QueryView(APIView):
     def get(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)  # For checking 404
+
             query_level = request.query_params.get('query_level')
             if not query_level:
-                return Response('query_level is required (project,transcript)',
-                                status.HTTP_406_NOT_ACCEPTABLE)
-
+                raise ValidationError()
+                
             queryset = Query.objects.filter(
                 transcript=pk,
                 query_level=query_level)
-
+            if not queryset.exists():
+                raise NotFound()
+                
             serializer = QuerySerializer(queryset, many=True)
+            if query_level == Query.QueryLevelChoices.PROJECT:
+                project = Project.objects.get(id=tct.project.id)
+                question_count = len(project.questions)
+                if queryset.count() != question_count:
+                    return Response(serializer.data,
+                                    status=status.HTTP_202_ACCEPTED)
+
             response = Response(serializer.data, status=status.HTTP_200_OK)
+
         except Transcript.DoesNotExist:
             response = Response(
                 f'Transcript does not exist with id {pk}',
@@ -368,4 +382,13 @@ class QueryView(APIView):
             response = Response(
                 f'Query does not exist for transcript {pk}',
                 status.HTTP_404_NOT_FOUND)
+        except ValidationError:
+            return Response(
+                'query_level is required (project,transcript)',
+                status.HTTP_406_NOT_ACCEPTABLE)
+        except NotFound:
+            return Response(
+                f'Query does not exist for transcript {pk}',
+                status.HTTP_404_NOT_FOUND)
+
         return response
