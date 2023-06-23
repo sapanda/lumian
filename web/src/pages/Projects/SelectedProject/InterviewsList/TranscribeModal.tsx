@@ -6,6 +6,7 @@ import { INTEGRATIONS } from "../../../../router/routes.constant";
 import { line__icon } from "../../../../assets/icons/svg";
 import { TextInputL } from "../../../../components/atoms";
 import { useState } from "react";
+
 import {
   useAddBotToMeetingMutation,
   useCalendarStatusQuery,
@@ -27,6 +28,12 @@ interface Meeting {
   bot_status: string;
 }
 
+const timeFormat: Intl.DateTimeFormatOptions = {
+  hour: "numeric",
+  minute: "numeric",
+  hour12: true,
+  hourCycle: "h23",
+};
 export default function TranscribeModal(props: TranscribeModalProps) {
   const { modalOpen, setModalOpen, projectId } = props;
   const [meetingUrl, setMeetingUrl] = useState<string>("");
@@ -63,22 +70,12 @@ export default function TranscribeModal(props: TranscribeModalProps) {
                           <span className="text-gray-600 text-12-400">
                             {new Date(meeting?.start_time).toLocaleTimeString(
                               [],
-                              {
-                                hour: "numeric",
-                                minute: "numeric",
-                                hour12: true,
-                                hourCycle: "h23",
-                              }
+                              timeFormat
                             )}
                             -{" "}
                             {new Date(meeting?.end_time).toLocaleTimeString(
                               [],
-                              {
-                                hour: "numeric",
-                                minute: "numeric",
-                                hour12: true,
-                                hourCycle: "h23",
-                              }
+                              timeFormat
                             )}
                           </span>
                         </div>
