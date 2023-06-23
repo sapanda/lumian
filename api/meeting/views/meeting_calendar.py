@@ -54,10 +54,8 @@ class OAuthRequestView(APIView):
             url = google_api.get_oauth_url()
             return Response(url)
         except GoogleAPIException as e:
-            logger.error(f"---Exception : {str(e)} --")
             return Response(str(e), HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.error(f"-- Exception : {str(e)} --")
             return Response(str(e), HTTP_404_NOT_FOUND)
 
 
@@ -71,7 +69,6 @@ class OAuthResponseView(APIView):
         try:
             serializer = self.serializer_class(data=request.data)
             if (not serializer.is_valid()):
-                logger.error(f"-- Serialization Error -- {serializer.errors}")
                 return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
 
             user = request.user
@@ -101,7 +98,6 @@ class OAuthResponseView(APIView):
             message = str(e)
             status_code = HTTP_400_BAD_REQUEST
 
-        logger.error(f"-- Exception : {message} --")
         return Response(message, status_code)
 
 
@@ -142,7 +138,6 @@ class EventDetailsView(APIView):
             message = f" Error occurred: {str(e)}"
             status_code = HTTP_400_BAD_REQUEST
 
-        logger.error(f"-- Exception : {message} --")
         return Response(message, status_code)
 
 

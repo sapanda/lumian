@@ -92,10 +92,9 @@ class AddBotView(APIView):
             response_data = {"error": str(e)}
             response_status = HTTP_408_REQUEST_TIMEOUT
         except IntegrityError as e:
-            response_data = {"error": f"Meeting bot already exists {str(e)}"}
+            response_data = {"error": str(e)}
             response_status = HTTP_409_CONFLICT
         except Exception as e:
-            logger.error(e)
             response_data = {"error": str(e)}
             response_status = HTTP_400_BAD_REQUEST
 
@@ -184,8 +183,6 @@ class GetBotStatusView(APIView):
         try:
             serializer = self.serializer_class(data=request.query_params)
             if not serializer.is_valid():
-                logger.exception("Serialization error",
-                                 exc_info=serializer.errors)
                 return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
 
             bot_id = serializer.validated_data['bot_id']
