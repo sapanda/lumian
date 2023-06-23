@@ -61,8 +61,25 @@ export default function TranscribeModal(props: TranscribeModalProps) {
                       >
                         <div className="flex w-full max-w-fit">
                           <span className="text-gray-600 text-12-400">
-                            {new Date(meeting?.start_time).toLocaleDateString()}{" "}
-                            - {new Date(meeting?.end_time).toLocaleDateString()}
+                            {new Date(meeting?.start_time).toLocaleTimeString(
+                              [],
+                              {
+                                hour: "numeric",
+                                minute: "numeric",
+                                hour12: true,
+                                hourCycle: "h23",
+                              }
+                            )}
+                            -{" "}
+                            {new Date(meeting?.end_time).toLocaleTimeString(
+                              [],
+                              {
+                                hour: "numeric",
+                                minute: "numeric",
+                                hour12: true,
+                                hourCycle: "h23",
+                              }
+                            )}
                           </span>
                         </div>
                         <div className="flex items-center justify-between w-full gap-2">
