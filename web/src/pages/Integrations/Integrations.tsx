@@ -6,6 +6,7 @@ import {
 } from "../../assets/icons/svg";
 import { PrivateContainer } from "../../components/Containers";
 import { PrivateAppbar } from "../../layout";
+import { useCalendarStatusQuery } from "../../api/meetingApi";
 
 interface IntegrationAppCardProps {
   name: string;
@@ -57,12 +58,13 @@ const IntegrationAppCard = (props: IntegrationAppCardProps) => {
 };
 
 export default function Integrations() {
+  const { status } = useCalendarStatusQuery();
   const integrations = [
     {
       name: "Google Calendar",
       icon: google_calendar__icon,
       desc: "Instantly connect to meetings on your calendar",
-      status: "1",
+      status: status === "success" ? "1" : "0",
     },
     {
       name: "Outlook Calendar",
