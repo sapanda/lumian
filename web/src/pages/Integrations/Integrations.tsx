@@ -77,6 +77,7 @@ export default function Integrations() {
       status: "-1",
     },
   ];
+
   return (
     <PrivateContainer
       appBar={<PrivateAppbar title="Integrations" icon={integrations__icon} />}
