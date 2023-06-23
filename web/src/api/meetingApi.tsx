@@ -156,7 +156,9 @@ const getMeetingQuery = async (
       .replace(":interviewId", meetingId.toString())
       .replace(":query_level", queryLevel)
   );
-  return res.data;
+  if (queryLevel === "project")
+    return { data: res.data, queryLevel: queryLevel, status: res.status };
+  else return res.data;
 };
 
 const askQuery = async (
@@ -287,13 +289,18 @@ const useGetMeetingQuery = (
   queryLevel: "project" | "transcript"
 ) => {
   const queryKey: QueryKey = ["meetingQuery", meetingId, queryLevel];
-  return useQuery(queryKey, () => getMeetingQuery(meetingId, queryLevel), {
-    staleTime: 1000 * 60 * 30, // 30 minutes
-    enabled: !!meetingId,
-    // refetchInterval(data) {
-    //   return data ? 1000 * 60 * 30 : 5000;
-    // },
-  });
+  const result = useQuery(
+    queryKey,
+    () => getMeetingQuery(meetingId, queryLevel),
+    {
+      staleTime: 1000 * 60 * 30, // 30 minutes
+      enabled: !!meetingId,
+    }
+  );
+
+  const { data, refetch } = result;
+  data?.queryLevel === "project" && data?.status === 202 && refetch();
+  return result;
 };
 
 const useAskQueryMutation = (

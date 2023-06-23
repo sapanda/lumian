@@ -180,7 +180,7 @@ export default function Summary() {
             </div>
           ) : (
             <div className="flex flex-col gap-4" id="questions">
-              {questions?.map((item: queryProps, index: number) => {
+              {questions?.data?.map((item: queryProps, index: number) => {
                 const answer = item?.output;
                 return (
                   <Stack>
