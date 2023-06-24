@@ -310,7 +310,7 @@ class QueryView(APIView):
         elif (embeds.status == SynthesisStatus.NOT_STARTED or
                 embeds.status == SynthesisStatus.IN_PROGRESS):
             return status.HTTP_202_ACCEPTED
-    
+
         elif embeds.status == SynthesisStatus.COMPLETED:
             return status.HTTP_201_CREATED
 
