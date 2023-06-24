@@ -22,6 +22,7 @@ export default function SelectedInterview() {
     interviewId,
     refreshInterviewList,
     refreshInterviewData,
+    interviewTime,
   } = useInterview();
 
   const { mutateAsync: deleteInterview } = useDeleteInterviewMutation(
@@ -58,6 +59,34 @@ export default function SelectedInterview() {
       await refreshInterviewList();
     }
   }
+
+  function processInterviewTime(interviewTime: {
+    start_time: string;
+    end_time: string;
+  }) {
+    const { start_time, end_time } = interviewTime;
+    const startTime = start_time
+      ? new Date(start_time).toLocaleString([], {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+          hour12: true,
+          hourCycle: "h12",
+        })
+      : "";
+    const endTime = end_time
+      ? new Date(end_time).toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "numeric",
+          hour12: true,
+          timeZoneName: "short",
+        })
+      : "";
+    return startTime ? `${startTime} to ${endTime}` : "";
+  }
+
   return (
     <PrivateContainer
       appBar={
@@ -75,7 +104,7 @@ export default function SelectedInterview() {
         >
           <div className="flex items-center justify-end w-full gap-5 px-10">
             <Typography variant="body1">
-              Thu Feb 10, 1:31pm to 2:16pm PT
+              {processInterviewTime(interviewTime)}
             </Typography>
             <Button variant="text" color="inherit">
               <IconButton onClick={handleClick}>

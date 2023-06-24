@@ -8,7 +8,6 @@ import { axiosInstance } from "./api";
 import { interviewEndPoints, meetingEndPoints } from "./apiEndpoints";
 import { useNavigate } from "react-router-dom";
 import { PROJECTS } from "../router/routes.constant";
-import { time } from "console";
 
 export const QUERY_LEVEL = {
   PROJECT_LEVEL: "project",
