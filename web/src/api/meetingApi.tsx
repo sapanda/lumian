@@ -8,6 +8,7 @@ import { axiosInstance } from "./api";
 import { interviewEndPoints, meetingEndPoints } from "./apiEndpoints";
 import { useNavigate } from "react-router-dom";
 import { PROJECTS } from "../router/routes.constant";
+import { time } from "console";
 
 export const QUERY_LEVEL = {
   PROJECT_LEVEL: "project",
@@ -58,6 +59,12 @@ const getInterviewsList = async (project_id: number | undefined) => {
   );
 
   const transformedData = res.data.map((row: rowProps) => {
+    const formattedDate = row["start_time"]
+      ? new Date(row["start_time"]).toLocaleDateString([], {
+          month: "short",
+          day: "numeric",
+        })
+      : "-";
     const start_time = row["start_time"]
       ? new Date(row["start_time"]).toLocaleTimeString()
       : "";
@@ -66,17 +73,23 @@ const getInterviewsList = async (project_id: number | undefined) => {
       ? new Date(row["end_time"]).toLocaleTimeString()
       : "";
 
-    const length =
+    let length = "-";
+
+    const timeDifference =
       !!start_time && !!end_time
         ? new Date(row["end_time"]).getTime() -
           new Date(row["start_time"]).getTime()
-        : "-";
+        : 0;
 
+    if (timeDifference !== 0) {
+      const timeLengthInMins = Math.floor(timeDifference / 60000);
+      length = `${timeLengthInMins} ${timeLengthInMins > 1 ? "mins" : "min"}`;
+    }
     return {
       id: row["id"],
       title: row["title"],
-      date: `${start_time} - ${end_time}`,
-      length: length,
+      date: formattedDate,
+      length,
     };
   });
   return transformedData;
