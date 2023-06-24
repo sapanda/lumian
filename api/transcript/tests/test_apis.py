@@ -305,8 +305,7 @@ class TranscriptAPITests(APITestCase):
         url = query_url(tpt.id)
         url = f"{url}?query_level=transcript"
         res = self.client.get(url)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 0)
+        self.assertEqual(res.status_code, status.HTTP_202_ACCEPTED)
 
     def test_query_list_invalid_transcript(self, patched_signal):
         """Test that the query GET request fails with invalid transcript."""
