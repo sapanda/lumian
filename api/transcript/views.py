@@ -17,6 +17,10 @@ from rest_framework import (
 )
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.exceptions import (
+    NotFound,
+    ValidationError
+)
 
 from . import tasks
 from .models import (
@@ -299,6 +303,17 @@ class QueryView(APIView):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
+    def _check_embeds(self, embeds):
+        if embeds.status == SynthesisStatus.FAILED:
+            return status.HTTP_500_INTERNAL_SERVER_ERROR
+
+        elif (embeds.status == SynthesisStatus.NOT_STARTED or
+                embeds.status == SynthesisStatus.IN_PROGRESS):
+            return status.HTTP_202_ACCEPTED
+
+        elif embeds.status == SynthesisStatus.COMPLETED:
+            return status.HTTP_201_CREATED
+
     @extend_schema(
         request=inline_serializer(
             name="ExecuteQuerySerializer",
@@ -310,26 +325,22 @@ class QueryView(APIView):
         try:
             tct = Transcript.objects.get(pk=pk)
             embeds = Embeds.objects.get(transcript=pk)
+            embeds_status = self._check_embeds(embeds)
+            if embeds_status != status.HTTP_201_CREATED:
+                return Response(status=embeds_status)
 
-            if embeds.status == SynthesisStatus.FAILED:
-                response = Response(
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-            elif (embeds.status == SynthesisStatus.NOT_STARTED or
-                  embeds.status == SynthesisStatus.IN_PROGRESS):
-                response = Response(status=status.HTTP_202_ACCEPTED)
-
-            elif embeds.status == SynthesisStatus.COMPLETED:
-                query_obj = tasks.run_openai_query(
-                    tct, query,
-                    Query.QueryLevelChoices.TRANSCRIPT)
-                data = {
-                    'query': query,
-                    'output': query_obj.output
-                }
-                response = Response(data, status=status.HTTP_201_CREATED)
+            query_obj = tasks.run_openai_query(
+                tct, query,
+                Query.QueryLevelChoices.TRANSCRIPT)
+            data = {
+                'query': query,
+                'output': query_obj.output
+            }
+            response = Response(data, status=status.HTTP_201_CREATED)
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
+        except Embeds.DoesNotExist:
+            response = Response(status=status.HTTP_202_ACCEPTED)
 
         return response
 
@@ -345,17 +356,28 @@ class QueryView(APIView):
     def get(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)  # For checking 404
+            embeds = Embeds.objects.get(transcript=pk)
+            embeds_status = self._check_embeds(embeds)
+            if embeds_status != status.HTTP_201_CREATED:
+                return Response(status=embeds_status)
+
             query_level = request.query_params.get('query_level')
             if not query_level:
-                return Response('query_level is required (project,transcript)',
-                                status.HTTP_406_NOT_ACCEPTABLE)
+                raise ValidationError()
 
             queryset = Query.objects.filter(
                 transcript=pk,
                 query_level=query_level)
+            data = QuerySerializer(queryset, many=True).data
 
-            serializer = QuerySerializer(queryset, many=True)
-            response = Response(serializer.data, status=status.HTTP_200_OK)
+            if query_level == Query.QueryLevelChoices.PROJECT:
+                project = Project.objects.get(id=tct.project.id)
+                question_count = len(project.questions)
+                if queryset.count() != question_count:
+                    return Response(data, status=status.HTTP_202_ACCEPTED)
+
+            response = Response(data, status=status.HTTP_201_CREATED)
+
         except Transcript.DoesNotExist:
             response = Response(
                 f'Transcript does not exist with id {pk}',
@@ -368,4 +390,19 @@ class QueryView(APIView):
             response = Response(
                 f'Query does not exist for transcript {pk}',
                 status.HTTP_404_NOT_FOUND)
+        except Embeds.DoesNotExist:
+            response = Response(
+                f'Embeds does not exist for transcript {pk}',
+                status=status.HTTP_202_ACCEPTED)
+        except ValidationError:
+            response = Response(
+                'query_level is required (project,transcript)',
+                status.HTTP_406_NOT_ACCEPTABLE)
+        except NotFound:
+            response = Response(
+                f'Query does not exist for transcript {pk}',
+                status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            response = Response(str(e), status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         return response

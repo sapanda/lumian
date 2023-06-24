@@ -6,6 +6,8 @@ import {
 } from "@tanstack/react-query";
 import { axiosInstance } from "./api";
 import { interviewEndPoints, meetingEndPoints } from "./apiEndpoints";
+import { useNavigate } from "react-router-dom";
+import { PROJECTS } from "../router/routes.constant";
 
 export const QUERY_LEVEL = {
   PROJECT_LEVEL: "project",
@@ -23,14 +25,25 @@ interface MeetingTranscriptPayloadType {
   interviewer_names?: string[];
   transcript?: string;
 }
+
+interface MeetingDataType {
+  project_id: string | number | null | undefined;
+  bot_name: string | undefined;
+  meeting_url: string | undefined;
+  start_time: string | undefined;
+  end_time: string | undefined;
+  title: string | undefined;
+}
+
 const connectApp = async () => {
   const res = await axiosInstance.get(`${meetingEndPoints.oauthUrl}`);
   const redirectUrl = res.data;
   window.location.href = redirectUrl;
 };
 
-const sendAccessToken = async (code: string) => {
-  await axiosInstance.post(meetingEndPoints.accessToken, {
+const sendAccessToken = async (code: string | null | undefined) => {
+  if (!code) return;
+  return await axiosInstance.post(meetingEndPoints.accessToken, {
     code: code,
   });
 };
@@ -44,12 +57,38 @@ const getInterviewsList = async (project_id: number | undefined) => {
     )
   );
 
-  const transformedData = res.data.map((row: rowProps, index: number) => {
+  const transformedData = res.data.map((row: rowProps) => {
+    const formattedDate = row["start_time"]
+      ? new Date(row["start_time"]).toLocaleDateString([], {
+          month: "short",
+          day: "numeric",
+        })
+      : "-";
+    const start_time = row["start_time"]
+      ? new Date(row["start_time"]).toLocaleTimeString()
+      : "";
+
+    const end_time = row["end_time"]
+      ? new Date(row["end_time"]).toLocaleTimeString()
+      : "";
+
+    let length = "-";
+
+    const timeDifference =
+      !!start_time && !!end_time
+        ? new Date(row["end_time"]).getTime() -
+          new Date(row["start_time"]).getTime()
+        : 0;
+
+    if (timeDifference !== 0) {
+      const timeLengthInMins = Math.floor(timeDifference / 60000);
+      length = `${timeLengthInMins} ${timeLengthInMins > 1 ? "mins" : "min"}`;
+    }
     return {
       id: row["id"],
       title: row["title"],
-      date: `Feb ${index + 1}`,
-      length: `${index + 1 * 10 + 1} mins`,
+      date: formattedDate,
+      length,
     };
   });
   return transformedData;
@@ -143,7 +182,8 @@ const getMeetingQuery = async (
       .replace(":interviewId", meetingId.toString())
       .replace(":query_level", queryLevel)
   );
-  return res.data;
+
+  return { data: res.data, queryLevel: queryLevel, status: res.status };
 };
 
 const askQuery = async (
@@ -175,6 +215,34 @@ const askQuery = async (
   const data = await res.data;
   return data;
 };
+
+const getCalendarStatus = async () => {
+  const res = await axiosInstance.get(meetingEndPoints.calendarStatus);
+  return res.data;
+};
+
+const getMeetingsList = async () => {
+  const res = await axiosInstance.get(meetingEndPoints.meetingsList);
+  return res.data;
+};
+
+const addBotToMeeting = async (meetingDetails: MeetingDataType) => {
+  if (
+    !meetingDetails.meeting_url ||
+    !meetingDetails.start_time ||
+    !meetingDetails.end_time ||
+    !meetingDetails.bot_name ||
+    !meetingDetails.title
+  )
+    return;
+  const res = await axiosInstance.post(
+    meetingEndPoints.addBotToMeeting,
+    meetingDetails
+  );
+  return res.data;
+};
+
+// hooks
 
 const useInterviewsListQuery = (projectId: number | undefined) => {
   const queryKey: QueryKey = ["interviews", projectId];
@@ -224,6 +292,9 @@ const useGetMeetingConciseQuery = (meetingId: number | undefined) => {
   return useQuery(queryKey, () => getMeetingConcise(meetingId), {
     staleTime: 1000 * 60 * 30, // 30 minutes
     enabled: !!meetingId,
+    refetchInterval(data) {
+      return data ? 1000 * 60 * 30 : 5000;
+    },
   });
 };
 
@@ -232,6 +303,9 @@ const useGetMeetingSummaryQuery = (meetingId: number | undefined) => {
   return useQuery(queryKey, () => getMeetingSummary(meetingId), {
     staleTime: 1000 * 60 * 30, // 30 minutes
     enabled: !!meetingId,
+    refetchInterval(data) {
+      return data ? 1000 * 60 * 30 : 5000;
+    },
   });
 };
 
@@ -240,10 +314,19 @@ const useGetMeetingQuery = (
   queryLevel: "project" | "transcript"
 ) => {
   const queryKey: QueryKey = ["meetingQuery", meetingId, queryLevel];
-  return useQuery(queryKey, () => getMeetingQuery(meetingId, queryLevel), {
-    staleTime: 1000 * 60 * 30, // 30 minutes
-    enabled: !!meetingId,
-  });
+  const result = useQuery(
+    queryKey,
+    () => getMeetingQuery(meetingId, queryLevel),
+    {
+      staleTime: 1000 * 60 * 30, // 30 minutes
+      enabled: !!meetingId,
+    }
+  );
+
+  const { data, refetch } = result;
+  data?.status === 202 && refetch();
+
+  return result;
 };
 
 const useAskQueryMutation = (
@@ -261,6 +344,48 @@ const useAskQueryMutation = (
   });
 };
 
+const useCalendarStatusQuery = () => {
+  const queryKey: QueryKey = ["calendarStatus"];
+  return useQuery(queryKey, () => getCalendarStatus(), {
+    staleTime: 1000 * 60 * 30, // 30 minutes
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+};
+
+const useSendAccessTokenMutation = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  return useMutation(
+    (code: string | null | undefined) => sendAccessToken(code),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["calendarStatus"]);
+        navigate(PROJECTS.default);
+      },
+    }
+  );
+};
+
+const useMeetingListQuery = () => {
+  const queryKey: QueryKey = ["meetingList"];
+  return useQuery(queryKey, () => getMeetingsList(), {
+    staleTime: 1000 * 60 * 30, // 30 minutes
+    retry: false,
+  });
+};
+
+const useAddBotToMeetingMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation(
+    (meetingDetails: MeetingDataType) => addBotToMeeting(meetingDetails),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["meetingList"]);
+      },
+    }
+  );
+};
 export {
   connectApp,
   sendAccessToken,
@@ -274,4 +399,8 @@ export {
   useGetMeetingSummaryQuery,
   useGetMeetingQuery,
   useAskQueryMutation,
+  useCalendarStatusQuery,
+  useSendAccessTokenMutation,
+  useMeetingListQuery,
+  useAddBotToMeetingMutation,
 };

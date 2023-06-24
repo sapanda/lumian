@@ -49,7 +49,7 @@ export const PUBLIC_ROUTES = [
   },
   {
     path: HOME,
-    component: Projects.AllProjects,
+    component: Login,
     exact: true,
   },
   {

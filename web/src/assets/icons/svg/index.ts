@@ -5,6 +5,7 @@ import edit_pencil__icon from "./edit_pencil__icon.svg";
 import email_icon from "./email_icon.svg";
 import google_calendar__icon from "./google_calendar__icon.svg";
 import integrations__icon from "./integrations__icon.svg";
+import line__icon from "./line__icon.svg";
 import lock_icon from "./lock_icon.svg";
 import navigate_next__icon from "./navigate_next__icon.svg";
 import outlook_calendar__icon from "./outlook_calendar__icon.svg";
@@ -20,6 +21,7 @@ export {
   email_icon,
   google_calendar__icon,
   integrations__icon,
+  line__icon,
   outlook_calendar__icon,
   lock_icon,
   navigate_next__icon,

@@ -138,11 +138,15 @@ export default function useInterview() {
     scrollToNextHighlightedText(0);
   }, [conversation]);
   return {
-    summary: summaryData?.output ?? [],
-    concise: conciseData?.output ?? [],
+    summary: summaryData?.output,
+    concise: conciseData?.output,
     query,
     questions,
     interviewTitle: interviewData?.title ?? "",
+    interviewTime: {
+      start_time: interviewData?.start_time ?? "",
+      end_time: interviewData?.end_time ?? "",
+    },
     projectTitle: projectData?.name ?? "",
     projectId,
     interviewId,

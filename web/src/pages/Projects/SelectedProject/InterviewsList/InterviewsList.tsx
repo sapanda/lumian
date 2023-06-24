@@ -21,6 +21,7 @@ import {
 import { updateProject } from "../../../../api/projectApi";
 import { PROJECTS } from "../../../../router/routes.constant";
 import { useNavigate } from "react-router-dom";
+import TranscribeModal from "./TranscribeModal";
 
 export default function InterviewsList() {
   const {
@@ -30,10 +31,13 @@ export default function InterviewsList() {
     projectId,
     getProject,
     refreshProjectsList,
+    projectsList,
   } = useInterviewsList();
 
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [transcribeModalOpen, setTranscribeModalOpen] =
+    useState<boolean>(false);
   const [pickedFiles, setPickedFiles] = useState<File[]>([]);
   const transcriptRef = useRef<string>("");
   const { mutateAsync: createInterview } =
@@ -70,6 +74,12 @@ export default function InterviewsList() {
     setPickedFiles([]);
     setModalOpen(false);
   };
+
+  const currentProject = projectsList?.find(
+    (project: { id: number }) => project.id === parseInt(projectId || "0")
+  );
+
+  console.log("currentProject", currentProject);
   return (
     <PrivateContainer
       appBar={
@@ -84,10 +94,12 @@ export default function InterviewsList() {
           onEditEnd={(newTitle: string) => onEditEnd(newTitle)}
         >
           <div className="flex items-center justify-end w-full gap-5 px-10">
-            <Typography variant="body1">Feb 2 to Feb 10</Typography>
+            <Typography variant="body1">
+              {currentProject?.date ?? ""}
+            </Typography>
             <Button
               variant="contained"
-              onClick={() => startTranscribe(parseInt(projectId || "0"))}
+              onClick={() => setTranscribeModalOpen(true)}
             >
               Transcribe
             </Button>
@@ -193,6 +205,11 @@ export default function InterviewsList() {
           </div>
         </div>
       </ModalL>
+      <TranscribeModal
+        modalOpen={transcribeModalOpen}
+        setModalOpen={setTranscribeModalOpen}
+        projectId={projectId}
+      />
     </PrivateContainer>
   );
 }

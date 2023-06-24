@@ -21,7 +21,8 @@ const columns = [
 ];
 export default function useInterviewsList() {
   const { projectId } = useParams();
-  const { refetch: refreshProjectsList } = useGetProjectsQuery();
+  const { refetch: refreshProjectsList, data: projectsList } =
+    useGetProjectsQuery();
   const { data: rows } = useInterviewsListQuery(parseInt(projectId || "0"));
   const { data: project, refetch: getProject } = useGetProjectQuery(
     parseInt(projectId || "0")
@@ -34,5 +35,6 @@ export default function useInterviewsList() {
     projectId,
     getProject,
     refreshProjectsList,
+    projectsList,
   };
 }

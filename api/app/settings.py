@@ -12,8 +12,6 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from enum import Enum
 from google.oauth2 import service_account
-import json
-import logging
 import os
 from pathlib import Path
 import sys
@@ -229,11 +227,6 @@ SYNTHESIS_TASK_TIMEOUT = int(os.environ.get('SYNTHESIS_TASK_TIMEOUT', 10))
 # Recall AI settings
 RECALL_API_KEY = os.environ.get("RECALL_API_KEY")
 RECALL_TRANSCRIPT_PROVIDER = os.environ.get("RECALL_TRANSCRIPT_PROVIDER")
-
-# Zoom settings
-ZOOM_SECRETS_BASE64 = os.environ.get("ZOOM_SECRETS_BASE64")
-ZOOM_REDIRECT_URL = os.environ.get("ZOOM_REDIRECT_URL")
-ZOOM_CLIENT_ID = os.environ.get("ZOOM_CLIENT_ID")
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")

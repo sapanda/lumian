@@ -9,6 +9,8 @@ interface ProjectType {
   goal: string;
   questions: string[];
   title: string;
+  start_time: string | null;
+  end_time: string | null;
 }
 
 interface ProjectPayloadType {
@@ -20,11 +22,28 @@ interface ProjectPayloadType {
 const getProjects = async () => {
   const res = await axiosInstance.get(`${projectEndpoints.projectList}`);
   const transformedData = res.data.map((project: ProjectType) => {
+    const { start_time, end_time } = project;
+    const startTime = start_time
+      ? new Date(start_time).toLocaleDateString([], {
+          month: "short",
+          day: "numeric",
+        })
+      : "";
+
+    const endTime = end_time
+      ? new Date(end_time).toLocaleDateString([], {
+          month: "short",
+          day: "numeric",
+        })
+      : "";
+
+    const formattedDate = startTime ? `${startTime} to ${endTime}` : "";
     return {
       id: project.id,
       name: project.title,
-      date: "Feb 2 to Feb 10",
-      interviews: "10",
+      date: formattedDate,
+      participants: "10",
+      owner: "John Doe",
     };
   });
   return transformedData;
