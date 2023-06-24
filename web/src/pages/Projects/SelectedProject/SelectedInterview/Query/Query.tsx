@@ -58,7 +58,7 @@ export default function Query() {
           maxHeight: "75vh",
         }}
       >
-        {!query ? (
+        {!query?.data || query.status !== 201 ? (
           <div className="flex items-center gap-5">
             <CircularProgress />
             <span className="italic text-gray-500 text-12-400">
@@ -79,7 +79,7 @@ export default function Query() {
                   },
                 ]}
               />
-              {query?.map((item: queryProps, index: number) => {
+              {query?.data?.map((item: queryProps, index: number) => {
                 return (
                   <Stack
                     sx={{
