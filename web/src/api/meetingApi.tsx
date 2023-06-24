@@ -156,9 +156,9 @@ const getMeetingQuery = async (
       .replace(":interviewId", meetingId.toString())
       .replace(":query_level", queryLevel)
   );
-  if (queryLevel === "project")
+  if (queryLevel === "project") {
     return { data: res.data, queryLevel: queryLevel, status: res.status };
-  else return res.data;
+  } else return res.data;
 };
 
 const askQuery = async (
@@ -300,6 +300,7 @@ const useGetMeetingQuery = (
 
   const { data, refetch } = result;
   data?.queryLevel === "project" && data?.status === 202 && refetch();
+
   return result;
 };
 

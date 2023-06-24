@@ -171,7 +171,7 @@ export default function Summary() {
             />
           </div>
 
-          {!questions ? (
+          {questions?.status === 202 || !questions?.data ? (
             <div className="flex items-center gap-5">
               <CircularProgress />
               <span className="italic text-gray-500 text-12-400">
