@@ -71,8 +71,9 @@ class TranscriptView(viewsets.ModelViewSet):
             create_synthesis_entry(tct)
 
     def create(self, request, *args, **kwargs):
-        super().create(request, *args, **kwargs)
-        return Response({'message': 'Transcript Created'},
+        instance = super().create(request, *args, **kwargs)
+        return Response({'data': instance.data,
+                         'message': 'Transcript Created'},
                         status.HTTP_201_CREATED)
 
     @extend_schema(parameters=[

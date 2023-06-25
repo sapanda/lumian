@@ -37,8 +37,9 @@ class ProjectView(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
-        super().create(request, *args, **kwargs)
-        return Response({'message': 'Project Created'},
+        instance = super().create(request, *args, **kwargs)
+        return Response({'data': instance.data,
+                         'message': 'Project Created'},
                         status.HTTP_201_CREATED)
 
     def get_queryset(self):
