@@ -2,6 +2,7 @@
 Views for the transcript API.
 """
 from django.db import transaction
+from django.db.models import Min, Max
 from django.urls import reverse
 from drf_spectacular.utils import (
     extend_schema, inline_serializer, OpenApiParameter, OpenApiTypes
@@ -34,7 +35,6 @@ from .repository import create_synthesis_entry
 from app.settings import SYNTHESIS_TASK_TIMEOUT
 from core.gcloud_client import client
 from project.models import Project
-
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +70,11 @@ class TranscriptView(viewsets.ModelViewSet):
             tct = serializer.save()
             create_synthesis_entry(tct)
 
+    def create(self, request, *args, **kwargs):
+        super().create(request, *args, **kwargs)
+        return Response({'message': 'Transcript Created'},
+                        status.HTTP_201_CREATED)
+
     @extend_schema(parameters=[
         OpenApiParameter(
             name='project',
@@ -81,7 +86,25 @@ class TranscriptView(viewsets.ModelViewSet):
     ])
     def list(self, request, *args, **kwargs):
         """Override the list method to enable filtering by project"""
-        return super().list(request, *args, **kwargs)
+        queryset = self.filter_queryset(self.get_queryset())
+
+        # Get the minimum start_time and maximum end_time from the queryset
+        start_time = queryset.aggregate(
+            Min('start_time')).get('start_time__min')
+        end_time = queryset.aggregate(
+            Max('end_time')).get('end_time__max')
+
+        # Serialize the queryset
+        serializer = self.get_serializer(queryset, many=True)
+        transcripts = serializer.data
+
+        # Create the response dictionary
+        data = {
+            'transcripts': transcripts,
+            'start_time': start_time,
+            'end_time': end_time
+        }
+        return Response({'data': data})
 
     def get_queryset(self):
         """Retrieve transcripts for authenticated user."""
@@ -115,6 +138,7 @@ class InitiateSynthesizerView(BaseSynthesizerView):
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
+            return Response()
             result = tasks.initiate_synthesis(tct)
             status_code = result['status_code']
             if status.is_success(status_code):

@@ -52,7 +52,7 @@ class OAuthRequestView(APIView):
 
         try:
             url = google_api.get_oauth_url()
-            return Response(url)
+            return Response({'url': url})
         except GoogleAPIException as e:
             return Response(str(e), HTTP_400_BAD_REQUEST)
         except Exception as e:

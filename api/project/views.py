@@ -5,6 +5,7 @@ from rest_framework import (
     authentication,
     permissions,
     viewsets,
+    status
 )
 from rest_framework.response import Response
 from django.db.models import Count, Min, Max
@@ -13,7 +14,6 @@ from .serializers import (
     ProjectSerializer,
     ProjectListSerializer
 )
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -36,6 +36,11 @@ class ProjectView(viewsets.ModelViewSet):
         """Create a new project."""
         serializer.save(user=self.request.user)
 
+    def create(self, request, *args, **kwargs):
+        super().create(request, *args, **kwargs)
+        return Response({'message': 'Project Created'},
+                        status.HTTP_201_CREATED)
+
     def get_queryset(self):
         """Retrieve projects for authenticated user."""
         queryset = self.queryset
@@ -50,5 +55,5 @@ class ProjectView(viewsets.ModelViewSet):
         queryset = queryset.annotate(transcript_count=Count('transcript'))
         queryset = queryset.annotate(start_time=Min('transcript__start_time'),
                                      end_time=Max('transcript__end_time'))
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        data = self.get_serializer(queryset, many=True).data
+        return Response({'data': data})

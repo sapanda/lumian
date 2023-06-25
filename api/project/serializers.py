@@ -29,7 +29,3 @@ class ProjectListSerializer(serializers.ModelSerializer):
         model = Project
         fields = ['id', 'title', 'goal', 'questions',
                   'transcript_count', 'start_time', 'end_time']
-
-    def create(self, validated_data):
-        """Create and return a project."""
-        return Project.objects.create(**validated_data)
