@@ -75,6 +75,13 @@ class TranscriptView(viewsets.ModelViewSet):
                          'message': 'Transcript Created'},
                         status.HTTP_201_CREATED)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+
+        message = "Resource deleted successfully"
+        return Response({'message': message}, status=status.HTTP_200_OK)
+
     @extend_schema(parameters=[
         OpenApiParameter(
             name='project',

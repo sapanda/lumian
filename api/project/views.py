@@ -44,11 +44,22 @@ class ProjectView(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
+        if queryset:
+            # Annotate the count of transcripts for each project
+            queryset = queryset.annotate(transcript_count=Count('transcript'))
+            queryset = queryset.annotate(
+                start_time_min=Min('transcript__start_time'),
+                end_time_max=Max('transcript__end_time'))
+            data = self.get_serializer(queryset, many=True).data
+            message = ""
+        else:
+            data = {}
+            message = 'No projects found'
+        return Response({'data': data, 'message': message})
 
-        # Annotate the count of transcripts for each project
-        queryset = queryset.annotate(transcript_count=Count('transcript'))
-        queryset = queryset.annotate(
-            start_time_min=Min('transcript__start_time'),
-            end_time_max=Max('transcript__end_time'))
-        data = self.get_serializer(queryset, many=True).data
-        return Response({'data': data})
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+
+        message = "Resource deleted successfully"
+        return Response({'message': message}, status=status.HTTP_200_OK)

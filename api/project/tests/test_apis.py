@@ -116,7 +116,7 @@ class PrivateAPITests(APITestCase):
         url = detail_url(pjt.id)
         res = self.client.delete(url)
 
-        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertFalse(Project.objects.filter(id=pjt.id).exists())
 
     def test_delete_project_failure(self):
