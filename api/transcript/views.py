@@ -2,6 +2,7 @@
 Views for the transcript API.
 """
 from django.db import transaction
+from django.db.models import Min, Max
 from django.urls import reverse
 from drf_spectacular.utils import (
     extend_schema, inline_serializer, OpenApiParameter, OpenApiTypes
@@ -18,7 +19,6 @@ from rest_framework import (
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import (
-    NotFound,
     ValidationError
 )
 
@@ -34,7 +34,6 @@ from .repository import create_synthesis_entry
 from app.settings import SYNTHESIS_TASK_TIMEOUT
 from core.gcloud_client import client
 from project.models import Project
-
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +69,12 @@ class TranscriptView(viewsets.ModelViewSet):
             tct = serializer.save()
             create_synthesis_entry(tct)
 
+    def create(self, request, *args, **kwargs):
+        instance = super().create(request, *args, **kwargs)
+        return Response({'data': instance.data,
+                         'message': 'Transcript Created'},
+                        status.HTTP_201_CREATED)
+
     @extend_schema(parameters=[
         OpenApiParameter(
             name='project',
@@ -81,7 +86,25 @@ class TranscriptView(viewsets.ModelViewSet):
     ])
     def list(self, request, *args, **kwargs):
         """Override the list method to enable filtering by project"""
-        return super().list(request, *args, **kwargs)
+        queryset = self.filter_queryset(self.get_queryset())
+
+        # Get the minimum start_time and maximum end_time from the queryset
+        start_time_min = queryset.aggregate(
+            Min('start_time')).get('start_time__min')
+        end_time_max = queryset.aggregate(
+            Max('end_time')).get('end_time__max')
+
+        # Serialize the queryset
+        serializer = self.get_serializer(queryset, many=True)
+        transcripts = serializer.data
+
+        # Create the response dictionary
+        data = {
+            'transcripts': transcripts,
+            'start_time_min': start_time_min,
+            'end_time_max': end_time_max
+        }
+        return Response({'data': data})
 
     def get_queryset(self):
         """Retrieve transcripts for authenticated user."""
@@ -359,24 +382,27 @@ class QueryView(APIView):
             embeds = Embeds.objects.get(transcript=pk)
             embeds_status = self._check_embeds(embeds)
             if embeds_status != status.HTTP_201_CREATED:
-                return Response(status=embeds_status)
+                response = Response(status=embeds_status)
 
-            query_level = request.query_params.get('query_level')
-            if not query_level:
-                raise ValidationError()
+            else:
+                query_level = request.query_params.get('query_level')
+                if not query_level:
+                    raise ValidationError()
 
-            queryset = Query.objects.filter(
-                transcript=pk,
-                query_level=query_level)
-            data = QuerySerializer(queryset, many=True).data
+                queryset = Query.objects.filter(
+                    transcript=pk,
+                    query_level=query_level)
+                data = QuerySerializer(queryset, many=True).data
+                response = Response(data, status=status.HTTP_201_CREATED)
 
-            if query_level == Query.QueryLevelChoices.PROJECT:
-                project = Project.objects.get(id=tct.project.id)
-                question_count = len(project.questions)
-                if queryset.count() != question_count:
-                    return Response(data, status=status.HTTP_202_ACCEPTED)
+                if query_level == Query.QueryLevelChoices.PROJECT:
+                    project = Project.objects.get(id=tct.project.id)
+                    question_count = len(project.questions)
+                    if queryset.count() != question_count:
+                        response = Response(data,
+                                            status=status.HTTP_202_ACCEPTED)
 
-            response = Response(data, status=status.HTTP_201_CREATED)
+            return response
 
         except Transcript.DoesNotExist:
             response = Response(
@@ -398,10 +424,6 @@ class QueryView(APIView):
             response = Response(
                 'query_level is required (project,transcript)',
                 status.HTTP_406_NOT_ACCEPTABLE)
-        except NotFound:
-            response = Response(
-                f'Query does not exist for transcript {pk}',
-                status.HTTP_404_NOT_FOUND)
         except Exception as e:
             response = Response(str(e), status.HTTP_500_INTERNAL_SERVER_ERROR)
 
