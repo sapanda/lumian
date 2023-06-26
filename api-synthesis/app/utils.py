@@ -39,8 +39,9 @@ def split_text_into_multiple_lines_for_speaker(
     paras = [txt for txt in re.split(r"\r?\n+|\r+", text.strip()) if txt]
     start_loc, results = 0, []
     for para in paras:
-        if len(para.split(": ")) > 1:
-            speech_parts = para.split(": ", 1)
+        if len(para.split(": ")) <= 1:
+            continue
+        speech_parts = para.split(": ", 1)
         speaker = speech_parts[0]
         speech_text_words = re.split(r"(\W)", speech_parts[1].strip('"'))
         start_loc += len(speaker)
