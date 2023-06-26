@@ -94,24 +94,28 @@ class TranscriptView(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         """Override the list method to enable filtering by project"""
         queryset = self.filter_queryset(self.get_queryset())
+        if queryset:
+            # Get the minimum start_time and maximum end_time from the queryset
+            start_time_min = queryset.aggregate(
+                Min('start_time')).get('start_time__min')
+            end_time_max = queryset.aggregate(
+                Max('end_time')).get('end_time__max')
 
-        # Get the minimum start_time and maximum end_time from the queryset
-        start_time_min = queryset.aggregate(
-            Min('start_time')).get('start_time__min')
-        end_time_max = queryset.aggregate(
-            Max('end_time')).get('end_time__max')
+            # Serialize the queryset
+            serializer = self.get_serializer(queryset, many=True)
+            transcripts = serializer.data
 
-        # Serialize the queryset
-        serializer = self.get_serializer(queryset, many=True)
-        transcripts = serializer.data
-
-        # Create the response dictionary
-        data = {
-            'transcripts': transcripts,
-            'start_time_min': start_time_min,
-            'end_time_max': end_time_max
-        }
-        return Response({'data': data})
+            # Create the response dictionary
+            data = {
+                'transcripts': transcripts,
+                'start_time_min': start_time_min,
+                'end_time_max': end_time_max
+            }
+            message = ''
+        else:
+            data = {}
+            message = 'No transcripts found'
+        return Response({'data': data, 'message': message})
 
     def get_queryset(self):
         """Retrieve transcripts for authenticated user."""
