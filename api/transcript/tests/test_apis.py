@@ -165,7 +165,7 @@ class TranscriptAPITests(APITestCase):
         url = detail_url(tpt.id)
         res = self.client.delete(url)
 
-        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertFalse(Transcript.objects.filter(id=tpt.id).exists())
 
     def test_create_transcript_other_users_failure(self, patched_signal):

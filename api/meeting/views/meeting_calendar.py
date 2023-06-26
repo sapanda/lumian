@@ -52,7 +52,7 @@ class OAuthRequestView(APIView):
 
         try:
             url = google_api.get_oauth_url()
-            return Response({'url': url})
+            return Response({'data': url})
         except GoogleAPIException as e:
             return Response(str(e), HTTP_400_BAD_REQUEST)
         except Exception as e:
@@ -168,7 +168,7 @@ class CalendarStatusView(APIView):
             )
             return Response('Calendar Integrated', HTTP_200_OK)
         except MeetingCalendar.DoesNotExist:
-            response_data = "Calendar integration doesn't exist for this user"
+            response_data = "Calendar not integrated"
             response_status = HTTP_404_NOT_FOUND
         except Exception as e:
             response_data = str(e)
