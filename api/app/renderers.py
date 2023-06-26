@@ -15,9 +15,9 @@ class ApiRenderer(JSONRenderer):
 
         elif isinstance(data, dict):
             if data.get('data') or data.get('message'):
-                if data.get('data'):
+                if 'data' in data:
                     response_dict['data'] = data.get('data')
-                if data.get('message'):
+                if 'message' in data:
                     response_dict['message'] = data.get('message')
             else:
                 # if direct data has been sent in dict format
