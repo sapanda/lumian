@@ -11,8 +11,7 @@ from rest_framework.response import Response
 from django.db.models import Count, Min, Max
 from .models import Project
 from .serializers import (
-    ProjectSerializer,
-    ProjectListSerializer
+    ProjectSerializer
 )
 import logging
 logger = logging.getLogger(__name__)
@@ -25,12 +24,6 @@ class ProjectView(viewsets.ModelViewSet):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     http_method_names = ['get', 'post', 'patch', 'head', 'delete']
-
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return ProjectListSerializer
-        else:
-            return ProjectSerializer
 
     def perform_create(self, serializer):
         """Create a new project."""
@@ -54,7 +47,8 @@ class ProjectView(viewsets.ModelViewSet):
 
         # Annotate the count of transcripts for each project
         queryset = queryset.annotate(transcript_count=Count('transcript'))
-        queryset = queryset.annotate(start_time=Min('transcript__start_time'),
-                                     end_time=Max('transcript__end_time'))
+        queryset = queryset.annotate(
+            start_time_min=Min('transcript__start_time'),
+            end_time_max=Max('transcript__end_time'))
         data = self.get_serializer(queryset, many=True).data
         return Response({'data': data})

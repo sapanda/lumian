@@ -19,7 +19,6 @@ from rest_framework import (
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import (
-    NotFound,
     ValidationError
 )
 
@@ -90,9 +89,9 @@ class TranscriptView(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         # Get the minimum start_time and maximum end_time from the queryset
-        start_time = queryset.aggregate(
+        start_time_min = queryset.aggregate(
             Min('start_time')).get('start_time__min')
-        end_time = queryset.aggregate(
+        end_time_max = queryset.aggregate(
             Max('end_time')).get('end_time__max')
 
         # Serialize the queryset
@@ -102,8 +101,8 @@ class TranscriptView(viewsets.ModelViewSet):
         # Create the response dictionary
         data = {
             'transcripts': transcripts,
-            'start_time': start_time,
-            'end_time': end_time
+            'start_time_min': start_time_min,
+            'end_time_max': end_time_max
         }
         return Response({'data': data})
 
@@ -139,7 +138,6 @@ class InitiateSynthesizerView(BaseSynthesizerView):
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
-            return Response()
             result = tasks.initiate_synthesis(tct)
             status_code = result['status_code']
             if status.is_success(status_code):
@@ -384,24 +382,27 @@ class QueryView(APIView):
             embeds = Embeds.objects.get(transcript=pk)
             embeds_status = self._check_embeds(embeds)
             if embeds_status != status.HTTP_201_CREATED:
-                return Response(status=embeds_status)
+                response = Response(status=embeds_status)
 
-            query_level = request.query_params.get('query_level')
-            if not query_level:
-                raise ValidationError()
+            else:
+                query_level = request.query_params.get('query_level')
+                if not query_level:
+                    raise ValidationError()
 
-            queryset = Query.objects.filter(
-                transcript=pk,
-                query_level=query_level)
-            data = QuerySerializer(queryset, many=True).data
+                queryset = Query.objects.filter(
+                    transcript=pk,
+                    query_level=query_level)
+                data = QuerySerializer(queryset, many=True).data
+                response = Response(data, status=status.HTTP_201_CREATED)
 
-            if query_level == Query.QueryLevelChoices.PROJECT:
-                project = Project.objects.get(id=tct.project.id)
-                question_count = len(project.questions)
-                if queryset.count() != question_count:
-                    return Response(data, status=status.HTTP_202_ACCEPTED)
+                if query_level == Query.QueryLevelChoices.PROJECT:
+                    project = Project.objects.get(id=tct.project.id)
+                    question_count = len(project.questions)
+                    if queryset.count() != question_count:
+                        response = Response(data,
+                                            status=status.HTTP_202_ACCEPTED)
 
-            response = Response(data, status=status.HTTP_201_CREATED)
+            return response
 
         except Transcript.DoesNotExist:
             response = Response(
@@ -423,10 +424,6 @@ class QueryView(APIView):
             response = Response(
                 'query_level is required (project,transcript)',
                 status.HTTP_406_NOT_ACCEPTABLE)
-        except NotFound:
-            response = Response(
-                f'Query does not exist for transcript {pk}',
-                status.HTTP_404_NOT_FOUND)
         except Exception as e:
             response = Response(str(e), status.HTTP_500_INTERNAL_SERVER_ERROR)
 
