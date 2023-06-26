@@ -79,7 +79,7 @@ class TranscriptView(viewsets.ModelViewSet):
         instance = self.get_object()
         self.perform_destroy(instance)
 
-        message = "Resource deleted successfully"
+        message = "Transcript deleted successfully"
         return Response({'message': message}, status=status.HTTP_200_OK)
 
     @extend_schema(parameters=[
