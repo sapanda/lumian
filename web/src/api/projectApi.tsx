@@ -11,6 +11,7 @@ interface ProjectType {
   title: string;
   start_time: string | null;
   end_time: string | null;
+  transcript_count: string | null;
 }
 
 interface ProjectPayloadType {
@@ -22,7 +23,7 @@ interface ProjectPayloadType {
 const getProjects = async () => {
   const res = await axiosInstance.get(`${projectEndpoints.projectList}`);
   const transformedData = res.data.map((project: ProjectType) => {
-    const { start_time, end_time } = project;
+    const { start_time, end_time, transcript_count } = project;
     const startTime = start_time
       ? new Date(start_time).toLocaleDateString([], {
           month: "short",
@@ -42,8 +43,7 @@ const getProjects = async () => {
       id: project.id,
       name: project.title,
       date: formattedDate,
-      participants: "10",
-      owner: "John Doe",
+      interviews: transcript_count ? transcript_count : "-",
     };
   });
   return transformedData;

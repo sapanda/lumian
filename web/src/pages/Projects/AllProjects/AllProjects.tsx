@@ -26,13 +26,8 @@ const columns = [
     width: 200,
   },
   {
-    field: "participants",
-    headerName: "Participants",
-    width: 200,
-  },
-  {
-    field: "owner",
-    headerName: "Owner",
+    field: "interviews",
+    headerName: "Interviews",
     width: 200,
   },
 ];
