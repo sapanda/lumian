@@ -31,7 +31,7 @@ export default function InterviewsList() {
     projectId,
     getProject,
     refreshProjectsList,
-    projectsList,
+    date,
   } = useInterviewsList();
 
   const navigate = useNavigate();
@@ -75,11 +75,6 @@ export default function InterviewsList() {
     setModalOpen(false);
   };
 
-  const currentProject = projectsList?.find(
-    (project: { id: number }) => project.id === parseInt(projectId || "0")
-  );
-
-  console.log("currentProject", currentProject);
   return (
     <PrivateContainer
       appBar={
@@ -94,9 +89,7 @@ export default function InterviewsList() {
           onEditEnd={(newTitle: string) => onEditEnd(newTitle)}
         >
           <div className="flex items-center justify-end w-full gap-5 px-10">
-            <Typography variant="body1">
-              {currentProject?.date ?? ""}
-            </Typography>
+            <Typography variant="body1">{date ?? ""}</Typography>
             <Button
               variant="contained"
               onClick={() => setTranscribeModalOpen(true)}
