@@ -171,7 +171,7 @@ export default function Summary() {
             />
           </div>
 
-          {!questions ? (
+          {questions?.status !== 201 || !questions?.data ? (
             <div className="flex items-center gap-5">
               <CircularProgress />
               <span className="italic text-gray-500 text-12-400">
@@ -180,7 +180,7 @@ export default function Summary() {
             </div>
           ) : (
             <div className="flex flex-col gap-4" id="questions">
-              {questions?.map((item: queryProps, index: number) => {
+              {questions?.data?.map((item: queryProps, index: number) => {
                 const answer = item?.output;
                 return (
                   <Stack>
