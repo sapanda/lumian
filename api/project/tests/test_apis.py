@@ -49,7 +49,7 @@ class PrivateAPITests(APITestCase):
         }
         res = self.client.post(PROJECT_URL, payload)
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        pjt = Project.objects.get(id=res.data['id'])
+        pjt = Project.objects.get(id=res.data['data']['id'])
         for k, v in payload.items():
             self.assertEqual(getattr(pjt, k), v)
 
@@ -78,9 +78,9 @@ class PrivateAPITests(APITestCase):
         res = self.client.get(PROJECT_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 3)
+        self.assertEqual(len(res.data['data']), 3)
         self.assertFalse(any(item['id'] == other_project.id
-                             for item in res.data),
+                             for item in res.data['data']),
                          "Wrong project returned for user")
 
     def test_patch_project_success(self):
@@ -116,7 +116,7 @@ class PrivateAPITests(APITestCase):
         url = detail_url(pjt.id)
         res = self.client.delete(url)
 
-        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertFalse(Project.objects.filter(id=pjt.id).exists())
 
     def test_delete_project_failure(self):
