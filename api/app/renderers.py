@@ -7,7 +7,6 @@ class ApiRenderer(JSONRenderer):
         response_dict = {
             'data': {},
             'message': '',
-            'details': {}
         }
         # if direct message has been sent
         if isinstance(data, str):
@@ -15,13 +14,13 @@ class ApiRenderer(JSONRenderer):
 
         elif isinstance(data, dict):
             if data.get('data') or data.get('message'):
-                if data.get('data'):
+                if 'data' in data:
                     response_dict['data'] = data.get('data')
-                if data.get('message'):
+                if 'message' in data:
                     response_dict['message'] = data.get('message')
             else:
                 # if direct data has been sent in dict format
-                response_dict['details'] = data
+                response_dict['data'] = data
         else:
             # if direct data has been sent in any other format
             # like ordered dict

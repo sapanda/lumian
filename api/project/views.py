@@ -53,7 +53,7 @@ class ProjectView(viewsets.ModelViewSet):
             data = self.get_serializer(queryset, many=True).data
             message = ""
         else:
-            data = {}
+            data = []
             message = 'No projects found'
         return Response({'data': data, 'message': message})
 
