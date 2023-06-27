@@ -207,14 +207,14 @@ class GetBotStatusViewTest(APITestCase):
         response = self.client.get(f"{self.url}?bot_id={bot_id}")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['bot_status'], self.bot.status)
+        self.assertEqual(response.data['data']['bot_status'], self.bot.status)
 
     def test_invalid_bot_id(self):
         invalid_bot_id = 'invalid_bot_id'
         response = self.client.get(f"{self.url}?bot_id={invalid_bot_id}")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data, {'error': 'Bot does not exist'})
+        self.assertEqual(response.data, 'Bot does not exist')
 
 
 class ScheduleBotViewTests(APITestCase):
