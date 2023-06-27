@@ -51,7 +51,8 @@ class AddBotView(APIView):
         try:
             serializer = self.serializer_class(data=request.data)
             if not serializer.is_valid():
-                return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
+                return Response({'message': serializer.errors},
+                                HTTP_406_NOT_ACCEPTABLE)
 
             bot_name = serializer.validated_data['bot_name']
             project_id = serializer.validated_data['project_id']
@@ -64,9 +65,8 @@ class AddBotView(APIView):
 
             if MeetingBot.objects.filter(meeting_url=meeting_url).exists():
                 return Response(
-                    'Bot already present in the meeting',
-                    HTTP_202_ACCEPTED
-                )
+                    {'message': 'Bot already present in the meeting'},
+                    HTTP_202_ACCEPTED)
             project = Project.objects.get(id=project_id)
 
             bot = add_bot_to_meeting(bot_name, meeting_url)
@@ -83,23 +83,27 @@ class AddBotView(APIView):
             )
 
             response_data = bot['id']
+            response_message = 'Bot successfully added'
             response_status = HTTP_201_CREATED
+            return Response({'data': response_data,
+                             'message': response_message},
+                            status=response_status)
 
         except Project.DoesNotExist:
-            response_data = {"error": "Project does not exist"}
+            response_message = {"error": "Project does not exist"}
             response_status = HTTP_404_NOT_FOUND
         except RecallAITimeoutException as e:
-            response_data = {"error": str(e)}
+            response_message = {"error": str(e)}
             response_status = HTTP_408_REQUEST_TIMEOUT
         except IntegrityError as e:
-            response_data = {"error": f"Meeting bot already exists {str(e)}"}
+            response_message = {"error": str(e)}
             response_status = HTTP_409_CONFLICT
         except Exception as e:
-            logger.error(e)
-            response_data = {"error": str(e)}
+            response_message = {"error": str(e)}
             response_status = HTTP_400_BAD_REQUEST
 
-        return Response(response_data, status=response_status)
+        return Response({'message': response_message},
+                        status=response_status)
 
 
 # View for callback URL for every bot status change
@@ -184,28 +188,27 @@ class GetBotStatusView(APIView):
         try:
             serializer = self.serializer_class(data=request.query_params)
             if not serializer.is_valid():
-                logger.exception("Serialization error",
-                                 exc_info=serializer.errors)
                 return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
 
             bot_id = serializer.validated_data['bot_id']
             bot = MeetingBot.objects.get(id=bot_id)
-            response = {
+            data = {
                 'bot_id': bot.id,
                 'bot_status': bot.status,
                 'meeting_title': bot.title,
                 'meeting_start_time': bot.start_time,
                 'meeting_end_time': bot.end_time
             }
-            return Response(response)
+            return Response({'data': data})
         except MeetingBot.DoesNotExist:
-            response_data = {"error": "Bot does not exist"}
+            response_message = "Bot does not exist"
             response_status = HTTP_404_NOT_FOUND
         except Exception as e:
-            response_data = str(e)
+            response_message = str(e)
             response_status = HTTP_400_BAD_REQUEST
 
-        return Response(response_data, response_status)
+        return Response(response_message,
+                        response_status)
 
 
 class ScheduleBotView(APIView):
