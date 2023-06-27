@@ -174,22 +174,6 @@ class InitiateSynthesizerView(BaseSynthesizerView):
         return response
 
 
-class GenerateMetadataView(BaseSynthesizerView):
-    """Generate trancsript metadata AND kick off the other synthesis tasks"""
-    def post(self, request, pk):
-        try:
-            tct = Transcript.objects.get(pk=pk)
-            if tct.metadata_generated:
-                response = Response(status=status.HTTP_200_OK)
-            else:
-                result = tasks.generate_metadata(tct)
-                status_code = result['status_code']
-                response = Response(status=status_code)
-        except Transcript.DoesNotExist:
-            response = Response(status=status.HTTP_404_NOT_FOUND)
-        return response
-
-
 class BaseSynthesisSynthesizerView(BaseSynthesizerView):
     """Base class for synthesis generation views"""
     def post_of_type(self, request, pk, synthesis_type, generate_func):
@@ -212,15 +196,6 @@ class BaseSynthesisSynthesizerView(BaseSynthesizerView):
                 result = generate_func(tct)
                 response = Response(status=result['status_code'])
 
-                if not tct.metadata_generated:
-                    if synthesis_type == SynthesisType.SUMMARY:
-                        if status.is_success(result['status_code']):
-                            client.create_task(
-                                path=reverse('transcript:generate-metadata',
-                                             args=[pk]),
-                                payload='',
-                                timeout_minutes=SYNTHESIS_TASK_TIMEOUT
-                            )
             else:
                 response = Response(status=status.HTTP_200_OK)
 

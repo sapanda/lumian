@@ -15,10 +15,10 @@ def initiate_synthesis(tct: Transcript) -> dict:
         transcript_id=tct.id, transcript=tct.transcript)
 
 
-def generate_metadata(summary: str) -> dict:
+def _update_metadata_from_result(tct: Transcript, result: dict):
     """Generate the metadata for the transcript."""
-    result = synthesis_client.get_transcript_metadata(transcript_id=tct.id)
     if (result["status_code"] < 300):
+        result = result['metadata']
         if result.get("title"):
             tct.title = result["title"]
         if result.get("interviewees"):
@@ -28,7 +28,6 @@ def generate_metadata(summary: str) -> dict:
         tct.metadata_generated = True
         tct.cost += Decimal(result["cost"])
         tct.save()
-    return result
 
 
 def _update_synthesis_from_result(tct: Transcript,
@@ -62,6 +61,7 @@ def generate_summary(tct: Transcript) -> dict:
             interviewee=tct.interviewee_names[0]
         )
         _update_synthesis_from_result(tct, synthesis, result)
+        _update_metadata_from_result(tct, result)
     except Synthesis.DoesNotExist as e:
         logger.exception(("Synthesis doesn't exist. "
                           "Summary generation will be skipped."),

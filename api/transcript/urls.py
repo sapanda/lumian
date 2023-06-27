@@ -14,8 +14,6 @@ urlpatterns = [
      path('', include(router.urls)),
      path('<int:pk>/generate/initiate',
           views.InitiateSynthesizerView.as_view(), name='initiate-synthesis'),
-     path('<int:pk>/generate/metadata',
-          views.GenerateMetadataView.as_view(), name='generate-metadata'),
      path('<int:pk>/generate/summary',
           views.GenerateSummaryView.as_view(), name='generate-summary'),
      path('<int:pk>/generate/concise',

@@ -48,8 +48,9 @@ class Synthesis(SynthesisInterface):
             "interviewee_names": [],
         }
 
-    def metadata_transcript(
-            self, indexed_transcript: str
+    def _openai_transcript_metadata(
+            self,
+            synthesis_result: List[SynthesisResultOutput]
     ) -> MetadataResult:
         """
             Return metadata for transcript
@@ -65,21 +66,19 @@ class Synthesis(SynthesisInterface):
         """
         cost = 0
         try:
-            tct_summary = self.summarize_transcript(indexed_transcript, 'test')
-            summary = [output['text'] for output in tct_summary['output']]
+            summary = [output['text'] for output in
+                       synthesis_result]
             summary = "".join(summary)
-            response = self._openai_transcript_metadata(summary)
-
+            prompt = METADATA_PROMPT_TEMPLATE.format(schema=METADATA_SCHEMA,
+                                                     summary=summary)
+            response = self.openai_client.execute_completion(prompt)
             cost += response["cost"]
             transcript_metadata = json.loads(response["output"])
             message = ""
         except json.decoder.JSONDecodeError as e:
-            logger.exception("JSONDecodeError when generating metadata",
-                             exc_info=e)
             transcript_metadata = self._get_empty_transcript_metadata()
             message = str(e)
         except Exception as e:
-            logger.exception("Exception when generating metadata", exc_info=e)
             transcript_metadata = self._get_empty_transcript_metadata()
             message = str(e)
 
@@ -91,15 +90,6 @@ class Synthesis(SynthesisInterface):
             "message": message
         }
         return data
-
-    def _openai_transcript_metadata(self, summary: str) -> dict:
-        """
-            Generate metadata for meeting transcript.
-            Metadata : title, interviewees, interviewers
-        """
-        prompt = METADATA_PROMPT_TEMPLATE.format(schema=METADATA_SCHEMA,
-                                                 summary=summary)
-        return self.openai_client.execute_completion(prompt)
 
     def summarize_transcript(
             self, indexed_transcript: str, interviewee: str
@@ -139,10 +129,13 @@ class Synthesis(SynthesisInterface):
             final_results.append({
                 'text': item['text'],
                 'references': list(temp)})
+
+        metadata = self._openai_transcript_metadata(final_results)
         data: SynthesisResult = {
             "output": final_results,
             "prompt": temp_result["prompt"],
-            "cost": cost
+            "cost": cost,
+            "metadata": metadata
         }
         return data
 

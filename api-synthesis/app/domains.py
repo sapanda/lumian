@@ -38,6 +38,15 @@ class SynthesisResult(TypedDict):
     output: 'list[SynthesisResultOutput]'
     prompt: str
     cost: float
+    metadata: 'MetadataResult'
+
+
+class SynthesisResponse(TypedDict):
+    """Result model for standard request"""
+    output: 'list[CitationResultOutput]'
+    prompt: str
+    cost: float
+    metadata: 'MetadataResult'
 
 
 class EmbedsResult(TypedDict):
