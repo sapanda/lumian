@@ -1,5 +1,5 @@
 import { AppBar, IconButton, Stack, Toolbar, Typography } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 const drawerWidth = 180;
@@ -29,6 +29,7 @@ function AppBarLabel(
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
+  const titleEditRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setEditTitle(title);
@@ -51,6 +52,7 @@ function AppBarLabel(
         <Stack>
           {isEditing ? (
             <input
+              ref={titleEditRef}
               type="text"
               value={editTitle}
               onChange={(e) => {
@@ -83,10 +85,16 @@ function AppBarLabel(
               component="div"
               sx={{ flexGrow: 1 }}
               {...(isTitleEditable && {
-                onDoubleClick: () => setIsEditing(true),
+                onDoubleClick: () => {
+                  setIsEditing(true);
+                  setTimeout(() => {
+                    titleEditRef.current?.focus();
+                  }, 100);
+                },
               })}
+              title={title}
             >
-              {title}
+              {title?.length > 30 ? title?.slice(0, 30) + "..." : title}
             </Typography>
           )}
           {!!breadcrumb && breadcrumb.title && (
@@ -95,7 +103,7 @@ function AppBarLabel(
               noWrap
               component="div"
               fontWeight="light"
-              sx={{ flexGrow: 1, cursor: "pointer" }}
+              sx={{ flexGrow: 1, cursor: "pointer", width: "max-content" }}
               onClick={() => navigate(breadcrumb.path)}
             >
               {breadcrumb.title}

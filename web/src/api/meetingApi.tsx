@@ -57,12 +57,38 @@ const getInterviewsList = async (project_id: number | undefined) => {
     )
   );
 
-  const transformedData = res.data.map((row: rowProps, index: number) => {
+  const transformedData = res.data.map((row: rowProps) => {
+    const formattedDate = row["start_time"]
+      ? new Date(row["start_time"]).toLocaleDateString([], {
+          month: "short",
+          day: "numeric",
+        })
+      : "-";
+    const start_time = row["start_time"]
+      ? new Date(row["start_time"]).toLocaleTimeString()
+      : "";
+
+    const end_time = row["end_time"]
+      ? new Date(row["end_time"]).toLocaleTimeString()
+      : "";
+
+    let length = "-";
+
+    const timeDifference =
+      !!start_time && !!end_time
+        ? new Date(row["end_time"]).getTime() -
+          new Date(row["start_time"]).getTime()
+        : 0;
+
+    if (timeDifference !== 0) {
+      const timeLengthInMins = Math.floor(timeDifference / 60000);
+      length = `${timeLengthInMins} ${timeLengthInMins > 1 ? "mins" : "min"}`;
+    }
     return {
       id: row["id"],
       title: row["title"],
-      date: `Feb ${index + 1}`,
-      length: `${index + 1 * 10 + 1} mins`,
+      date: formattedDate,
+      length,
     };
   });
   return transformedData;
