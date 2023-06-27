@@ -17,14 +17,14 @@ class Metadata(BaseModel):
 
 METADATA_SCHEMA = Metadata.schema_json()
 
-METADATA_PROMPT_TEMPLATE = """The following are summaries of various sections of an interview. Please fill out the Interview Title, Interviewee Names and Interviewer Names. Title should contain the Interviewee Name. The output should be formatted as a JSON instance that conforms to the JSON schema below.
+METADATA_PROMPT_TEMPLATE = """The following is the summary of an interview. Please fill out the Interview Title, Interviewee Names and Interviewer Names. Title should contain the Interviewee Name. The output should be formatted as a JSON instance that conforms to the JSON schema below.
 
 Output JSON Schema: ###
 {schema}
 ###
 
-Summaries: ###
-{summaries}
+Summary: ###
+{summary}
 ###
 """
 

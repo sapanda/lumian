@@ -184,7 +184,7 @@ def get_transcript(
     except Exception as e:
         content = str(e)
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return Response(content=content, status_code=status_code)
+        return JSONResponse(content=content, status_code=status_code)
 
 
 @app.post('/transcript/{id}')
@@ -205,7 +205,7 @@ def save_transcript(
     except Exception as e:
         content = str(e)
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return Response(content=content, status_code=status_code)
+        return JSONResponse(content=content, status_code=status_code)
 
 
 @app.delete('/transcript/{id}')
@@ -223,7 +223,7 @@ def delete_transcript(
     except Exception as e:
         content = str(e)
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return Response(content=content, status_code=status_code)
+        return JSONResponse(content=content, status_code=status_code)
 
 
 @app.get('/transcript/{id}/metadata')
@@ -247,7 +247,7 @@ def get_transcript_metadata(
     except Exception as e:
         content = str(e)
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return Response(content=content, status_code=status_code)
+        return JSONResponse(content=content, status_code=status_code)
 
 
 @app.get('/transcript/{id}/summary')
@@ -270,7 +270,7 @@ def get_transcript_summary(
     except Exception as e:
         content = str(e)
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return Response(content=content, status_code=status_code)
+        return JSONResponse(content=content, status_code=status_code)
 
 
 @app.get('/transcript/{id}/concise')
@@ -293,7 +293,7 @@ def get_transcript_concise(
     except Exception as e:
         content = str(e)
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return Response(content=content, status_code=status_code)
+        return JSONResponse(content=content, status_code=status_code)
 
 
 @app.post('/transcript/{id}/embeds')
@@ -318,7 +318,7 @@ def create_transcript_embeds(
     except Exception as e:
         content = str(e)
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return Response(content=content, status_code=status_code)
+        return JSONResponse(content=content, status_code=status_code)
 
 
 @app.post('/transcript/{id}/query')
@@ -341,4 +341,4 @@ def run_transcript_query(
     except Exception as e:
         content = str(e)
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return Response(content=content, status_code=status_code)
+        return JSONResponse(content=content, status_code=status_code)

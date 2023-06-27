@@ -15,7 +15,7 @@ def initiate_synthesis(tct: Transcript) -> dict:
         transcript_id=tct.id, transcript=tct.transcript)
 
 
-def generate_metadata(tct: Transcript) -> dict:
+def generate_metadata(summary: str) -> dict:
     """Generate the metadata for the transcript."""
     result = synthesis_client.get_transcript_metadata(transcript_id=tct.id)
     if (result["status_code"] < 300):
