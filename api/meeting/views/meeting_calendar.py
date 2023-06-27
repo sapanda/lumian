@@ -166,7 +166,7 @@ class CalendarStatusView(APIView):
                 user=request.user,
                 calendar_app=serializer.validated_data['app']
             )
-            return Response('Calendar Integrated', HTTP_200_OK)
+            return Response(HTTP_200_OK)
         except MeetingCalendar.DoesNotExist:
             response_data = "Calendar not integrated"
             response_status = HTTP_404_NOT_FOUND
