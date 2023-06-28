@@ -25,7 +25,7 @@ jobs:
       - name: Test Synthesis API
         run: >
           docker-compose run --rm api_synthesis sh -c
-          "PYTHONPATH=. pytest tests -s"
+          "PYTHONPATH=. pytest tests"
       - name: Lint API
         run: docker-compose run --rm api sh -c "flake8"
       - name: Lint Synthesis API
