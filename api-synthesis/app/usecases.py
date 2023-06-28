@@ -7,7 +7,7 @@ from .interfaces import (
     TranscriptRepositoryInterface, SynthesisInterface
 )
 from .utils import split_text_into_multiple_lines_for_speaker
-from typing import List, Dict
+from typing import List
 
 def _get_transcript(
         id: int,
@@ -54,7 +54,7 @@ def delete_transcript(
 
 
 def _synthesis_to_citation_result(sresults: SynthesisResult,
-                                  transcript_data: List[Dict]
+                                  transcript_data: List[dict]
                                   ) -> CitationResult:
     citations = []
     for text_reference in sresults["output"]:

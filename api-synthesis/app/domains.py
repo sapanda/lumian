@@ -2,8 +2,7 @@ from dataclasses import dataclass
 from typing import (
     TypedDict,
     List,
-    Optional,
-    Dict
+    Optional
 )
 
 
@@ -11,7 +10,7 @@ from typing import (
 class Transcript:
     """Data model for transcript"""
     id: int
-    data: List[Dict]
+    data: List[dict]
 
     def __str__(self):
         return '\n'.join([

@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 from fastapi import status
 import json
 import pytest
-from typing import List, Dict
+from typing import List
 
 from app.server import (
     app, get_openai_client, get_embeds_client,
@@ -41,7 +41,7 @@ class MockOpenAIClient(OpenAIClientInterface):
             'tokens_used': tokens_used
         }
 
-    def execute_chat(self, messages: List[Dict[str, str]] = None,
+    def execute_chat(self, messages: List[dict[str, str]] = None,
                      temperature: int = 0,
                      max_tokens: int = 100,
                      ) -> dict:
@@ -77,7 +77,7 @@ class MockOpenAIClient(OpenAIClientInterface):
 class MockEmbedsClient(EmbedsClientInterface):
     """Mock class for Embeddings Client"""
 
-    def upsert(self, vectors: List[Dict]):
+    def upsert(self, vectors: List[dict]):
         pass
 
     def search(self, id: int, embedding: List[int], limit: int = 5) -> dict:

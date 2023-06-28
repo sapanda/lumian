@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List
+from typing import List
 import pinecone
 from retry import retry
 
@@ -50,7 +50,7 @@ class PineconeClient(EmbedsClientInterface):
                 detail="Exception retrieving Pinecone Index")
         return index
 
-    def upsert(self, vectors: List[Dict]):
+    def upsert(self, vectors: List[dict]):
         """Upsert the vectors into the index."""
         logger.debug(f"Upserting to Pinecone: {len(vectors)} vectors")
         self.index.upsert(vectors=vectors, namespace=self.namespace)
