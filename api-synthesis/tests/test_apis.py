@@ -5,7 +5,6 @@ import json
 import pytest
 import os
 
-
 TEST_ENV_IS_LOCAL = os.environ.get('DEPLOY_MODE', 'local') == 'local'
 OPENAI_COSTS_REASON = "OpenAI Costs: Run only when\
  testing AI Synthesis changes"
@@ -110,6 +109,8 @@ def test_get_summary(setup_teardown):
     response = client.get(
         f'/transcript/{TRANSCRIPT_ID}/summary?interviewee=Jason')
     body = json.loads(response.content)
+    print(body)
+    print(response.content)
     assert body['cost'] > 0
     assert len(body['output']) > 0
     summary = ''.join([item['text'] for item in body['output']])
