@@ -74,7 +74,7 @@ class Synthesis(SynthesisInterface):
                                                      summary=summary)
             response = self.openai_client.execute_completion(prompt)
             cost += response["cost"]
-            print(f'response {response.json()}')
+            print(f'response {response}')
             transcript_metadata = json.loads(response["output"])
             print(f'transcript_metadata {transcript_metadata}')
             message = ""
