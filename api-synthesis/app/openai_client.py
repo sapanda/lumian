@@ -7,6 +7,7 @@ from typing import List, Dict
 
 from .errors import OpenAITimeoutException, OpenAIRateLimitException
 from .interfaces import OpenAIClientInterface
+from typing import List
 
 
 # Pricing
@@ -212,7 +213,7 @@ class OpenAIClient(OpenAIClientInterface):
     @retry(OpenAITimeoutException, tries=RETRY_TRIES,
            delay=RETRY_DELAY_TIMEOUT, backoff=RETRY_BACKOFF)
     def execute_embeds_batch(self,
-                             request_list: 'list[str]',
+                             request_list: List[str],
                              object_id: int = None,
                              object_desc: str = None,
                              start_index: int = 0,

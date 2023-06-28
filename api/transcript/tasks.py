@@ -1,5 +1,6 @@
 from decimal import Decimal
 import logging
+from typing import Dict, List
 from . import synthesis_client
 from .models import (
     Transcript, SynthesisType, Query, Embeds, Synthesis, SynthesisStatus
@@ -121,7 +122,7 @@ def generate_embeds(tct: Transcript) -> dict:
     return result
 
 
-def generate_answers(tct: Transcript) -> 'list[dict]':
+def generate_answers(tct: Transcript) -> List[Dict]:
     questions = tct.project.questions
     query_objects = []
     for question in questions:

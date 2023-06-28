@@ -61,7 +61,7 @@ class MockOpenAIClient(OpenAIClientInterface):
             "cost": 0.1
         }
 
-    def execute_embeds_batch(self, request_list: 'list[str]',
+    def execute_embeds_batch(self, request_list: List[str],
                              object_id: int = None,
                              object_desc: str = None,
                              start_index: int = 0,
@@ -77,10 +77,10 @@ class MockOpenAIClient(OpenAIClientInterface):
 class MockEmbedsClient(EmbedsClientInterface):
     """Mock class for Embeddings Client"""
 
-    def upsert(self, vectors: 'list[dict]'):
+    def upsert(self, vectors: List[Dict]):
         pass
 
-    def search(self, id: int, embedding: 'list[int]', limit: int = 5) -> dict:
+    def search(self, id: int, embedding: List[int], limit: int = 5) -> dict:
         return {
             "matches": [{
                 "id": "example-vector-1",
