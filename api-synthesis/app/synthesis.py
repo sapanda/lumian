@@ -69,11 +69,14 @@ class Synthesis(SynthesisInterface):
             summary = [output['text'] for output in
                        synthesis_result]
             summary = "".join(summary)
+            print(f'summary {summary}')
             prompt = METADATA_PROMPT_TEMPLATE.format(schema=METADATA_SCHEMA,
                                                      summary=summary)
             response = self.openai_client.execute_completion(prompt)
             cost += response["cost"]
+            print(f'response {response.json()}')
             transcript_metadata = json.loads(response["output"])
+            print(f'transcript_metadata {transcript_metadata}')
             message = ""
         except json.decoder.JSONDecodeError as e:
             transcript_metadata = self._get_empty_transcript_metadata()
@@ -89,6 +92,7 @@ class Synthesis(SynthesisInterface):
             "cost": cost,
             "message": message
         }
+        print(f'data {data}')
         return data
 
     def summarize_transcript(
@@ -130,13 +134,16 @@ class Synthesis(SynthesisInterface):
                 'text': item['text'],
                 'references': list(temp)})
 
+        print(final_results)
         metadata = self._openai_transcript_metadata(final_results)
+        print(f'metadat results {metadata}')
         data: SynthesisResult = {
             "output": final_results,
             "prompt": temp_result["prompt"],
             "cost": cost,
             "metadata": metadata
         }
+        print(f'data {data}')
         return data
 
     def _summarize_text(
