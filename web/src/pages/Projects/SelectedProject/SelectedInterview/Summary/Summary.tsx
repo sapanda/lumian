@@ -171,7 +171,7 @@ export default function Summary() {
             />
           </div>
 
-          {!questions ? (
+          {questions?.status !== 201 || !questions?.data ? (
             <div className="flex items-center gap-5">
               <CircularProgress />
               <span className="italic text-gray-500 text-12-400">
@@ -180,73 +180,82 @@ export default function Summary() {
             </div>
           ) : (
             <div className="flex flex-col gap-4" id="questions">
-              {questions?.map((item: queryProps, index: number) => {
-                const answer = item?.output;
-                return (
-                  <Stack>
-                    <span className="italic text-12-700 ">{item?.query}</span>
-                    <div>
-                      {answer.map((item, queryIndex) => {
-                        const regex = /^[a-zA-Z0-9]/;
-                        let selectedBgColor = "";
+              {questions?.data?.length > 0 ? (
+                questions?.data?.map((item: queryProps, index: number) => {
+                  const answer = item?.output;
+                  return (
+                    <Stack>
+                      <span className="italic text-12-700 ">{item?.query}</span>
+                      <div>
+                        {answer.map((item, queryIndex) => {
+                          const regex = /^[a-zA-Z0-9]/;
+                          let selectedBgColor = "";
 
-                        const answerIndex = `answer-${index}-${queryIndex}`;
+                          const answerIndex = `answer-${index}-${queryIndex}`;
 
-                        if (
-                          selectedIndex === answerIndex &&
-                          item.references.length > 0
-                        ) {
-                          selectedBgColor = "bg-blue-200";
-                        }
-                        if (item.text[0] === " " || !regex.test(item.text[0])) {
+                          if (
+                            selectedIndex === answerIndex &&
+                            item.references.length > 0
+                          ) {
+                            selectedBgColor = "bg-blue-200";
+                          }
+                          if (
+                            item.text[0] === " " ||
+                            !regex.test(item.text[0])
+                          ) {
+                            return (
+                              <>
+                                {item.text[0]}
+                                <span
+                                  key={index}
+                                  className={`text-12-500 ${
+                                    item?.references?.length > 0 &&
+                                    "hover:bg-blue-100"
+                                  } cursor-pointer ${selectedBgColor}`}
+                                  onClick={() =>
+                                    item?.references?.length > 0 &&
+                                    handleSummaryItemClick &&
+                                    handleSummaryItemClick(
+                                      item.references,
+                                      answerIndex
+                                    )
+                                  }
+                                >
+                                  {item.text.slice(1)}
+                                </span>
+                              </>
+                            );
+                          }
+
                           return (
-                            <>
-                              {item.text[0]}
-                              <span
-                                key={index}
-                                className={`text-12-500 ${
-                                  item?.references?.length > 0 &&
-                                  "hover:bg-blue-100"
-                                } cursor-pointer ${selectedBgColor}`}
-                                onClick={() =>
-                                  item?.references?.length > 0 &&
-                                  handleSummaryItemClick &&
-                                  handleSummaryItemClick(
-                                    item.references,
-                                    answerIndex
-                                  )
-                                }
-                              >
-                                {item.text.slice(1)}
-                              </span>
-                            </>
+                            <span
+                              key={index}
+                              className={`text-12-500 ${
+                                item?.references?.length > 0 &&
+                                "hover:bg-blue-100"
+                              } cursor-pointer ${selectedBgColor}`}
+                              onClick={() =>
+                                item.references.length > 0 &&
+                                handleSummaryItemClick &&
+                                handleSummaryItemClick(
+                                  item.references,
+                                  answerIndex
+                                )
+                              }
+                            >
+                              {item.text}
+                            </span>
                           );
-                        }
-
-                        return (
-                          <span
-                            key={index}
-                            className={`text-12-500 ${
-                              item?.references?.length > 0 &&
-                              "hover:bg-blue-100"
-                            } cursor-pointer ${selectedBgColor}`}
-                            onClick={() =>
-                              item.references.length > 0 &&
-                              handleSummaryItemClick &&
-                              handleSummaryItemClick(
-                                item.references,
-                                answerIndex
-                              )
-                            }
-                          >
-                            {item.text}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </Stack>
-                );
-              })}
+                        })}
+                      </div>
+                    </Stack>
+                  );
+                })
+              ) : (
+                <span className="italic text-gray-500 text-12-400">
+                  No questions available
+                </span>
+              )}
             </div>
           )}
         </div>

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { PROJECTS } from "../router/routes.constant";
 
 interface LoginResponse {
-  token: string;
+  data: { token: string };
 }
 interface LoginParams {
   email: string;
@@ -17,7 +17,7 @@ const login = async (credentials: LoginParams) => {
     `${authEndPoints.login}`,
     credentials
   );
-  return response.data;
+  return response.data.data;
 };
 
 const useLoginMutation = (credentials: LoginParams) => {

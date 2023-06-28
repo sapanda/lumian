@@ -143,6 +143,10 @@ export default function useInterview() {
     query,
     questions,
     interviewTitle: interviewData?.title ?? "",
+    interviewTime: {
+      start_time: interviewData?.start_time ?? "",
+      end_time: interviewData?.end_time ?? "",
+    },
     projectTitle: projectData?.name ?? "",
     projectId,
     interviewId,
