@@ -136,6 +136,8 @@ def test_get_concise(setup_teardown):
     response = client.get(
         f'/transcript/{TRANSCRIPT_ID}/concise?interviewee=Jason')
     body = json.loads(response.content)
+    print(response.content)
+    print(body)
     assert body['cost'] > 0
     assert len(body['output']) > 0
     concise = ''.join([item['text'] for item in body['output']])
