@@ -9,8 +9,8 @@ interface ProjectType {
   goal: string;
   questions: string[];
   title: string;
-  start_time: string | null;
-  end_time: string | null;
+  start_time_min: string | null;
+  end_time_max: string | null;
   transcript_count: string | null;
 }
 
@@ -22,23 +22,25 @@ interface ProjectPayloadType {
 
 const getProjects = async () => {
   const res = await axiosInstance.get(`${projectEndpoints.projectList}`);
-  const transformedData = res.data.map((project: ProjectType) => {
-    const { start_time, end_time, transcript_count } = project;
-    const startTime = start_time
-      ? new Date(start_time).toLocaleDateString([], {
+
+  if (!res.data.data) return [];
+  const transformedData = res.data.data.map((project: ProjectType) => {
+    const { start_time_min, end_time_max, transcript_count } = project;
+    const startTime = start_time_min
+      ? new Date(start_time_min).toLocaleDateString([], {
           month: "short",
           day: "numeric",
         })
       : "";
 
-    const endTime = end_time
-      ? new Date(end_time).toLocaleDateString([], {
+    const endTime = end_time_max
+      ? new Date(end_time_max).toLocaleDateString([], {
           month: "short",
           day: "numeric",
         })
       : "";
 
-    const formattedDate = startTime ? `${startTime} to ${endTime}` : "";
+    const formattedDate = startTime ? `${startTime} to ${endTime}` : "-";
     return {
       id: project.id,
       name: project.title,
@@ -55,10 +57,10 @@ const getProject = async (projectId: number | undefined) => {
   );
 
   const transformedData = {
-    id: res.data.id,
-    name: res.data.title,
-    goal: res.data.goal,
-    questions: res.data.questions,
+    id: res.data.data.id,
+    name: res.data.data.title,
+    goal: res.data.data.goal,
+    questions: res.data.data.questions,
   };
   return transformedData;
 };
@@ -82,6 +84,7 @@ const deleteProject = async (projectId: number) => {
     `${projectEndpoints.projectList}${projectId}/`
   );
 };
+
 const useGetProjectsQuery = () => {
   return useQuery(["projects"], getProjects, {
     staleTime: 1000 * 60 * 30, // 30 minutes

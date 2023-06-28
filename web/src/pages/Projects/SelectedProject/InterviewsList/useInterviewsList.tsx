@@ -21,20 +21,21 @@ const columns = [
 ];
 export default function useInterviewsList() {
   const { projectId } = useParams();
-  const { refetch: refreshProjectsList, data: projectsList } =
-    useGetProjectsQuery();
-  const { data: rows } = useInterviewsListQuery(parseInt(projectId || "0"));
+  const { refetch: refreshProjectsList } = useGetProjectsQuery();
+  const { data: interviews } = useInterviewsListQuery(
+    parseInt(projectId || "0")
+  );
   const { data: project, refetch: getProject } = useGetProjectQuery(
     parseInt(projectId || "0")
   );
 
   return {
-    rows,
+    rows: interviews?.interviewArr,
+    date: interviews?.date,
     columns,
     projectTitle: project?.name,
     projectId,
     getProject,
     refreshProjectsList,
-    projectsList,
   };
 }

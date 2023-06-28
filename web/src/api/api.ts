@@ -25,29 +25,21 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
   (response) => {
-    const showToast = !!response.config.headers["showToast"];
-    if (showToast) {
-      if (response.status === 201) {
-        toast.success(response.statusText, {
-          style: {
-            backgroundColor: "#00b300",
-            color: "#fff",
-            fill: "#fff",
-          },
-          theme: "colored",
-        });
-      } else if (response.status === 204) {
-        const msg = response.statusText;
-        toast.success(msg, {
-          style: {
-            backgroundColor: "#00b300",
-            color: "#fff",
-            fill: "#fff",
-          },
-          theme: "colored",
-        });
-      }
+    const hideToast = !!response.config.headers["hideToast"];
+    const msg = response.data.message;
+
+    if (hideToast || !msg) {
+      return response;
     }
+    toast.success(msg, {
+      style: {
+        backgroundColor: "#00b300",
+        color: "#fff",
+        fill: "#fff",
+      },
+      theme: "colored",
+    });
+
     return response;
   },
   (error) => {
