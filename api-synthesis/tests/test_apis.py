@@ -5,7 +5,6 @@ import json
 import pytest
 import os
 
-
 TEST_ENV_IS_LOCAL = os.environ.get('DEPLOY_MODE', 'local') == 'local'
 OPENAI_COSTS_REASON = "OpenAI Costs: Run only when\
  testing AI Synthesis changes"
@@ -90,29 +89,6 @@ def test_delete_transcript(setup_teardown):
             'Content-Type': 'text/plain'
         })
     assert response.status_code == status.HTTP_201_CREATED
-    response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
-    assert response.status_code == status.HTTP_204_NO_CONTENT
-
-
-@pytest.mark.skipif(TEST_ENV_IS_LOCAL, reason=OPENAI_COSTS_REASON)
-def test_get_transcript_metadta(setup_teardown):
-    """Test get transcript metadata method."""
-    response = client.get(
-        f'/transcript/{TRANSCRIPT_ID}/metadata')
-    assert response.status_code == status.HTTP_404_NOT_FOUND
-    response = client.post(
-        f"/transcript/{TRANSCRIPT_ID}",
-        content=transcript_text,
-        headers={
-            'Content-Type': 'text/plain'
-        })
-    assert response.status_code == status.HTTP_201_CREATED
-    response = client.get(
-        f'/transcript/{TRANSCRIPT_ID}/metadata')
-    body = json.loads(response.content)
-    assert 'title' in body
-    assert 'interviewees' in body
-    assert 'interviewers' in body
     response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
     assert response.status_code == status.HTTP_204_NO_CONTENT
 

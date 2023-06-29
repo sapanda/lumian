@@ -1,4 +1,5 @@
 import logging
+from typing import List
 import pinecone
 from retry import retry
 
@@ -49,12 +50,12 @@ class PineconeClient(EmbedsClientInterface):
                 detail="Exception retrieving Pinecone Index")
         return index
 
-    def upsert(self, vectors: 'list[dict]'):
+    def upsert(self, vectors: List[dict]):
         """Upsert the vectors into the index."""
         logger.debug(f"Upserting to Pinecone: {len(vectors)} vectors")
         self.index.upsert(vectors=vectors, namespace=self.namespace)
 
-    def search(self, id: int, embedding: 'list[int]', limit: int = 5) -> dict:
+    def search(self, id: int, embedding: List[int], limit: int = 5) -> dict:
         """Retrieve the closest embeds for the input embedding"""
         logger.debug(f"Executing Pinecone search for object with ID {id}")
         query_result = self.index.query(

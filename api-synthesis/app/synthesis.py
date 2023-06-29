@@ -41,15 +41,22 @@ class Synthesis(SynthesisInterface):
         self.embeds_client = embeds_client
         self.__dict__.update(kwargs)
 
-    def _get_empty_transcript_metadata(self):
+    def _get_empty_transcript_metadata(
+            self,
+            cost: float,
+            message: str
+            ):
         return {
             "title": "",
             "interviewer_names": [],
             "interviewee_names": [],
+            "cost": cost,
+            "message": message
         }
 
-    def metadata_transcript(
-            self, indexed_transcript: str
+    def _openai_transcript_metadata(
+            self,
+            synthesis_result: List[SynthesisResultOutput]
     ) -> MetadataResult:
         """
             Return metadata for transcript
@@ -64,62 +71,26 @@ class Synthesis(SynthesisInterface):
                     }
         """
         cost = 0
-
         try:
-            chunks = split_indexed_lines_into_chunks(
-                indexed_transcript, self.chunk_min_tokens_summary)
-
-            base_prompt = METADATA_PROMPT_TEMPLATE.format(
-                schema=METADATA_SCHEMA, summaries="")
-
-            results = []
-            message = ""
-            input_tokens = token_count(base_prompt)
-            for chunk in chunks:
-                chunk_str = "\n".join(chunk)
-                result = self._openai_summarize_chunk(chunk_str)
-                summary = split_and_extract_indices(result["output"])
-                summary_text = "".join([f"{summary[i]['text']}"
-                                        for i in range(len(summary))])
-                cost += result["cost"]
-                input_tokens += token_count(summary_text)
-
-                if input_tokens < self.max_input_tokens_metadata:
-                    results.append(summary_text)
-                else:
-                    break
-
-            response = self._openai_transcript_metadata(results)
+            summary = [output['text'] for output in
+                       synthesis_result]
+            summary = "".join(summary)
+            prompt = METADATA_PROMPT_TEMPLATE.format(schema=METADATA_SCHEMA,
+                                                     summary=summary)
+            response = self.openai_client.execute_completion(prompt)
             cost += response["cost"]
             transcript_metadata = json.loads(response["output"])
+            return {
+                "title": transcript_metadata["title"],
+                "interviewees": transcript_metadata["interviewee_names"],
+                "interviewers": transcript_metadata["interviewer_names"],
+                "cost": cost,
+                "message": ""
+            }
         except json.decoder.JSONDecodeError as e:
-            logger.exception("JSONDecodeError when generating metadata",
-                             exc_info=e)
-            transcript_metadata = self._get_empty_transcript_metadata()
-            message = str(e)
+            return self._get_empty_transcript_metadata(cost, str(e))
         except Exception as e:
-            logger.exception("Exception when generating metadata", exc_info=e)
-            transcript_metadata = self._get_empty_transcript_metadata()
-            message = str(e)
-
-        data: MetadataResult = {
-            "title": transcript_metadata["title"],
-            "interviewees": transcript_metadata["interviewee_names"],
-            "interviewers": transcript_metadata["interviewer_names"],
-            "cost": cost,
-            "message": message
-        }
-        return data
-
-    def _openai_transcript_metadata(self, summary_list: List[str]) -> dict:
-        """
-            Generate metadata for meeting transcript.
-            Metadata : title, interviewees, interviewers
-        """
-        summaries = "\n* ".join(summary_list)
-        prompt = METADATA_PROMPT_TEMPLATE.format(schema=METADATA_SCHEMA,
-                                                 summaries=summaries.strip())
-        return self.openai_client.execute_completion(prompt)
+            return self._get_empty_transcript_metadata(cost, str(e))
 
     def summarize_transcript(
             self, indexed_transcript: str, interviewee: str
@@ -132,8 +103,8 @@ class Synthesis(SynthesisInterface):
             [{"text": "The quick brown fox jumps", "references": [(16, 19)]},
              {"text": "over the lazy dog", "references": [(4, 9), (14)]}]
         """
-        chunks = split_indexed_transcript_lines_into_chunks(
-            indexed_transcript, interviewee, self.chunk_min_tokens_summary)
+        chunks = split_indexed_lines_into_chunks(
+            indexed_transcript, self.chunk_min_tokens_summary)
         results = []
         cost = 0
         for chunk in chunks:
@@ -159,10 +130,13 @@ class Synthesis(SynthesisInterface):
             final_results.append({
                 'text': item['text'],
                 'references': list(temp)})
+
+        metadata = self._openai_transcript_metadata(final_results)
         data: SynthesisResult = {
             "output": final_results,
             "prompt": temp_result["prompt"],
-            "cost": cost
+            "cost": cost,
+            "metadata": metadata
         }
         return data
 
