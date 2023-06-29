@@ -7,7 +7,6 @@ from typing import List, Dict
 
 from .errors import OpenAITimeoutException, OpenAIRateLimitException
 from .interfaces import OpenAIClientInterface
-from typing import List
 
 
 # Pricing

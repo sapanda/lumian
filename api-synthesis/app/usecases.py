@@ -9,6 +9,7 @@ from .interfaces import (
 from .utils import split_text_into_multiple_lines_for_speaker
 from typing import List
 
+
 def _get_transcript(
         id: int,
         repo: TranscriptRepositoryInterface
