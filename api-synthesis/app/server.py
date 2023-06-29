@@ -178,8 +178,15 @@ def get_transcript(
 ):
     logger.info(f" ---- GET request initiated :  /transcript/{id}")
     """API for getting a transcript the way it is stored"""
-    data = usecases.get_transcript(id, repo)
-    return data
+    try:
+        data = usecases.get_transcript(id, repo)
+        return data
+    except ObjectNotFoundException:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        content = str(e)
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return JSONResponse(content=content, status_code=status_code)
 
 
 @app.post('/transcript/{id}')
@@ -191,10 +198,18 @@ def save_transcript(
 ):
     logger.info(f" ---- POST request initiated :  /transcript/{id}")
     """API for saving a transcript"""
-    usecases.save_transcript(id=id, transcript=transcript,
-                             line_min_chars=settings.indexed_line_min_chars,
-                             repo=repo)
-    return Response(status_code=status.HTTP_201_CREATED)
+    try:
+        usecases.save_transcript(
+            id=id, transcript=transcript,
+            line_min_chars=settings.indexed_line_min_chars,
+            repo=repo)
+        return Response(status_code=status.HTTP_201_CREATED)
+    except ObjectAlreadyPresentException:
+        return Response(status_code=status.HTTP_409_CONFLICT)
+    except Exception as e:
+        content = str(e)
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return JSONResponse(content=content, status_code=status_code)
 
 
 @app.delete('/transcript/{id}')
@@ -205,28 +220,16 @@ def delete_transcript(
 ):
     logger.info(f" ---- DELETE request initiated :  /transcript/{id}")
     """API for deleting a transcript"""
-    usecases.delete_transcript(id, repo)
-    embeds_client.delete(id)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@app.get('/transcript/{id}/metadata')
-def get_transcript_metadata(
-    id: int,
-    repo: TranscriptRepositoryInterface = Depends(get_transcript_repo),
-    synthesis: Synthesis = Depends(get_synthesis)
-):
-    logger.info(f" ---- GET request initiated :  /transcript/{id}/metadata")
-    """
-        API for getting metadata of a meeting transcript :
-        Metadata : (title, interviewee, interviwerrs)
-    """
-    results = usecases.get_transcript_metadata(
-        id=id,
-        repo=repo,
-        synthesis=synthesis
-    )
-    return results
+    try:
+        usecases.delete_transcript(id, repo)
+        embeds_client.delete(id)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    except ObjectNotFoundException:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        content = str(e)
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return JSONResponse(content=content, status_code=status_code)
 
 
 @app.get('/transcript/{id}/summary')
@@ -238,13 +241,20 @@ def get_transcript_summary(
 ):
     logger.info(f" ---- GET request initiated :  /transcript/{id}/summary")
     """API for getting a summary of a transcript"""
-    results = usecases.get_transcript_summary(
-        id=id,
-        interviewee=interviewee,
-        repo=repo,
-        synthesis=synthesis
-    )
-    return results
+    try:
+        results = usecases.get_transcript_summary(
+            id=id,
+            interviewee=interviewee,
+            repo=repo,
+            synthesis=synthesis
+        )
+        return results
+    except ObjectNotFoundException:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        content = str(e)
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return JSONResponse(content=content, status_code=status_code)
 
 
 @app.get('/transcript/{id}/concise')
@@ -256,13 +266,20 @@ def get_transcript_concise(
 ):
     logger.info(f" ---- GET request initiated :  /transcript/{id}/concise")
     """API for getting a concise transcript"""
-    results = usecases.get_transcript_concise(
-        id=id,
-        interviewee=interviewee,
-        repo=repo,
-        synthesis=synthesis
-    )
-    return results
+    try:
+        results = usecases.get_transcript_concise(
+            id=id,
+            interviewee=interviewee,
+            repo=repo,
+            synthesis=synthesis
+        )
+        return results
+    except ObjectNotFoundException:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        content = str(e)
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return JSONResponse(content=content, status_code=status_code)
 
 
 @app.post('/transcript/{id}/embeds')
@@ -275,14 +292,21 @@ def create_transcript_embeds(
 ):
     logger.info(f" ---- POST request initiated :  /transcript/{id}/embeds")
     """API for generating vector embeds for a transcript"""
-    results = usecases.create_transcript_embeds(
-        id=id,
-        title=title,
-        interviewee=interviewee,
-        repo=repo,
-        synthesis=synthesis
-    )
-    return results
+    try:
+        results = usecases.create_transcript_embeds(
+            id=id,
+            title=title,
+            interviewee=interviewee,
+            repo=repo,
+            synthesis=synthesis
+        )
+        return results
+    except ObjectNotFoundException:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        content = str(e)
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return JSONResponse(content=content, status_code=status_code)
 
 
 @app.post('/transcript/{id}/query')
@@ -294,10 +318,17 @@ def run_transcript_query(
 ):
     logger.info(f" ---- POST request initiated :  /transcript/{id}/query")
     """API for running a query against a transcript"""
-    results = usecases.run_transcript_query(
-        id=id,
-        query=ask,
-        repo=repo,
-        synthesis=synthesis
-    )
-    return results
+    try:
+        results = usecases.run_transcript_query(
+            id=id,
+            query=ask,
+            repo=repo,
+            synthesis=synthesis
+        )
+        return results
+    except ObjectNotFoundException:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        content = str(e)
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return JSONResponse(content=content, status_code=status_code)
