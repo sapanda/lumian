@@ -3,8 +3,11 @@ from google_auth_oauthlib.flow import Flow
 import logging
 logger = logging.getLogger(__name__)
 
-SCOPES = ['https://www.googleapis.com/auth/calendar.events.readonly',
-          'https://www.googleapis.com/auth/userinfo.email', 'openid']
+SCOPES = [
+    'openid',
+    'https://www.googleapis.com/auth/calendar.events.readonly',
+    'https://www.googleapis.com/auth/userinfo.email'
+    ]
 TOKEN_URI = "https://oauth2.googleapis.com/token"
 AUTH_URI = "https://accounts.google.com/o/oauth2/auth"
 REDIRECT_URI = settings.GOOGLE_REDIRECT_URL

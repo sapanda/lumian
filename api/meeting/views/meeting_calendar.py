@@ -75,8 +75,6 @@ class OAuthResponseView(APIView):
             user = request.user
             code = serializer.validated_data['code']
             access_token, refresh_token = google_api.get_access_token(code)
-            logger.info(access_token)
-            logger.info(refresh_token)
             calendar_id = create_calendar(refresh_token)
             # calendar_email = retrieve_calendar(calendar_id)
             defaults = {
