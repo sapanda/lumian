@@ -29,7 +29,8 @@ from meeting.external_clients.google import (
 from meeting.external_clients.recallai import (
     create_calendar,
     # retrieve_calendar,
-    list_calendar_events
+    list_calendar_events,
+    delete_calendar
 )
 from meeting.serializers import (
     OAuthSerializer,
@@ -73,7 +74,9 @@ class OAuthResponseView(APIView):
 
             user = request.user
             code = serializer.validated_data['code']
-            _, refresh_token = google_api.get_access_token(code)
+            access_token, refresh_token = google_api.get_access_token(code)
+            logger.info(access_token)
+            logger.info(refresh_token)
             calendar_id = create_calendar(refresh_token)
             # calendar_email = retrieve_calendar(calendar_id)
             defaults = {
@@ -115,6 +118,7 @@ class EventDetailsView(APIView):
             )
 
             events = list_calendar_events(meeting_calendar_details.calendar_id)
+            # TODO : message for empty meetings
             for event in events:
                 meeting_url = event['meeting_url']
                 try:
@@ -174,4 +178,50 @@ class CalendarStatusView(APIView):
             response_data = str(e)
             response_status = HTTP_400_BAD_REQUEST
 
+        return Response(response_data, response_status)
+
+
+class DeleteCalendarView(APIView):
+
+    serializer_class = CalendarStatusSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='app',
+                description='calendar app (google, outlook)',
+                required=True,
+                type=str),
+        ]
+    )
+    def delete(self, request):
+
+        try:
+            serializer = self.serializer_class(data=request.query_params)
+            if (not serializer.is_valid()):
+                return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
+            user = request.user
+            calendar = MeetingCalendar.objects.get(
+                user=user,
+                calendar_app=serializer.validated_data['app']
+            )
+            # TODO : revoke access token
+            delete_calendar(calendar.calendar_id)
+            calendar.delete()
+            return Response(
+                'Calendar deleted successfully',
+                HTTP_200_OK
+            )
+
+        except MeetingCalendar.DoesNotExist:
+            response_data = "Calendar not integrated"
+            response_status = HTTP_404_NOT_FOUND
+        except RecallAITimeoutException as e:
+            response_data = str(e)
+            response_status = HTTP_408_REQUEST_TIMEOUT
+        except Exception as e:
+            response_data = str(e)
+            response_status = HTTP_400_BAD_REQUEST
         return Response(response_data, response_status)
