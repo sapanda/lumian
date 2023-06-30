@@ -116,7 +116,11 @@ class EventDetailsView(APIView):
             )
 
             events = list_calendar_events(meeting_calendar_details.calendar_id)
-            # TODO : message for empty meetings
+            if not events:
+                return Response(
+                    {'message': 'No meetings found'},
+                    status=HTTP_200_OK)
+            
             for event in events:
                 meeting_url = event['meeting_url']
                 try:
