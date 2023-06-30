@@ -37,7 +37,7 @@ interface MeetingDataType {
 
 const connectApp = async () => {
   const res = await axiosInstance.get(`${meetingEndPoints.oauthUrl}`);
-  const redirectUrl = res.data;
+  const redirectUrl = res.data.data;
   window.location.href = redirectUrl;
 };
 
