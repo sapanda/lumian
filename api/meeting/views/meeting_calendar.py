@@ -28,7 +28,7 @@ from meeting.external_clients.google import (
 )
 from meeting.external_clients.recallai import (
     create_calendar,
-    # retrieve_calendar,
+    retrieve_calendar,
     list_calendar_events,
     delete_calendar
 )
@@ -74,15 +74,16 @@ class OAuthResponseView(APIView):
 
             user = request.user
             code = serializer.validated_data['code']
-            access_token, refresh_token = google_api.get_access_token(code)
+            _, refresh_token = google_api.get_access_token(code)
             calendar_id = create_calendar(refresh_token)
-            # calendar_email = retrieve_calendar(calendar_id)
+            calendar_email = retrieve_calendar(calendar_id)
+            logger.info(calendar_email)
             defaults = {
                 'calendar_id': calendar_id,
             }
             MeetingCalendar.objects.update_or_create(
                 user=user,
-                calendar_email=f'placeholder-{user.id}@gmail.com',
+                calendar_email=calendar_email,
                 calendar_app=MeetingCalendar.CalendarChoices.GOOGLE,
                 defaults=defaults
             )
