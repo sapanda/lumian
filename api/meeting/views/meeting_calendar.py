@@ -121,7 +121,7 @@ class EventDetailsView(APIView):
                 return Response(
                     {'message': 'No meetings found'},
                     status=HTTP_200_OK)
-            
+
             for event in events:
                 meeting_url = event['meeting_url']
                 try:
