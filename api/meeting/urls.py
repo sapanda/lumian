@@ -10,7 +10,8 @@ from meeting.views.meeting_calendar import (
     OAuthRequestView,
     OAuthResponseView,
     EventDetailsView,
-    CalendarStatusView
+    CalendarStatusView,
+    DeleteCalendarView
 )
 
 urlpatterns = [
@@ -30,4 +31,6 @@ urlpatterns = [
           EventDetailsView.as_view(), name='calendar-meeting-details'),
      path('calendar/status',
           CalendarStatusView.as_view(), name='calendar-meeting-details'),
+     path('calendar/delete',
+          DeleteCalendarView.as_view(), name='calendar-meeting-details'),
 ]

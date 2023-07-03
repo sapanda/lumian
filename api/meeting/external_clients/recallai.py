@@ -22,6 +22,7 @@ MEETING_TRANSCRIPT_URL = "https://api.recall.ai/api/v1/bot/{}/transcript/"
 CREATE_CALENDAR_URL = "https://api.recall.ai/api/v2/calendars/"
 RETRIEVE_CALENDAR_URL = "https://api.recall.ai/api/v2/calendars/{}/"
 LIST_CALENDAR_EVENTS = "https://api.recall.ai/api/v2/calendar-events/"
+DELETE_CALENDAR_URL = "https://api.recall.ai/api/v2/calendars/{}/"
 
 
 @retry(RecallAITimeoutException, tries=3, delay=5, backoff=2)
@@ -178,7 +179,8 @@ def list_calendar_events(calendar_id, schedule=False):
         events = []
         for result in res['results']:
             event = {}
-            event['meeting_url'] = result['raw']['location']
+            #  TODO : test if meeting_url gives correct link consistently
+            event['meeting_url'] = result['meeting_url']
             event['start_time'] = result['raw']['start']['dateTime']
             event['end_time'] = result['raw']['end']['dateTime']
             event['title'] = result['raw']['summary']
@@ -187,6 +189,30 @@ def list_calendar_events(calendar_id, schedule=False):
             events.append(event)
 
         return events
+    except HTTPError as e:
+        error_msg = f"HTTP error occurred: {e}"
+        status_code = e.response.status_code
+        raise RecallAITimeoutException(error_msg, status_code)
+    except RequestException as e:
+        error_msg = f"An error occurred: {e}"
+        status_code = None
+        raise RecallAITimeoutException(error_msg, status_code)
+
+
+@retry(RecallAITimeoutException, tries=3, delay=10, backoff=3)
+def delete_calendar(calendar_id):
+
+    url = DELETE_CALENDAR_URL.format(calendar_id)
+    token = RECALL_API_KEY
+
+    headers = {
+        "Authorization": "Token " + token
+    }
+
+    try:
+        response = requests.delete(url, headers=headers)
+        response.raise_for_status()
+
     except HTTPError as e:
         error_msg = f"HTTP error occurred: {e}"
         status_code = e.response.status_code
