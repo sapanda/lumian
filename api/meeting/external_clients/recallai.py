@@ -12,7 +12,10 @@ from app.settings import (
     RECALL_TRANSCRIPT_PROVIDER,
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
-    GOOGLE_REDIRECT_URL
+    GOOGLE_REDIRECT_URL,
+    MICROSOFT_CLIENT_ID,
+    MICROSOFT_CLIENT_SECRET,
+    MICROSOFT_REDIRECT_URL
 )
 import logging
 logger = logging.getLogger(__name__)
@@ -85,18 +88,27 @@ def get_meeting_transcript(bot_id: str):
 
 
 @retry(RecallAITimeoutException, tries=3, delay=5, backoff=2)
-def create_calendar(refresh_token):
+def create_calendar(refresh_token, calendar_app):
 
     url = CREATE_CALENDAR_URL
     token = RECALL_API_KEY
 
-    payload = {
-        "platform": "google_calendar",
-        "oauth_client_id": GOOGLE_CLIENT_ID,
-        "oauth_client_secret": GOOGLE_CLIENT_SECRET,
-        "oauth_refresh_token": refresh_token,
-        "webhook_url": GOOGLE_REDIRECT_URL
-    }
+    if calendar_app == 'microsoft':
+        payload = {
+            "platform": 'microsoft_outlook',
+            "oauth_client_id": MICROSOFT_CLIENT_ID,
+            "oauth_client_secret": MICROSOFT_CLIENT_SECRET,
+            "oauth_refresh_token": refresh_token,
+            "webhook_url": MICROSOFT_REDIRECT_URL
+        }
+    else:
+        payload = {
+            "platform": 'google_calendar',
+            "oauth_client_id": GOOGLE_CLIENT_ID,
+            "oauth_client_secret": GOOGLE_CLIENT_SECRET,
+            "oauth_refresh_token": refresh_token,
+            "webhook_url": GOOGLE_REDIRECT_URL
+        }
 
     headers = {
         "accept": "application/json",
@@ -178,12 +190,22 @@ def list_calendar_events(calendar_id, schedule=False):
         res = response.json()
         events = []
         for result in res['results']:
-            event = {}
+            event = {
+                'meeting_url': '',
+                'start_time': None,
+                'end_time': None,
+                'title': ''
+            }
             #  TODO : test if meeting_url gives correct link consistently
-            event['meeting_url'] = result['meeting_url']
-            event['start_time'] = result['raw']['start']['dateTime']
-            event['end_time'] = result['raw']['end']['dateTime']
-            event['title'] = result['raw']['summary']
+            if 'meeting_url' in result:
+                event['meeting_url'] = result['meeting_url']
+            if 'start' in result['raw']:
+                event['start_time'] = result['raw']['start']['dateTime']
+                event['end_time'] = result['raw']['end']['dateTime']
+            if 'summary' in result['raw']:
+                event['title'] = result['raw']['summary']
+            elif 'subject' in result['raw']:
+                event['title'] = result['raw']['subject']
 
             # TODO : Check if meeting has been finished already
             events.append(event)

@@ -36,6 +36,7 @@ class MeetingCalendar(models.Model):
 
     class CalendarChoices(models.TextChoices):
         GOOGLE = 'google', _('Google Calendar')
+        MICROSOFT = 'microsoft', _('Microsoft Outlook')
         # TODO : add other meeting choices
 
     user = models.ForeignKey(
