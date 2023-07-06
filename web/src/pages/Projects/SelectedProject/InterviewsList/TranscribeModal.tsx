@@ -78,6 +78,8 @@ export default function TranscribeModal(props: TranscribeModalProps) {
                                   ...meeting,
                                   project_id: projectId,
                                   bot_name: "Lumian Notetaker",
+                                }).then(() => {
+                                  setModalOpen(false);
                                 });
                               }}
                             >
