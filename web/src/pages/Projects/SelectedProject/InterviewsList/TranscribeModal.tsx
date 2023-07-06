@@ -77,7 +77,6 @@ export default function TranscribeModal(props: TranscribeModalProps) {
                                 addBotToMeeting({
                                   ...meeting,
                                   project_id: projectId,
-                                  bot_name: "Lumian Notetaker",
                                 }).then(() => {
                                   setModalOpen(false);
                                 });

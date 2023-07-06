@@ -28,7 +28,6 @@ interface MeetingTranscriptPayloadType {
 
 interface MeetingDataType {
   project_id: string | number | null | undefined;
-  bot_name: string | undefined;
   meeting_url: string | undefined;
   start_time: string | undefined;
   end_time: string | undefined;
@@ -252,7 +251,6 @@ const addBotToMeeting = async (meetingDetails: MeetingDataType) => {
     !meetingDetails.meeting_url ||
     !meetingDetails.start_time ||
     !meetingDetails.end_time ||
-    !meetingDetails.bot_name ||
     !meetingDetails.title
   )
     return;
