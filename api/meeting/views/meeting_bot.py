@@ -54,13 +54,9 @@ class AddBotView(APIView):
                 return Response({'message': serializer.errors},
                                 HTTP_406_NOT_ACCEPTABLE)
 
-            bot_name = serializer.validated_data['bot_name']
             project_id = serializer.validated_data['project_id']
             meeting_url = serializer.validated_data['meeting_url']
-            start_time = serializer.validated_data['start_time']
-            end_time = serializer.validated_data['end_time']
-            title = serializer.validated_data['title']
-
+            bot_name = request.user.bot_name
             # TODO : Check if a bot is already present for that meeting
 
             if MeetingBot.objects.filter(meeting_url=meeting_url).exists():
@@ -75,9 +71,9 @@ class AddBotView(APIView):
                 status=MeetingBot.StatusChoices.READY,
                 message="Bot is created and ready to join the call",
                 meeting_url=meeting_url,
-                start_time=start_time,
-                end_time=end_time,
-                title=title,
+                start_time=bot['calendar_meetings'][0]['start_time'],
+                end_time=bot['calendar_meetings'][0]['start_time'],
+                title=bot['meeting_metadata']['title'],
                 transcript=None,
                 project=project
             )
@@ -234,6 +230,7 @@ class ScheduleBotView(APIView):
             events = list_calendar_events(calendar_id, schedule=True)
 
             for event in events:
+                # TODO : How to change bot name here
                 bot = add_bot_to_meeting(
                     bot_name='Lumian Notetaker',
                     meeting_url=event['meeting_url'],
