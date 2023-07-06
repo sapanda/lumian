@@ -1,5 +1,6 @@
 from decimal import Decimal
 import logging
+from typing import List
 from . import synthesis_client
 from .models import (
     Transcript, SynthesisType, Query, Embeds, Synthesis, SynthesisStatus
@@ -15,10 +16,10 @@ def initiate_synthesis(tct: Transcript) -> dict:
         transcript_id=tct.id, transcript=tct.transcript)
 
 
-def generate_metadata(tct: Transcript) -> dict:
+def _update_metadata_from_result(tct: Transcript, result: dict):
     """Generate the metadata for the transcript."""
-    result = synthesis_client.get_transcript_metadata(transcript_id=tct.id)
     if (result["status_code"] < 300):
+        result = result['metadata']
         if result.get("title"):
             tct.title = result["title"]
         if result.get("interviewees"):
@@ -28,7 +29,6 @@ def generate_metadata(tct: Transcript) -> dict:
         tct.metadata_generated = True
         tct.cost += Decimal(result["cost"])
         tct.save()
-    return result
 
 
 def _update_synthesis_from_result(tct: Transcript,
@@ -62,6 +62,7 @@ def generate_summary(tct: Transcript) -> dict:
             interviewee=tct.interviewee_names[0]
         )
         _update_synthesis_from_result(tct, synthesis, result)
+        _update_metadata_from_result(tct, result)
     except Synthesis.DoesNotExist as e:
         logger.exception(("Synthesis doesn't exist. "
                           "Summary generation will be skipped."),
@@ -121,19 +122,21 @@ def generate_embeds(tct: Transcript) -> dict:
     return result
 
 
-def generate_answers(tct: Transcript) -> 'list[dict]':
+def generate_answers(tct: Transcript) -> List[dict]:
     questions = tct.project.questions
     query_objects = []
     for question in questions:
-        # TODO: What if some question fails
-        query_obj = run_openai_query(
-            tct, question,
-            Query.QueryLevelChoices.PROJECT)
-        data = {
-                'query': question,
-                'output': query_obj.output
-            }
-        query_objects.append(data)
+        try:
+            query_obj = run_openai_query(
+                tct, question,
+                Query.QueryLevelChoices.PROJECT)
+            data = {
+                    'query': question,
+                    'output': query_obj.output
+                }
+            query_objects.append(data)
+        except Exception as e:
+            logger.exception(f"Query : {question}", exc_info=e)
     return query_objects
 
 

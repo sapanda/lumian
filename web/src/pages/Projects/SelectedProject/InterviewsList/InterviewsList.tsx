@@ -31,6 +31,7 @@ export default function InterviewsList() {
     projectId,
     getProject,
     refreshProjectsList,
+    date,
   } = useInterviewsList();
 
   const navigate = useNavigate();
@@ -73,6 +74,7 @@ export default function InterviewsList() {
     setPickedFiles([]);
     setModalOpen(false);
   };
+
   return (
     <PrivateContainer
       appBar={
@@ -87,7 +89,7 @@ export default function InterviewsList() {
           onEditEnd={(newTitle: string) => onEditEnd(newTitle)}
         >
           <div className="flex items-center justify-end w-full gap-5 px-10">
-            <Typography variant="body1">Feb 2 to Feb 10</Typography>
+            <Typography variant="body1">{date ?? ""}</Typography>
             <Button
               variant="contained"
               onClick={() => setTranscribeModalOpen(true)}

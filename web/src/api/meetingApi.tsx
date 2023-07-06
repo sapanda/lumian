@@ -37,7 +37,7 @@ interface MeetingDataType {
 
 const connectApp = async () => {
   const res = await axiosInstance.get(`${meetingEndPoints.oauthUrl}`);
-  const redirectUrl = res.data;
+  const redirectUrl = res.data.data;
   window.location.href = redirectUrl;
 };
 
@@ -56,16 +56,64 @@ const getInterviewsList = async (project_id: number | undefined) => {
       project_id.toString()
     )
   );
+  const start_time_min = res.data.data.start_time_min;
+  const end_time_max = res.data.data.end_time_max;
 
-  const transformedData = res.data.map((row: rowProps, index: number) => {
-    return {
-      id: row["id"],
-      title: row["title"],
-      date: `Feb ${index + 1}`,
-      length: `${index + 1 * 10 + 1} mins`,
-    };
-  });
-  return transformedData;
+  const startTime = start_time_min
+    ? new Date(start_time_min).toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+      })
+    : "";
+
+  const endTime = end_time_max
+    ? new Date(end_time_max).toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+      })
+    : "";
+
+  const formattedDate = startTime ? `${startTime} to ${endTime}` : "";
+
+  const transformedData = res.data.data.transcripts
+    ? res?.data?.data?.transcripts?.map((row: rowProps) => {
+        const formattedDate = row["start_time"]
+          ? new Date(row["start_time"]).toLocaleDateString([], {
+              month: "short",
+              day: "numeric",
+            })
+          : "-";
+        const start_time = row["start_time"]
+          ? new Date(row["start_time"]).toLocaleTimeString()
+          : "";
+
+        const end_time = row["end_time"]
+          ? new Date(row["end_time"]).toLocaleTimeString()
+          : "";
+
+        let length = "-";
+
+        const timeDifference =
+          !!start_time && !!end_time
+            ? new Date(row["end_time"]).getTime() -
+              new Date(row["start_time"]).getTime()
+            : 0;
+
+        if (timeDifference !== 0) {
+          const timeLengthInMins = Math.floor(timeDifference / 60000);
+          length = `${timeLengthInMins} ${
+            timeLengthInMins > 1 ? "mins" : "min"
+          }`;
+        }
+        return {
+          id: row["id"],
+          title: row["title"],
+          date: formattedDate,
+          length,
+        };
+      })
+    : [];
+  return { interviewArr: transformedData, date: formattedDate };
 };
 
 const startTranscribe = async (projectId: number | undefined) => {
@@ -107,7 +155,7 @@ const getMeetingTranscript = async (meetingId: number | undefined) => {
       meetingId.toString()
     )
   );
-  return res.data;
+  return res.data.data;
 };
 
 const updateMeetingTranscript = async (
@@ -132,7 +180,7 @@ const getMeetingConcise = async (meetingId: number | undefined) => {
       meetingId.toString()
     )
   );
-  return res.data;
+  return res.data.data;
 };
 
 const getMeetingSummary = async (meetingId: number | undefined) => {
@@ -143,7 +191,7 @@ const getMeetingSummary = async (meetingId: number | undefined) => {
       meetingId.toString()
     )
   );
-  return res.data;
+  return res.data.data;
 };
 
 const getMeetingQuery = async (
@@ -156,7 +204,8 @@ const getMeetingQuery = async (
       .replace(":interviewId", meetingId.toString())
       .replace(":query_level", queryLevel)
   );
-  return res.data;
+
+  return { data: res.data.data, queryLevel: queryLevel, status: res.status };
 };
 
 const askQuery = async (
@@ -181,22 +230,21 @@ const askQuery = async (
       headers: {
         "Content-Type": `multipart/form-data; boundary=${boundary}`,
         accept: "application/json",
-        showToast: false,
       },
     }
   );
-  const data = await res.data;
+  const data = await res.data.data;
   return data;
 };
 
 const getCalendarStatus = async () => {
   const res = await axiosInstance.get(meetingEndPoints.calendarStatus);
-  return res.data;
+  return res.data.data;
 };
 
 const getMeetingsList = async () => {
   const res = await axiosInstance.get(meetingEndPoints.meetingsList);
-  return res.data;
+  return res.data.data;
 };
 
 const addBotToMeeting = async (meetingDetails: MeetingDataType) => {
@@ -212,7 +260,7 @@ const addBotToMeeting = async (meetingDetails: MeetingDataType) => {
     meetingEndPoints.addBotToMeeting,
     meetingDetails
   );
-  return res.data;
+  return res.data.data;
 };
 
 // hooks
@@ -287,13 +335,19 @@ const useGetMeetingQuery = (
   queryLevel: "project" | "transcript"
 ) => {
   const queryKey: QueryKey = ["meetingQuery", meetingId, queryLevel];
-  return useQuery(queryKey, () => getMeetingQuery(meetingId, queryLevel), {
-    staleTime: 1000 * 60 * 30, // 30 minutes
-    enabled: !!meetingId,
-    // refetchInterval(data) {
-    //   return data ? 1000 * 60 * 30 : 5000;
-    // },
-  });
+  const result = useQuery(
+    queryKey,
+    () => getMeetingQuery(meetingId, queryLevel),
+    {
+      staleTime: 1000 * 60 * 30, // 30 minutes
+      enabled: !!meetingId,
+    }
+  );
+
+  const { data, refetch } = result;
+  data?.status === 202 && refetch();
+
+  return result;
 };
 
 const useAskQueryMutation = (

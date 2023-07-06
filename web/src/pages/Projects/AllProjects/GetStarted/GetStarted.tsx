@@ -1,6 +1,7 @@
 import { Button, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { PROJECTS } from "../../../../router/routes.constant";
+import { connectApp } from "../../../../api/meetingApi";
 
 export default function GetStarted() {
   const navigate = useNavigate();
@@ -21,7 +22,9 @@ export default function GetStarted() {
               </i>
             </Typography>
             <div className="mt-2">
-              <Button variant="contained">Connect App</Button>
+              <Button variant="contained" onClick={() => connectApp()}>
+                Connect App
+              </Button>
             </div>
           </div>
           <div className="flex flex-col">

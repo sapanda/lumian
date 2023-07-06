@@ -26,13 +26,8 @@ const columns = [
     width: 200,
   },
   {
-    field: "participants",
-    headerName: "Participants",
-    width: 200,
-  },
-  {
-    field: "owner",
-    headerName: "Owner",
+    field: "interviews",
+    headerName: "Interviews",
     width: 200,
   },
 ];
@@ -71,11 +66,13 @@ export default function AllProjects() {
       appBar={
         <PrivateAppbar title="Projects" icon={projects_icon}>
           <div className="flex items-center justify-end w-full gap-5 px-10">
-            {status !== "loading" && status !== "success" && (
-              <Button variant="contained" onClick={() => connectApp()}>
-                Connect App
-              </Button>
-            )}
+            {status !== "loading" &&
+              status !== "success" &&
+              allProjects?.length > 0 && (
+                <Button variant="contained" onClick={() => connectApp()}>
+                  Connect App
+                </Button>
+              )}
             <Button
               variant="contained"
               onClick={() => navigate(PROJECTS.CREATE_PROJECT)}

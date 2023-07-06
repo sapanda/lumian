@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 from fastapi import status
 import json
 import pytest
-from typing import List, Dict
+from typing import List
 
 from app.server import (
     app, get_openai_client, get_embeds_client,
@@ -41,7 +41,7 @@ class MockOpenAIClient(OpenAIClientInterface):
             'tokens_used': tokens_used
         }
 
-    def execute_chat(self, messages: List[Dict[str, str]] = None,
+    def execute_chat(self, messages: List[dict[str, str]] = None,
                      temperature: int = 0,
                      max_tokens: int = 100,
                      ) -> dict:
@@ -61,7 +61,7 @@ class MockOpenAIClient(OpenAIClientInterface):
             "cost": 0.1
         }
 
-    def execute_embeds_batch(self, request_list: 'list[str]',
+    def execute_embeds_batch(self, request_list: List[str],
                              object_id: int = None,
                              object_desc: str = None,
                              start_index: int = 0,
@@ -77,10 +77,10 @@ class MockOpenAIClient(OpenAIClientInterface):
 class MockEmbedsClient(EmbedsClientInterface):
     """Mock class for Embeddings Client"""
 
-    def upsert(self, vectors: 'list[dict]'):
+    def upsert(self, vectors: List[dict]):
         pass
 
-    def search(self, id: int, embedding: 'list[int]', limit: int = 5) -> dict:
+    def search(self, id: int, embedding: List[int], limit: int = 5) -> dict:
         return {
             "matches": [{
                 "id": "example-vector-1",
@@ -229,28 +229,6 @@ def test_delete_transcript(setup_teardown):
             'Content-Type': 'text/plain'
         })
     assert response.status_code == status.HTTP_201_CREATED
-    response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
-    assert response.status_code == status.HTTP_204_NO_CONTENT
-
-
-def test_get_metadata(setup_teardown):
-    """Test get transcript metadata method."""
-    response = client.get(
-        f'/transcript/{TRANSCRIPT_ID}/metadata')
-    assert response.status_code == status.HTTP_404_NOT_FOUND
-    response = client.post(
-        f"/transcript/{TRANSCRIPT_ID}",
-        content=transcript_text,
-        headers={
-            'Content-Type': 'text/plain'
-        })
-    assert response.status_code == status.HTTP_201_CREATED
-    response = client.get(
-        f'/transcript/{TRANSCRIPT_ID}/metadata')
-    body = json.loads(response.content)
-    assert 'title' in body
-    assert 'interviewees' in body
-    assert 'interviewers' in body
     response = client.delete(f"/transcript/{TRANSCRIPT_ID}")
     assert response.status_code == status.HTTP_204_NO_CONTENT
 

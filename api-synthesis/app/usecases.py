@@ -1,11 +1,13 @@
 from .domains import (
-    Transcript, CitationResult, SynthesisResult, EmbedsResult, MetadataResult
+    Transcript, CitationResult, SynthesisResult, EmbedsResult,
+    SynthesisResponse
 )
 from .errors import ObjectNotFoundException, ObjectAlreadyPresentException
 from .interfaces import (
     TranscriptRepositoryInterface, SynthesisInterface
 )
 from .utils import split_text_into_multiple_lines_for_speaker
+from typing import List
 
 
 def _get_transcript(
@@ -53,7 +55,7 @@ def delete_transcript(
 
 
 def _synthesis_to_citation_result(sresults: SynthesisResult,
-                                  transcript_data: 'list[dict]'
+                                  transcript_data: List[dict]
                                   ) -> CitationResult:
     citations = []
     for text_reference in sresults["output"]:
@@ -74,25 +76,18 @@ def _synthesis_to_citation_result(sresults: SynthesisResult,
     return retval
 
 
-def get_transcript_metadata(
-        id: int,
-        repo: TranscriptRepositoryInterface,
-        synthesis: SynthesisInterface) -> MetadataResult:
-    """Generate a summary from the transcript"""
-    transcript = _get_transcript(id, repo)
-    return synthesis.metadata_transcript(str(transcript))
-
-
 def get_transcript_summary(
         id: int,
         interviewee: str,
         repo: TranscriptRepositoryInterface,
-        synthesis: SynthesisInterface) -> CitationResult:
+        synthesis: SynthesisInterface) -> SynthesisResponse:
     """Generate a summary from the transcript"""
     transcript = _get_transcript(id, repo)
     data = transcript.data
     results = synthesis.summarize_transcript(str(transcript), interviewee)
-    return _synthesis_to_citation_result(results, data)
+    synthesis_results = _synthesis_to_citation_result(results, data)
+    synthesis_results['metadata'] = results['metadata']
+    return synthesis_results
 
 
 def get_transcript_concise(

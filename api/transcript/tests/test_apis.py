@@ -76,7 +76,7 @@ class TranscriptAPITests(APITestCase):
         payload = default_transcript_payload(self.project)
         res = self.client.post(TRANSCRIPT_URL, payload)
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        tpt = Transcript.objects.get(id=res.data['id'])
+        tpt = Transcript.objects.get(id=res.data['data']['id'])
         for k, v in payload.items():
             attr = getattr(tpt, k)
             if not isinstance(attr, Project):
@@ -93,7 +93,6 @@ class TranscriptAPITests(APITestCase):
             'transcript': '',
         }
         res = self.client.post(TRANSCRIPT_URL, payload)
-
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(res.data['title'][0],
                          'This field may not be blank.')
@@ -113,7 +112,7 @@ class TranscriptAPITests(APITestCase):
         trancripts = Transcript.objects.all().order_by('-id')
         serializer = TranscriptSerializer(trancripts, many=True)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serializer.data)
+        self.assertEqual(res.data['data']['transcripts'], serializer.data)
 
     def test_transcript_list_limited_to_user(self, patched_signal):
         """Test list of transcripts is limited to authenticated user."""
@@ -125,8 +124,9 @@ class TranscriptAPITests(APITestCase):
         res = self.client.get(TRANSCRIPT_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 1)
-        self.assertEqual(res.data[0]['project'], self.project.id)
+        self.assertEqual(len(res.data['data']), 3)
+        self.assertEqual(res.data['data']['transcripts'][0]['project'],
+                         self.project.id)
 
     def test_transcript_filter(self, patched_signal):
         """Test filtering the transcript list to requested project."""
@@ -138,8 +138,9 @@ class TranscriptAPITests(APITestCase):
         res = self.client.get(TRANSCRIPT_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 1)
-        self.assertEqual(res.data[0]['project'], self.project.id)
+        self.assertEqual(len(res.data['data']), 3)
+        self.assertEqual(res.data['data']['transcripts'][0]['project'],
+                         self.project.id)
 
     def test_partial_update(self, patched_signal):
         """Test partial update of a transcript."""
@@ -164,7 +165,7 @@ class TranscriptAPITests(APITestCase):
         url = detail_url(tpt.id)
         res = self.client.delete(url)
 
-        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertFalse(Transcript.objects.filter(id=tpt.id).exists())
 
     def test_create_transcript_other_users_failure(self, patched_signal):
@@ -200,7 +201,7 @@ class TranscriptAPITests(APITestCase):
         payload = default_transcript_payload(self.project)
         res = self.client.post(TRANSCRIPT_URL, payload)
 
-        url = summary_url(res.data['id'])
+        url = summary_url(res.data['data']['id'])
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_202_ACCEPTED)
@@ -210,7 +211,7 @@ class TranscriptAPITests(APITestCase):
         """Test getting a summary of a transcript."""
         payload = default_transcript_payload(self.project)
         res = self.client.post(TRANSCRIPT_URL, payload)
-        tpt = Transcript.objects.get(id=res.data['id'])
+        tpt = Transcript.objects.get(id=res.data['data']['id'])
         summary = Synthesis.objects.get(
             transcript=tpt,
             output_type=SynthesisType.SUMMARY
@@ -236,7 +237,7 @@ class TranscriptAPITests(APITestCase):
         payload = default_transcript_payload(self.project)
         res = self.client.post(TRANSCRIPT_URL, payload)
 
-        url = concise_url(res.data['id'])
+        url = concise_url(res.data['data']['id'])
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_202_ACCEPTED)
@@ -246,7 +247,7 @@ class TranscriptAPITests(APITestCase):
         """Test getting a concise transcript."""
         payload = default_transcript_payload(self.project)
         res = self.client.post(TRANSCRIPT_URL, payload)
-        tpt = Transcript.objects.get(id=res.data['id'])
+        tpt = Transcript.objects.get(id=res.data['data']['id'])
         concise = Synthesis.objects.get(
             transcript=tpt,
             output_type=SynthesisType.CONCISE
@@ -305,8 +306,7 @@ class TranscriptAPITests(APITestCase):
         url = query_url(tpt.id)
         url = f"{url}?query_level=transcript"
         res = self.client.get(url)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 0)
+        self.assertEqual(res.status_code, status.HTTP_202_ACCEPTED)
 
     def test_query_list_invalid_transcript(self, patched_signal):
         """Test that the query GET request fails with invalid transcript."""
@@ -353,8 +353,10 @@ class EndToEndQueryTests(APITestCase):
         res = self.client.post(url, {'query': query})
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(res.data['query'], query, "Wrong query string")
-        self.assertTrue('Boise' in res.data['result'], "Bad result")
+        self.assertEqual(res.data['data']['query'],
+                         query,
+                         "Wrong query string")
+        self.assertTrue('Boise' in res.data['data']['result'], "Bad result")
 
     @skip("Needs synthesis Service to be running")
     def test_query_list_valid(self, patched_signal):
@@ -369,4 +371,4 @@ class EndToEndQueryTests(APITestCase):
         url = f"{url}?query_level=transcript"
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 2)
+        self.assertEqual(len(res.data['data']), 2)

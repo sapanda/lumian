@@ -2,6 +2,7 @@
 Views for the transcript API.
 """
 from django.db import transaction
+from django.db.models import Min, Max
 from django.urls import reverse
 from drf_spectacular.utils import (
     extend_schema, inline_serializer, OpenApiParameter, OpenApiTypes
@@ -17,6 +18,9 @@ from rest_framework import (
 )
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.exceptions import (
+    ValidationError
+)
 
 from . import tasks
 from .models import (
@@ -30,7 +34,6 @@ from .repository import create_synthesis_entry
 from app.settings import SYNTHESIS_TASK_TIMEOUT
 from core.gcloud_client import client
 from project.models import Project
-
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +69,19 @@ class TranscriptView(viewsets.ModelViewSet):
             tct = serializer.save()
             create_synthesis_entry(tct)
 
+    def create(self, request, *args, **kwargs):
+        instance = super().create(request, *args, **kwargs)
+        return Response({'data': instance.data,
+                         'message': 'Transcript Created'},
+                        status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+
+        message = "Transcript deleted successfully"
+        return Response({'message': message}, status=status.HTTP_200_OK)
+
     @extend_schema(parameters=[
         OpenApiParameter(
             name='project',
@@ -77,7 +93,29 @@ class TranscriptView(viewsets.ModelViewSet):
     ])
     def list(self, request, *args, **kwargs):
         """Override the list method to enable filtering by project"""
-        return super().list(request, *args, **kwargs)
+        queryset = self.filter_queryset(self.get_queryset())
+        if queryset:
+            # Get the minimum start_time and maximum end_time from the queryset
+            start_time_min = queryset.aggregate(
+                Min('start_time')).get('start_time__min')
+            end_time_max = queryset.aggregate(
+                Max('end_time')).get('end_time__max')
+
+            # Serialize the queryset
+            serializer = self.get_serializer(queryset, many=True)
+            transcripts = serializer.data
+
+            # Create the response dictionary
+            data = {
+                'transcripts': transcripts,
+                'start_time_min': start_time_min,
+                'end_time_max': end_time_max
+            }
+            message = ''
+        else:
+            data = {}
+            message = 'No transcripts found'
+        return Response({'data': data, 'message': message})
 
     def get_queryset(self):
         """Retrieve transcripts for authenticated user."""
@@ -114,27 +152,6 @@ class InitiateSynthesizerView(BaseSynthesizerView):
             result = tasks.initiate_synthesis(tct)
             status_code = result['status_code']
             if status.is_success(status_code):
-                client.create_task(
-                    path=reverse('transcript:generate-metadata', args=[pk]),
-                    payload='',
-                    timeout_minutes=SYNTHESIS_TASK_TIMEOUT
-                )
-            response = Response(status=status_code)
-        except Transcript.DoesNotExist:
-            response = Response(status=status.HTTP_404_NOT_FOUND)
-        return response
-
-
-class GenerateMetadataView(BaseSynthesizerView):
-    """Generate trancsript metadata AND kick off the other synthesis tasks"""
-    def post(self, request, pk):
-        try:
-            tct = Transcript.objects.get(pk=pk)
-            if tct.metadata_generated:
-                response = Response(status=status.HTTP_200_OK)
-            else:
-                result = tasks.generate_metadata(tct)
-                status_code = result['status_code']
                 if status.is_success(status_code):
                     client.create_task(
                         path=reverse('transcript:generate-summary', args=[pk]),
@@ -151,7 +168,7 @@ class GenerateMetadataView(BaseSynthesizerView):
                         payload='',
                         timeout_minutes=SYNTHESIS_TASK_TIMEOUT
                     )
-                response = Response(status=status_code)
+            response = Response(status=status_code)
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
         return response
@@ -178,6 +195,7 @@ class BaseSynthesisSynthesizerView(BaseSynthesizerView):
             if run_generation:
                 result = generate_func(tct)
                 response = Response(status=result['status_code'])
+
             else:
                 response = Response(status=status.HTTP_200_OK)
 
@@ -299,6 +317,17 @@ class QueryView(APIView):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
+    def _check_embeds(self, embeds):
+        if embeds.status == SynthesisStatus.FAILED:
+            return status.HTTP_500_INTERNAL_SERVER_ERROR
+
+        elif (embeds.status == SynthesisStatus.NOT_STARTED or
+                embeds.status == SynthesisStatus.IN_PROGRESS):
+            return status.HTTP_202_ACCEPTED
+
+        elif embeds.status == SynthesisStatus.COMPLETED:
+            return status.HTTP_201_CREATED
+
     @extend_schema(
         request=inline_serializer(
             name="ExecuteQuerySerializer",
@@ -310,26 +339,22 @@ class QueryView(APIView):
         try:
             tct = Transcript.objects.get(pk=pk)
             embeds = Embeds.objects.get(transcript=pk)
+            embeds_status = self._check_embeds(embeds)
+            if embeds_status != status.HTTP_201_CREATED:
+                return Response(status=embeds_status)
 
-            if embeds.status == SynthesisStatus.FAILED:
-                response = Response(
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-            elif (embeds.status == SynthesisStatus.NOT_STARTED or
-                  embeds.status == SynthesisStatus.IN_PROGRESS):
-                response = Response(status=status.HTTP_202_ACCEPTED)
-
-            elif embeds.status == SynthesisStatus.COMPLETED:
-                query_obj = tasks.run_openai_query(
-                    tct, query,
-                    Query.QueryLevelChoices.TRANSCRIPT)
-                data = {
-                    'query': query,
-                    'output': query_obj.output
-                }
-                response = Response(data, status=status.HTTP_201_CREATED)
+            query_obj = tasks.run_openai_query(
+                tct, query,
+                Query.QueryLevelChoices.TRANSCRIPT)
+            data = {
+                'query': query,
+                'output': query_obj.output
+            }
+            response = Response(data, status=status.HTTP_201_CREATED)
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
+        except Embeds.DoesNotExist:
+            response = Response(status=status.HTTP_202_ACCEPTED)
 
         return response
 
@@ -345,17 +370,31 @@ class QueryView(APIView):
     def get(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)  # For checking 404
-            query_level = request.query_params.get('query_level')
-            if not query_level:
-                return Response('query_level is required (project,transcript)',
-                                status.HTTP_406_NOT_ACCEPTABLE)
+            embeds = Embeds.objects.get(transcript=pk)
+            embeds_status = self._check_embeds(embeds)
+            if embeds_status != status.HTTP_201_CREATED:
+                response = Response(status=embeds_status)
 
-            queryset = Query.objects.filter(
-                transcript=pk,
-                query_level=query_level)
+            else:
+                query_level = request.query_params.get('query_level')
+                if not query_level:
+                    raise ValidationError()
 
-            serializer = QuerySerializer(queryset, many=True)
-            response = Response(serializer.data, status=status.HTTP_200_OK)
+                queryset = Query.objects.filter(
+                    transcript=pk,
+                    query_level=query_level)
+                data = QuerySerializer(queryset, many=True).data
+                response = Response(data, status=status.HTTP_201_CREATED)
+
+                if query_level == Query.QueryLevelChoices.PROJECT:
+                    project = Project.objects.get(id=tct.project.id)
+                    question_count = len(project.questions)
+                    if queryset.count() != question_count:
+                        response = Response(data,
+                                            status=status.HTTP_202_ACCEPTED)
+
+            return response
+
         except Transcript.DoesNotExist:
             response = Response(
                 f'Transcript does not exist with id {pk}',
@@ -368,4 +407,15 @@ class QueryView(APIView):
             response = Response(
                 f'Query does not exist for transcript {pk}',
                 status.HTTP_404_NOT_FOUND)
+        except Embeds.DoesNotExist:
+            response = Response(
+                f'Embeds does not exist for transcript {pk}',
+                status=status.HTTP_202_ACCEPTED)
+        except ValidationError:
+            response = Response(
+                'query_level is required (project,transcript)',
+                status.HTTP_406_NOT_ACCEPTABLE)
+        except Exception as e:
+            response = Response(str(e), status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         return response
