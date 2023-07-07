@@ -74,12 +74,12 @@ class AddBotView(APIView):
                 start_time=bot['calendar_meetings'][0]['start_time'],
                 end_time=bot['calendar_meetings'][0]['end_time'],
                 title=bot['meeting_metadata']['title'],
-                transcript=None,
+                transcript=None,w
                 project=project
             )
 
             response_data = bot['id']
-            response_message = 'Bot successfully added'
+            response_message = f"Transcriber added to {bot['meeting_metadata']['title']}"
             response_status = HTTP_201_CREATED
             return Response({'data': response_data,
                              'message': response_message},
