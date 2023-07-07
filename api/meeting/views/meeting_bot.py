@@ -66,20 +66,23 @@ class AddBotView(APIView):
             project = Project.objects.get(id=project_id)
 
             bot = add_bot_to_meeting(bot_name, meeting_url)
+            title = bot['meeting_metadata']['title']
+            start_time = bot['calendar_meetings'][0]['start_time']
+            end_time = bot['calendar_meetings'][0]['end_time']
             MeetingBot.objects.create(
                 id=bot['id'],
                 status=MeetingBot.StatusChoices.READY,
                 message="Bot is created and ready to join the call",
                 meeting_url=meeting_url,
-                start_time=bot['calendar_meetings'][0]['start_time'],
-                end_time=bot['calendar_meetings'][0]['end_time'],
-                title=bot['meeting_metadata']['title'],
+                start_time=start_time,
+                end_time=end_time,
+                title=title,
                 transcript=None,
                 project=project
             )
 
             response_data = bot['id']
-            response_message = f"Transcriber added to {bot['meeting_metadata']['title']}"
+            response_message = f"Transcriber added to {title}"
             response_status = HTTP_201_CREATED
             return Response({'data': response_data,
                              'message': response_message},
