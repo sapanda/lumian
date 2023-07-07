@@ -53,6 +53,7 @@ export default function AllProjects() {
     if (code && !apiCalledFlag.current) {
       apiCalledFlag.current = true;
       const app = localStorage.getItem("app") as "google" | "microsoft";
+
       if (app === "google" || app === "microsoft")
         sendAccessToken({
           code,

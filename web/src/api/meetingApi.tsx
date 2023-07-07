@@ -42,7 +42,7 @@ const connectApp = async (appName: "google" | "microsoft") => {
     },
   });
   if (!res.data.data) return;
-  localStorage.removeItem("app");
+
   const redirectUrl = res.data.data;
   window.location.href = redirectUrl;
 };
@@ -409,8 +409,7 @@ const useSendAccessTokenMutation = () => {
       app: "google" | "microsoft";
     }) => sendAccessToken(code, app),
     {
-      onSuccess: (data) => {
-        console.log("data", data);
+      onSuccess: () => {
         queryClient.invalidateQueries(["calendarStatus"]);
         navigate(PROJECTS.default);
       },
