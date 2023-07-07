@@ -6,8 +6,14 @@ import {
 } from "../../assets/icons/svg";
 import { PrivateContainer } from "../../components/Containers";
 import { PrivateAppbar } from "../../layout";
+import {
+  connectApp,
+  useCalendarStatusQuery,
+  useDisconnectAppMutation,
+} from "../../api/meetingApi";
 
 interface IntegrationAppCardProps {
+  app: "google" | "microsoft";
   name: string;
   icon: string;
   desc: string;
@@ -36,7 +42,9 @@ const BTN_VARIANT_MAP: BtnVariantMapType = {
   "-1": { variant: "contained", color: "primary", disabled: true },
 };
 const IntegrationAppCard = (props: IntegrationAppCardProps) => {
-  const { name, icon, desc, status } = props;
+  const { app, name, icon, desc, status } = props;
+  const { mutateAsync: disconnectApp } = useDisconnectAppMutation();
+
   return (
     <div className="flex flex-col p-6 min-w-[180px] max-w-[180px] rounded-lg border border-[#CFCECE] max-h-[330px] justify-center gap-6">
       <img src={icon} alt={name} className="w-full h-full" />
@@ -49,6 +57,11 @@ const IntegrationAppCard = (props: IntegrationAppCardProps) => {
         variant={BTN_VARIANT_MAP[status].variant}
         color={BTN_VARIANT_MAP[status].color}
         disabled={BTN_VARIANT_MAP[status].disabled}
+        onClick={() => {
+          localStorage.setItem("app", app);
+          status === "0" && connectApp(app);
+          status === "1" && disconnectApp(app);
+        }}
       >
         {STATUS_MAP[status]}
       </Button>
@@ -57,26 +70,32 @@ const IntegrationAppCard = (props: IntegrationAppCardProps) => {
 };
 
 export default function Integrations() {
-  const integrations = [
+  const { status: google } = useCalendarStatusQuery("google");
+  const { status: microsoft } = useCalendarStatusQuery("microsoft");
+
+  const integrations: IntegrationAppCardProps[] = [
     {
+      app: "google",
       name: "Google Calendar",
       icon: google_calendar__icon,
       desc: "Instantly connect to meetings on your calendar",
-      status: "1",
+      status: google === "success" ? "1" : "0",
     },
     {
+      app: "microsoft",
       name: "Outlook Calendar",
       icon: outlook_calendar__icon,
       desc: "Instantly connect to meetings on your calendar",
-      status: "-1",
+      status: microsoft === "success" ? "1" : "0",
     },
   ];
+
   return (
     <PrivateContainer
       appBar={<PrivateAppbar title="Integrations" icon={integrations__icon} />}
     >
       <div className="flex justify-center w-full h-full mt-[10%] gap-12">
-        {integrations.map((integration, index) => (
+        {integrations?.map((integration, index) => (
           <IntegrationAppCard key={index} {...integration} />
         ))}
       </div>

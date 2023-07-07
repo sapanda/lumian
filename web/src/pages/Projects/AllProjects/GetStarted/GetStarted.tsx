@@ -1,7 +1,6 @@
 import { Button, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { PROJECTS } from "../../../../router/routes.constant";
-import { connectApp } from "../../../../api/meetingApi";
+import { INTEGRATIONS, PROJECTS } from "../../../../router/routes.constant";
 
 export default function GetStarted() {
   const navigate = useNavigate();
@@ -22,7 +21,10 @@ export default function GetStarted() {
               </i>
             </Typography>
             <div className="mt-2">
-              <Button variant="contained" onClick={() => connectApp()}>
+              <Button
+                variant="contained"
+                onClick={() => navigate(INTEGRATIONS)}
+              >
                 Connect App
               </Button>
             </div>

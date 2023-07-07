@@ -35,16 +35,34 @@ interface MeetingDataType {
   title: string | undefined;
 }
 
-const connectApp = async () => {
-  const res = await axiosInstance.get(`${meetingEndPoints.oauthUrl}`);
+const connectApp = async (appName: "google" | "microsoft") => {
+  const res = await axiosInstance.get(`${meetingEndPoints.oauthUrl}`, {
+    params: {
+      app: appName,
+    },
+  });
+  if (!res.data.data) return;
+  localStorage.removeItem("app");
   const redirectUrl = res.data.data;
   window.location.href = redirectUrl;
 };
 
-const sendAccessToken = async (code: string | null | undefined) => {
+const disconnectApp = async (appName: "google" | "microsoft") => {
+  axiosInstance.delete(meetingEndPoints.removeCalendar, {
+    params: {
+      app: appName,
+    },
+  });
+};
+
+const sendAccessToken = async (
+  code: string | null | undefined,
+  app: "google" | "microsoft"
+) => {
   if (!code) return;
   return await axiosInstance.post(meetingEndPoints.accessToken, {
     code: code,
+    app,
   });
 };
 
@@ -237,9 +255,13 @@ const askQuery = async (
   return data;
 };
 
-const getCalendarStatus = async () => {
-  const res = await axiosInstance.get(meetingEndPoints.calendarStatus);
-  return res.data.data;
+const getCalendarStatus = async (appName: "google" | "microsoft") => {
+  const res = await axiosInstance.get(meetingEndPoints.calendarStatus, {
+    params: {
+      app: appName,
+    },
+  });
+  return res.data;
 };
 
 const getMeetingsList = async () => {
@@ -365,9 +387,10 @@ const useAskQueryMutation = (
   });
 };
 
-const useCalendarStatusQuery = () => {
-  const queryKey: QueryKey = ["calendarStatus"];
-  return useQuery(queryKey, () => getCalendarStatus(), {
+const useCalendarStatusQuery = (appName: "google" | "microsoft") => {
+  const queryKey: QueryKey = ["calendarStatus", appName];
+
+  return useQuery(queryKey, () => getCalendarStatus(appName), {
     staleTime: 1000 * 60 * 30, // 30 minutes
     retry: false,
     refetchOnWindowFocus: false,
@@ -378,9 +401,16 @@ const useSendAccessTokenMutation = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   return useMutation(
-    (code: string | null | undefined) => sendAccessToken(code),
+    ({
+      code,
+      app,
+    }: {
+      code: string | null | undefined;
+      app: "google" | "microsoft";
+    }) => sendAccessToken(code, app),
     {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        console.log("data", data);
         queryClient.invalidateQueries(["calendarStatus"]);
         navigate(PROJECTS.default);
       },
@@ -407,6 +437,20 @@ const useAddBotToMeetingMutation = () => {
     }
   );
 };
+
+const useDisconnectAppMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation(
+    (appName: "google" | "microsoft") => disconnectApp(appName),
+    {
+      onSuccess: () => {
+        setTimeout(() => {
+          queryClient.invalidateQueries(["calendarStatus"]);
+        }, 1000);
+      },
+    }
+  );
+};
 export {
   connectApp,
   sendAccessToken,
@@ -424,4 +468,5 @@ export {
   useSendAccessTokenMutation,
   useMeetingListQuery,
   useAddBotToMeetingMutation,
+  useDisconnectAppMutation,
 };
