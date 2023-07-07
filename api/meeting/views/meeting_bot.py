@@ -72,7 +72,7 @@ class AddBotView(APIView):
                 message="Bot is created and ready to join the call",
                 meeting_url=meeting_url,
                 start_time=bot['calendar_meetings'][0]['start_time'],
-                end_time=bot['calendar_meetings'][0]['start_time'],
+                end_time=bot['calendar_meetings'][0]['end_time'],
                 title=bot['meeting_metadata']['title'],
                 transcript=None,
                 project=project
