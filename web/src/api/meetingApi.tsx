@@ -29,9 +29,9 @@ interface MeetingTranscriptPayloadType {
 interface MeetingDataType {
   project_id: string | number | null | undefined;
   meeting_url: string | undefined;
-  start_time: string | undefined;
-  end_time: string | undefined;
-  title: string | undefined;
+  start_time?: string | undefined;
+  end_time?: string | undefined;
+  title?: string | undefined;
 }
 
 const connectApp = async () => {
@@ -247,13 +247,7 @@ const getMeetingsList = async () => {
 };
 
 const addBotToMeeting = async (meetingDetails: MeetingDataType) => {
-  if (
-    !meetingDetails.meeting_url ||
-    !meetingDetails.start_time ||
-    !meetingDetails.end_time ||
-    !meetingDetails.title
-  )
-    return;
+  if (!meetingDetails.meeting_url || !meetingDetails.project_id) return;
   const res = await axiosInstance.post(
     meetingEndPoints.addBotToMeeting,
     meetingDetails

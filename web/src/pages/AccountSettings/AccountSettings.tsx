@@ -64,7 +64,7 @@ export default function AccountSettings() {
             onChange={handleChange}
             value={state.bot_name}
             placeholder="Bot Name"
-            name="botName"
+            name="bot_name"
             error={errors.bot_name}
           />
 
