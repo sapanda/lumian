@@ -74,7 +74,7 @@ class AddBotView(APIView):
                 start_time=bot['calendar_meetings'][0]['start_time'],
                 end_time=bot['calendar_meetings'][0]['end_time'],
                 title=bot['meeting_metadata']['title'],
-                transcript=None,w
+                transcript=None,
                 project=project
             )
 
