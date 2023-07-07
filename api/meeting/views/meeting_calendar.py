@@ -19,12 +19,11 @@ from rest_framework import (
     permissions
 )
 from meeting.errors import (
-    GoogleAPIException,
     RecallAITimeoutException
 )
 from meeting.models import MeetingCalendar, MeetingBot
-from meeting.external_clients.google import (
-    google_api
+from meeting.external_clients.calendar import (
+    CalendarAPIFactory
 )
 from meeting.external_clients.recallai import (
     create_calendar,
@@ -49,15 +48,30 @@ class OAuthRequestView(APIView):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='app',
+                description='calendar app (google, microsoft)',
+                required=True,
+                type=str),
+        ]
+    )
     def get(self, request):
 
         try:
-            url = google_api.get_oauth_url()
+            serializer = self.serializer_class(data=request.query_params)
+            if (not serializer.is_valid()):
+                return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
+
+            calendar_app = serializer.validated_data['app']
+            calendar_api = CalendarAPIFactory.get_api(calendar_app)
+            url = calendar_api.get_oauth_url()
             return Response({'data': url})
-        except GoogleAPIException as e:
-            return Response(str(e), HTTP_400_BAD_REQUEST)
+        except ValueError as e:
+            return Response(str(e), HTTP_412_PRECONDITION_FAILED)
         except Exception as e:
-            return Response(str(e), HTTP_404_NOT_FOUND)
+            return Response(str(e), HTTP_400_BAD_REQUEST)
 
 
 class OAuthResponseView(APIView):
@@ -72,30 +86,34 @@ class OAuthResponseView(APIView):
             if (not serializer.is_valid()):
                 return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
 
+            # Request parameters
             user = request.user
             code = serializer.validated_data['code']
-            _, refresh_token = google_api.get_access_token(code)
-            calendar_id = create_calendar(refresh_token)
+            calendar_app = serializer.validated_data['app']
+            calendar_api = CalendarAPIFactory.get_api(calendar_app)
+
+            # Calendar creation
+            _, refresh_token = calendar_api.get_access_token(code)
+            calendar_id = create_calendar(refresh_token, calendar_app)
             calendar_email = retrieve_calendar(calendar_id)
-            logger.info(calendar_email)
-            defaults = {
-                'calendar_id': calendar_id,
-            }
+
+            # Create database object
+            defaults = {'calendar_id': calendar_id}
             MeetingCalendar.objects.update_or_create(
                 user=user,
                 calendar_email=calendar_email,
-                calendar_app=MeetingCalendar.CalendarChoices.GOOGLE,
+                calendar_app=calendar_app,
                 defaults=defaults
             )
-            return Response("Calendar successfully integrated",
-                            HTTP_201_CREATED)
+            return Response(
+                "Calendar successfully integrated",
+                HTTP_201_CREATED)
 
-        except GoogleAPIException as e:
-            message = str(e)
-            status_code = HTTP_412_PRECONDITION_FAILED
         except RecallAITimeoutException as e:
             message = str(e)
             status_code = HTTP_408_REQUEST_TIMEOUT
+        except ValueError as e:
+            return Response(str(e), HTTP_412_PRECONDITION_FAILED)
         except Exception as e:
             message = str(e)
             status_code = HTTP_400_BAD_REQUEST
@@ -109,11 +127,24 @@ class EventDetailsView(APIView):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='app',
+                description='calendar app (google, microsoft)',
+                required=True,
+                type=str),
+        ]
+    )
     def get(self, request):
         try:
+            serializer = self.serializer_class(data=request.query_params)
+            if (not serializer.is_valid()):
+                return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
+
             meeting_calendar_details = MeetingCalendar.objects.get(
                 user=request.user,
-                calendar_app=MeetingCalendar.CalendarChoices.GOOGLE
+                calendar_app=serializer.validated_data['app']
             )
 
             events = list_calendar_events(meeting_calendar_details.calendar_id)
@@ -158,7 +189,7 @@ class CalendarStatusView(APIView):
         parameters=[
             OpenApiParameter(
                 name='app',
-                description='calendar app (google, outlook)',
+                description='calendar app (google, microsoft)',
                 required=True,
                 type=str),
         ]
@@ -194,7 +225,7 @@ class DeleteCalendarView(APIView):
         parameters=[
             OpenApiParameter(
                 name='app',
-                description='calendar app (google, outlook)',
+                description='calendar app (google, microsoft)',
                 required=True,
                 type=str),
         ]
