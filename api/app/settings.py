@@ -269,6 +269,7 @@ if DEPLOY_MODE == ModeEnum.development or DEPLOY_MODE == ModeEnum.production:
         integrations=[
             DjangoIntegration(),
         ],
+        environment=DEPLOY_MODE.value,
 
         # Set traces_sample_rate to 1.0 to capture 100%
         # of transactions for performance monitoring.
