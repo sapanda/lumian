@@ -24,16 +24,22 @@ class AddBotViewTest(APITestCase):
 
     @patch('meeting.views.meeting_bot.add_bot_to_meeting')
     def test_add_bot_success(self, mock_add_bot_to_meeting):
-        mock_add_bot_to_meeting.return_value = {'id': 1, 'name': 'bot1'}
+        mock_add_bot_to_meeting.return_value = \
+            {
+                'id': 1,
+                'name': 'bot1',
+                'meeting_metadata':
+                    {'title': 'test'},
+                'calendar_meetings': [{
+                    'start_time': '2023-07-07T05:33:08.920Z',
+                    'end_time': '2023-07-07T05:33:08.920Z'
+                }]
+            }
         self.project = create_project(self.user)
         self.client.force_authenticate(self.user)
         self.data = {
-                'bot_name': 'bot1',
                 'meeting_url': 'http://example.com/meeting',
                 'project_id': self.project.id,
-                "start_time": "2023-06-05T15:00:00+05:30",
-                "end_time": "2023-06-05T15:00:00+05:30",
-                "title": "Meeting"
             }
 
         response = self.client.post(self.url, self.data, format='json')
@@ -54,12 +60,8 @@ class AddBotViewTest(APITestCase):
         self.client.force_authenticate(self.user)
 
         self.data = {
-                'bot_name': 'bot1',
                 'meeting_url': 'http://example.com/meeting',
                 'project_id': self.project.id,
-                "start_time": "2023-06-05T15:00:00+05:30",
-                "end_time": "2023-06-05T15:00:00+05:30",
-                "title": "Meeting"
             }
 
         response = self.client.post(self.url, self.data, format='json')
@@ -77,12 +79,8 @@ class AddBotViewTest(APITestCase):
         self.client.force_authenticate(self.user)
 
         self.data = {
-                'bot_name': 'bot1',
                 'meeting_url': 'http://example.com/meeting',
                 'project_id': self.project.id,
-                "start_time": "2023-06-05T15:00:00+05:30",
-                "end_time": "2023-06-05T15:00:00+05:30",
-                "title": "Meeting"
             }
 
         response = self.client.post(self.url, self.data, format='json')
@@ -97,12 +95,8 @@ class AddBotViewTest(APITestCase):
         self.client.force_authenticate(self.user)
 
         self.data = {
-                'bot_name': 'bot1',
                 'meeting_url': 'http://example.com/meeting',
                 'project_id': self.project.id,
-                "start_time": "2023-06-05T15:00:00+05:30",
-                "end_time": "2023-06-05T15:00:00+05:30",
-                "title": "Meeting"
             }
 
         response = self.client.post(self.url, self.data, format='json')

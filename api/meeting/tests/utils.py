@@ -11,7 +11,8 @@ def create_user():
     return get_user_model().objects.create_user(
         name='testuser',
         email='testuser@example.com',
-        password='testpass'
+        password='testpass',
+        bot_name='LumianBot'
     )
 
 
