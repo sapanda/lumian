@@ -73,12 +73,14 @@ export default function AllProjects() {
                   Connect App
                 </Button>
               )}
-            <Button
-              variant="contained"
-              onClick={() => navigate(PROJECTS.CREATE_PROJECT)}
-            >
-              New Project
-            </Button>
+            {allProjects?.length > 0 && (
+              <Button
+                variant="contained"
+                onClick={() => navigate(PROJECTS.CREATE_PROJECT)}
+              >
+                New Project
+              </Button>
+            )}
           </div>
         </PrivateAppbar>
       }
