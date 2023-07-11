@@ -77,7 +77,8 @@ export default function TranscribeModal(props: TranscribeModalProps) {
                                 addBotToMeeting({
                                   ...meeting,
                                   project_id: projectId,
-                                  bot_name: "Lumian Notetaker",
+                                }).then(() => {
+                                  setModalOpen(false);
                                 });
                               }}
                             >
@@ -149,6 +150,14 @@ export default function TranscribeModal(props: TranscribeModalProps) {
               variant="contained"
               color="primary"
               disabled={meetingUrl === ""}
+              onClick={() => {
+                addBotToMeeting({
+                  meeting_url: meetingUrl,
+                  project_id: projectId,
+                }).then(() => {
+                  setModalOpen(false);
+                });
+              }}
             >
               Transcribe
             </Button>

@@ -31,6 +31,7 @@ class PublicUserApiTests(TestCase):
             'email': 'test@example.com',
             'password': 'testpass123',
             'name': 'Test Name',
+            'bot_name': 'LumianBot'
         }
         res = self.client.post(CREATE_USER_URL, payload)
 
@@ -45,6 +46,7 @@ class PublicUserApiTests(TestCase):
             'email': 'test@example.com',
             'password': 'testpass123',
             'name': 'Test Name',
+            'bot_name': 'LumianBot'
         }
         create_user(**payload)
         res = self.client.post(CREATE_USER_URL, payload)
@@ -57,6 +59,7 @@ class PublicUserApiTests(TestCase):
             'email': 'test@example.com',
             'password': 'pw',
             'name': 'Test name',
+            'bot_name': 'LumianBot'
         }
         res = self.client.post(CREATE_USER_URL, payload)
 
@@ -72,6 +75,7 @@ class PublicUserApiTests(TestCase):
             'name': 'Test Name',
             'email': 'test@example.com',
             'password': 'test-user-password123',
+            'bot_name': 'LumianBot'
         }
         create_user(**user_details)
 
@@ -125,6 +129,7 @@ class PrivateUserApiTests(TestCase):
             email='test@example.com',
             password='testpass123',
             name='Test Name',
+            bot_name='LumianBot'
         )
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
@@ -137,6 +142,7 @@ class PrivateUserApiTests(TestCase):
         self.assertEqual(res.data, {
             'name': self.user.name,
             'email': self.user.email,
+            'bot_name': self.user.bot_name,
         })
 
     def test_post_me_not_allowed(self):

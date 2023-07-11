@@ -13,11 +13,7 @@ class OauthCallbackSerializer(serializers.Serializer):
 
 class AddBotSerializer(serializers.Serializer):
     project_id = serializers.IntegerField()
-    bot_name = serializers.CharField()
     meeting_url = serializers.CharField()
-    start_time = serializers.DateTimeField()
-    end_time = serializers.DateTimeField()
-    title = serializers.CharField()
 
     class Meta:
         model = MeetingBot

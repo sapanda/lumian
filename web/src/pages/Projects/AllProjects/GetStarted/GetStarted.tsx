@@ -4,16 +4,17 @@ import { INTEGRATIONS, PROJECTS } from "../../../../router/routes.constant";
 
 export default function GetStarted() {
   const navigate = useNavigate();
+
   return (
     <div className="flex flex-col items-center flex-1 h-full">
       <div className="flex flex-col max-w-[360px] mt-[10%]">
         <div className="flex flex-col gap-5">
           <Typography variant="h4">Let's get started</Typography>
+
           <div className="flex flex-col">
             <Typography variant="body1" fontWeight="bold">
               Connect your conferencing app (optional)
             </Typography>
-
             <Typography variant="body1">
               <i>
                 Select from Zoom, Teams, Meet, Webex and more to get automated
@@ -29,6 +30,7 @@ export default function GetStarted() {
               </Button>
             </div>
           </div>
+
           <div className="flex flex-col">
             <Typography variant="body1" fontWeight="bold">
               Create a new project

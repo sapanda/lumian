@@ -6,6 +6,7 @@ const initialState = {
   email: "",
   oldPassword: "",
   newPassword: "",
+  bot_name: "",
 };
 
 const initialErrors = {
@@ -17,6 +18,7 @@ interface IState {
   email: string;
   oldPassword: string;
   newPassword: string;
+  bot_name: string;
 }
 
 export default function useAccountSettings(defaultValues: IState) {
@@ -45,11 +47,13 @@ export default function useAccountSettings(defaultValues: IState) {
     if (!state.email) {
       errors.email = "Email is required";
     }
-    if (!state.oldPassword) {
-      errors.oldPassword = "Old Password is required";
+    if (!state.bot_name) {
+      errors.bot_name = "Bot Name is required";
     }
-    if (!state.newPassword) {
-      errors.newPassword = "New Password is required";
+    if (state.newPassword) {
+      if (!state.oldPassword) {
+        errors.oldPassword = "Old Password is required";
+      }
     }
 
     setErrors(errors);
@@ -65,7 +69,8 @@ export default function useAccountSettings(defaultValues: IState) {
     const payload = {
       email: state.email,
       name: state.name,
-      password: state.newPassword,
+      bot_name: state.bot_name,
+      password: state.newPassword ? state.newPassword : undefined,
     };
     updateMe(payload);
   }

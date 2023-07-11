@@ -35,7 +35,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-
+    bot_name = models.CharField(max_length=255, default='Lumian Notetaker')
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
