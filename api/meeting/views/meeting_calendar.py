@@ -132,7 +132,7 @@ class EventDetailsView(APIView):
             OpenApiParameter(
                 name='app',
                 description='calendar app (google, microsoft)',
-                required=True,
+                required=False,
                 type=str),
         ]
     )
@@ -142,12 +142,33 @@ class EventDetailsView(APIView):
             if (not serializer.is_valid()):
                 return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
 
-            meeting_calendar_details = MeetingCalendar.objects.get(
-                user=request.user,
-                calendar_app=serializer.validated_data['app']
-            )
+            logger.info('camer here')
+            # fetch only requested calendar events
+            if serializer.validated_data.get('app'):
+                meeting_calendar_details = MeetingCalendar.objects.get(
+                    user=request.user,
+                    calendar_app=serializer.validated_data['app']
+                )
 
-            events = list_calendar_events(meeting_calendar_details.calendar_id)
+                events = list_calendar_events(
+                    meeting_calendar_details.calendar_id)
+            # fetch all events
+            else:
+                calendar_details_google = MeetingCalendar.objects.get(
+                    user=request.user,
+                    calendar_app=MeetingCalendar.CalendarChoices.GOOGLE
+                )
+                calendar_details_microsoft = MeetingCalendar.objects.get(
+                    user=request.user,
+                    calendar_app=MeetingCalendar.CalendarChoices.MICROSOFT
+                )
+                google_events = list_calendar_events(
+                    calendar_details_google.calendar_id)
+                microsoft_events = list_calendar_events(
+                    calendar_details_microsoft.calendar_id)
+
+                events = google_events + microsoft_events
+
             if not events:
                 return Response(
                     {'message': 'No meetings found'},
@@ -161,6 +182,7 @@ class EventDetailsView(APIView):
                     event['bot_status'] = bot.status
                 except MeetingBot.DoesNotExist:
                     event['bot_added'] = False
+
             return Response(events)
 
         except MeetingCalendar.DoesNotExist:

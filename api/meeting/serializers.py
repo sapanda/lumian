@@ -43,7 +43,7 @@ class GetBotStatusSerializer(serializers.Serializer):
 
 
 class MeetingDetailsSerializer(serializers.Serializer):
-    app = serializers.CharField()
+    app = serializers.CharField(required=False)
 
 
 class ScheduleBotSerializer(serializers.Serializer):
