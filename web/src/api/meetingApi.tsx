@@ -409,11 +409,12 @@ const useSendAccessTokenMutation = () => {
   );
 };
 
-const useMeetingListQuery = () => {
+const useMeetingListQuery = (modalOpen: boolean) => {
   const queryKey: QueryKey = ["meetingList"];
   return useQuery(queryKey, () => getMeetingsList(), {
     staleTime: 1000 * 60 * 30, // 30 minutes
     retry: false,
+    enabled: modalOpen,
   });
 };
 
