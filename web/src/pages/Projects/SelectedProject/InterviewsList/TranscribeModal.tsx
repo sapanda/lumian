@@ -35,8 +35,9 @@ export default function TranscribeModal(props: TranscribeModalProps) {
   const { status: microsoftStatus } = useCalendarStatusQuery("microsoft");
   const { data: meetingsLists, refetch } = useMeetingListQuery(modalOpen);
   const { mutateAsync: addBotToMeeting } = useAddBotToMeetingMutation();
+
   const noAppConnected =
-    googleStatus !== "success" || microsoftStatus !== "success";
+    googleStatus !== "success" && microsoftStatus !== "success";
   useEffect(() => {
     if (modalOpen) refetch();
   }, [modalOpen, refetch]);
