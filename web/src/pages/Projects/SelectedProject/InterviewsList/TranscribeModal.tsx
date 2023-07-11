@@ -31,10 +31,12 @@ export default function TranscribeModal(props: TranscribeModalProps) {
   const { modalOpen, setModalOpen, projectId } = props;
   const [meetingUrl, setMeetingUrl] = useState<string>("");
   const navigate = useNavigate();
-  const { status } = useCalendarStatusQuery();
-  const { data: meetingsLists, refetch } = useMeetingListQuery();
+  const { status: googleStatus } = useCalendarStatusQuery("google");
+  const { status: microsoftStatus } = useCalendarStatusQuery("microsoft");
+  const { data: meetingsLists, refetch } = useMeetingListQuery(modalOpen);
   const { mutateAsync: addBotToMeeting } = useAddBotToMeetingMutation();
-
+  const noAppConnected =
+    googleStatus !== "success" || microsoftStatus !== "success";
   useEffect(() => {
     if (modalOpen) refetch();
   }, [modalOpen, refetch]);
@@ -42,7 +44,7 @@ export default function TranscribeModal(props: TranscribeModalProps) {
     <ModalL open={modalOpen} handleClose={() => setModalOpen(false)}>
       <div className="flex flex-col justify-center gap-5 max-w-[500px]">
         <h2 className="text-20-700">Transcribe Meeting</h2>
-        {status === "success" ? (
+        {!noAppConnected ? (
           <div className="flex flex-col gap-5">
             <p className="text-12-400">
               Have the Lumian Notetaker join a meeting that is currently in
