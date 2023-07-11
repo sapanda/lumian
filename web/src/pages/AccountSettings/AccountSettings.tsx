@@ -11,6 +11,7 @@ export default function AccountSettings() {
     email: "",
     oldPassword: "",
     newPassword: "",
+    bot_name: "",
   });
   return (
     <PrivateContainer
@@ -56,6 +57,15 @@ export default function AccountSettings() {
             name="newPassword"
             error={errors.newPassword}
             type="password"
+          />
+
+          <LabelInputCombo
+            label="Bot Name"
+            onChange={handleChange}
+            value={state.bot_name}
+            placeholder="Bot Name"
+            name="bot_name"
+            error={errors.bot_name}
           />
 
           <div className="flex gap-3">
