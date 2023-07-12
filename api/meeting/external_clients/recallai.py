@@ -3,10 +3,15 @@ from retry import retry
 from urllib.parse import urlencode
 import datetime
 from requests.exceptions import (
+    ConnectionError,
+    Timeout,
     HTTPError,
     RequestException
 )
-from meeting.errors import RecallAITimeoutException
+from meeting.errors import (
+    RecallAITimeoutException,
+    RecallAIException
+)
 from app.settings import (
     RECALL_API_KEY,
     RECALL_TRANSCRIPT_PROVIDER,
@@ -21,6 +26,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 CREATE_BOT_URL = "https://api.recall.ai/api/v1/bot/"
+REMOVE_BOT_URL = "https://api.recall.ai/api/v1/bot/{}/leave_call/"
 MEETING_TRANSCRIPT_URL = "https://api.recall.ai/api/v1/bot/{}/transcript/"
 CREATE_CALENDAR_URL = "https://api.recall.ai/api/v2/calendars/"
 RETRIEVE_CALENDAR_URL = "https://api.recall.ai/api/v2/calendars/{}/"
@@ -52,14 +58,45 @@ def add_bot_to_meeting(bot_name: str, meeting_url: str, join_at: str = None):
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
         return response.json()
+    except (Timeout, ConnectionError) as e:
+        error_msg = f"Connection error : {e}"
+        status_code = e.response.status_code
+        raise RecallAITimeoutException(error_msg, status_code)
     except HTTPError as e:
         error_msg = f"HTTP error occurred: {e}"
         status_code = e.response.status_code
-        raise RecallAITimeoutException(error_msg, status_code)
+        raise RecallAIException(error_msg, status_code)
     except RequestException as e:
         error_msg = f"An error occurred: {e}"
         status_code = None
+        raise RecallAIException(error_msg, status_code)
+
+
+@retry(RecallAITimeoutException, tries=3, delay=5, backoff=2)
+def remove_bot_from_meeting(bot_id: str):
+
+    url = REMOVE_BOT_URL.format(bot_id)
+    token = RECALL_API_KEY
+    headers = {
+        "accept": "application/json",
+        "Authorization": "Token " + token
+    }
+
+    try:
+        response = requests.post(url, headers=headers)
+        response.raise_for_status()
+    except (Timeout, ConnectionError) as e:
+        error_msg = f"Connection error: {e}"
+        status_code = e.response.status_code
         raise RecallAITimeoutException(error_msg, status_code)
+    except HTTPError as e:
+        error_msg = f"HTTP error occurred: {e}"
+        status_code = e.response.status_code
+        raise RecallAIException(error_msg, status_code)
+    except RequestException as e:
+        error_msg = f"An error occurred: {e}"
+        status_code = None
+        raise RecallAIException(error_msg, status_code)
 
 
 @retry(RecallAITimeoutException, tries=3, delay=5, backoff=2)
@@ -77,14 +114,18 @@ def get_meeting_transcript(bot_id: str):
         response = requests.get(url, headers=headers)
         response.raise_for_status()
         return response.json()
+    except (Timeout, ConnectionError) as e:
+        error_msg = f"Connection error : {e}"
+        status_code = e.response.status_code
+        raise RecallAITimeoutException(error_msg, status_code)
     except HTTPError as e:
         error_msg = f"HTTP error occurred: {e}"
         status_code = e.response.status_code
-        raise RecallAITimeoutException(error_msg, status_code)
+        raise RecallAIException(error_msg, status_code)
     except RequestException as e:
         error_msg = f"An error occurred: {e}"
         status_code = None
-        raise RecallAITimeoutException(error_msg, status_code)
+        raise RecallAIException(error_msg, status_code)
 
 
 @retry(RecallAITimeoutException, tries=3, delay=5, backoff=2)
@@ -121,14 +162,18 @@ def create_calendar(refresh_token, calendar_app):
         response.raise_for_status()
         res = response.json()
         return res['id']
+    except (Timeout, ConnectionError) as e:
+        error_msg = f"Connection errro: {e}"
+        status_code = e.response.status_code
+        raise RecallAITimeoutException(error_msg, status_code)
     except HTTPError as e:
         error_msg = f"HTTP error occurred: {e}"
         status_code = e.response.status_code
-        raise RecallAITimeoutException(error_msg, status_code)
+        raise RecallAIException(error_msg, status_code)
     except RequestException as e:
         error_msg = f"An error occurred: {e}"
         status_code = None
-        raise RecallAITimeoutException(error_msg, status_code)
+        raise RecallAIException(error_msg, status_code)
 
 
 @retry(RecallAITimeoutException, tries=3, delay=10, backoff=3)
@@ -211,14 +256,18 @@ def list_calendar_events(calendar_id, schedule=False):
             events.append(event)
 
         return events
+    except (Timeout, ConnectionError) as e:
+        error_msg = f"Connection error : {e}"
+        status_code = e.response.status_code
+        raise RecallAITimeoutException(error_msg, status_code)
     except HTTPError as e:
         error_msg = f"HTTP error occurred: {e}"
         status_code = e.response.status_code
-        raise RecallAITimeoutException(error_msg, status_code)
+        raise RecallAIException(error_msg, status_code)
     except RequestException as e:
         error_msg = f"An error occurred: {e}"
         status_code = None
-        raise RecallAITimeoutException(error_msg, status_code)
+        raise RecallAIException(error_msg, status_code)
 
 
 @retry(RecallAITimeoutException, tries=3, delay=10, backoff=3)
@@ -234,12 +283,15 @@ def delete_calendar(calendar_id):
     try:
         response = requests.delete(url, headers=headers)
         response.raise_for_status()
-
+    except (Timeout, ConnectionError) as e:
+        error_msg = f"Connectin error : {e}"
+        status_code = e.response.status_code
+        raise RecallAITimeoutException(error_msg, status_code)
     except HTTPError as e:
         error_msg = f"HTTP error occurred: {e}"
         status_code = e.response.status_code
-        raise RecallAITimeoutException(error_msg, status_code)
+        raise RecallAIException(error_msg, status_code)
     except RequestException as e:
         error_msg = f"An error occurred: {e}"
         status_code = None
-        raise RecallAITimeoutException(error_msg, status_code)
+        raise RecallAIException(error_msg, status_code)

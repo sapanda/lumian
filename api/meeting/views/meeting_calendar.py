@@ -7,19 +7,22 @@ from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
     HTTP_408_REQUEST_TIMEOUT,
-    HTTP_412_PRECONDITION_FAILED
+    HTTP_412_PRECONDITION_FAILED,
+    HTTP_422_UNPROCESSABLE_ENTITY
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import (
-    ValidationError
+    ValidationError,
+    NotFound
 )
 from rest_framework import (
     authentication,
     permissions
 )
 from meeting.errors import (
-    RecallAITimeoutException
+    RecallAITimeoutException,
+    RecallAIException
 )
 from meeting.models import MeetingCalendar, MeetingBot
 from meeting.external_clients.calendar import (
@@ -69,7 +72,7 @@ class OAuthRequestView(APIView):
             url = calendar_api.get_oauth_url()
             return Response({'data': url})
         except ValueError as e:
-            return Response(str(e), HTTP_412_PRECONDITION_FAILED)
+            return Response(str(e), HTTP_422_UNPROCESSABLE_ENTITY)
         except Exception as e:
             return Response(str(e), HTTP_400_BAD_REQUEST)
 
@@ -112,8 +115,11 @@ class OAuthResponseView(APIView):
         except RecallAITimeoutException as e:
             message = str(e)
             status_code = HTTP_408_REQUEST_TIMEOUT
+        except RecallAIException as e:
+            message = str(e)
+            status_code = HTTP_412_PRECONDITION_FAILED
         except ValueError as e:
-            return Response(str(e), HTTP_412_PRECONDITION_FAILED)
+            return Response(str(e), HTTP_422_UNPROCESSABLE_ENTITY)
         except Exception as e:
             message = str(e)
             status_code = HTTP_400_BAD_REQUEST
@@ -142,32 +148,44 @@ class EventDetailsView(APIView):
             if (not serializer.is_valid()):
                 return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
 
-            logger.info('camer here')
-            # fetch only requested calendar events
-            if serializer.validated_data.get('app'):
-                meeting_calendar_details = MeetingCalendar.objects.get(
-                    user=request.user,
-                    calendar_app=serializer.validated_data['app']
-                )
+            app_type = serializer.validated_data.get('app')
 
+            # fetch only requested calendar events
+            if app_type:
+                meeting_calendar = MeetingCalendar.objects.get(
+                    user=request.user,
+                    calendar_app=app_type
+                )
                 events = list_calendar_events(
-                    meeting_calendar_details.calendar_id)
+                    meeting_calendar.calendar_id
+                )
             # fetch all events
             else:
-                calendar_details_google = MeetingCalendar.objects.get(
+                google_calendar = MeetingCalendar.objects.filter(
                     user=request.user,
                     calendar_app=MeetingCalendar.CalendarChoices.GOOGLE
-                )
-                calendar_details_microsoft = MeetingCalendar.objects.get(
+                ).first()
+                microsoft_calendar = MeetingCalendar.objects.filter(
                     user=request.user,
                     calendar_app=MeetingCalendar.CalendarChoices.MICROSOFT
-                )
-                google_events = list_calendar_events(
-                    calendar_details_google.calendar_id)
-                microsoft_events = list_calendar_events(
-                    calendar_details_microsoft.calendar_id)
+                ).first()
 
-                events = google_events + microsoft_events
+                if not google_calendar and not microsoft_calendar:
+                    raise NotFound()
+
+                events = []
+
+                if google_calendar:
+                    google_events = list_calendar_events(
+                        google_calendar.calendar_id
+                    )
+                    events.extend(google_events)
+
+                if microsoft_calendar:
+                    microsoft_events = list_calendar_events(
+                        microsoft_calendar.calendar_id
+                    )
+                    events.extend(microsoft_events)
 
             if not events:
                 return Response(
@@ -183,9 +201,9 @@ class EventDetailsView(APIView):
                 except MeetingBot.DoesNotExist:
                     event['bot_added'] = False
 
-            return Response(events)
+            return Response({'data': events})
 
-        except MeetingCalendar.DoesNotExist:
+        except (MeetingCalendar.DoesNotExist, NotFound):
             message = "Calendar integration doesn't exist for this user"
             status_code = HTTP_404_NOT_FOUND
         except ValidationError as e:
@@ -194,11 +212,14 @@ class EventDetailsView(APIView):
         except RecallAITimeoutException as e:
             message = str(e)
             status_code = HTTP_408_REQUEST_TIMEOUT
+        except RecallAIException as e:
+            message = str(e)
+            status_code = HTTP_412_PRECONDITION_FAILED
         except Exception as e:
             message = f" Error occurred: {str(e)}"
             status_code = HTTP_400_BAD_REQUEST
 
-        return Response(message, status_code)
+        return Response({'message': message}, status_code)
 
 
 class CalendarStatusView(APIView):
@@ -277,6 +298,9 @@ class DeleteCalendarView(APIView):
         except RecallAITimeoutException as e:
             response_data = str(e)
             response_status = HTTP_408_REQUEST_TIMEOUT
+        except RecallAIException as e:
+            response_data = str(e)
+            response_status = HTTP_412_PRECONDITION_FAILED
         except Exception as e:
             response_data = str(e)
             response_status = HTTP_400_BAD_REQUEST

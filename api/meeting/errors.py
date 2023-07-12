@@ -13,3 +13,7 @@ class BaseException(APIException):
 
 class RecallAITimeoutException(BaseException):
     pass
+
+
+class RecallAIException(BaseException):
+    pass
