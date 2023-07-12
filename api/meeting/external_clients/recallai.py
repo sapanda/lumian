@@ -157,11 +157,12 @@ def create_calendar(refresh_token, calendar_app):
         "Authorization": "Token " + token
     }
 
+    logger.debug(f'Create calendar payload -{payload}')
     try:
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
         res = response.json()
-        logger.info(res)
+        logger.info(f'create calendar response {res}')
         return res['id']
     except (Timeout, ConnectionError) as e:
         error_msg = f"Connection errro: {e}"

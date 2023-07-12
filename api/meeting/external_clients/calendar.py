@@ -44,12 +44,12 @@ class GoogleAPI:
         self.creds = None
 
     def get_oauth_url(self):
-        logger.debug("-- Calendar OAuth URL --")
+        logger.debug("-- Google Calendar OAuth URL --")
         auth_url, _ = self.flow.authorization_url(access_type='offline')
         return auth_url
 
     def get_access_token(self, code):
-        logger.debug(" -- Calendar Access Token --")
+        logger.debug(" -- Google Calendar Access Token --")
         self.flow.fetch_token(code=code)
         creds = self.flow.credentials
         return creds.token, creds.refresh_token
