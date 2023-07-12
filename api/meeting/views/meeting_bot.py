@@ -56,19 +56,20 @@ class AddBotView(APIView):
 
             project_id = serializer.validated_data['project_id']
             meeting_url = serializer.validated_data['meeting_url']
+            title = serializer.validated_data.get('title')
+            start_time = serializer.validated_data.get('start_time')
+            end_time = serializer.validated_data.get('end_time')
             bot_name = request.user.bot_name
-            # TODO : Check if a bot is already present for that meeting
 
             if MeetingBot.objects.filter(meeting_url=meeting_url).exists():
                 return Response(
                     {'message': 'Bot already present in the meeting'},
                     HTTP_202_ACCEPTED)
             project = Project.objects.get(id=project_id)
+            if not title:
+                title = 'Meeting'
 
             bot = add_bot_to_meeting(bot_name, meeting_url)
-            title = bot['meeting_metadata']['title']
-            start_time = bot['calendar_meetings'][0]['start_time']
-            end_time = bot['calendar_meetings'][0]['end_time']
             MeetingBot.objects.create(
                 id=bot['id'],
                 status=MeetingBot.StatusChoices.READY,
