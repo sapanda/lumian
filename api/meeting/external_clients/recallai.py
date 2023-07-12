@@ -161,6 +161,7 @@ def create_calendar(refresh_token, calendar_app):
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
         res = response.json()
+        logger.info(res)
         return res['id']
     except (Timeout, ConnectionError) as e:
         error_msg = f"Connection errro: {e}"
