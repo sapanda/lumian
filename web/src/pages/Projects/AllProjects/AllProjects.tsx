@@ -56,7 +56,7 @@ export default function AllProjects() {
   const { status: microsoftStatus } = useCalendarStatusQuery("microsoft");
 
   const noAppConnected =
-    googleStatus !== "success" || microsoftStatus !== "success";
+    googleStatus !== "success" && microsoftStatus !== "success";
   useEffect(() => {
     if (code && !apiCalledFlag.current) {
       apiCalledFlag.current = true;
