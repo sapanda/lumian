@@ -14,7 +14,12 @@ interface AnswerBoxProps {
 }
 
 export default function AnswerBox(props: AnswerBoxProps) {
-  const { answer, handleSummaryItemClick, selectedIndex, queryIndex } = props;
+  const {
+    answer,
+    handleSummaryItemClick,
+    selectedIndex,
+    queryIndex = 0,
+  } = props;
   return (
     <div
       className="h-full px-4 py-[10px] w-[80%]"
@@ -27,9 +32,8 @@ export default function AnswerBox(props: AnswerBoxProps) {
         const regex = /^[a-zA-Z0-9]/;
         let selectedBgColor = "";
 
-        const answerIndex = queryIndex
-          ? parseInt(`${queryIndex}${index}`)
-          : index;
+        const answerIndex =
+          queryIndex + 1 ? parseInt(`${queryIndex + 1}${index}`) : index;
 
         if (selectedIndex === answerIndex && item.references.length > 0) {
           selectedBgColor = "bg-blue-200";
@@ -64,7 +68,7 @@ export default function AnswerBox(props: AnswerBoxProps) {
             onClick={() =>
               item.references.length > 0 &&
               handleSummaryItemClick &&
-              handleSummaryItemClick(item.references, index)
+              handleSummaryItemClick(item.references, answerIndex)
             }
           >
             {item.text}
