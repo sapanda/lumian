@@ -18,7 +18,7 @@ export default function ChatLoader() {
       xmlns="http://www.w3.org/2000/svg"
     >
       <g filter="url(#filter0_d_1694_2935)">
-        <g clip-path="url(#clip0_1694_2935)">
+        <g clipPath="url(#clip0_1694_2935)">
           <path
             d="M6 16C6 10.4772 10.4772 6 16 6H74C79.5228 6 84 10.4772 84 16V31C84 36.5228 79.5228 41 74 41H16C10.4772 41 6 36.5228 6 31V16Z"
             fill="white"
@@ -54,9 +54,9 @@ export default function ChatLoader() {
           width="90"
           height="47"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"

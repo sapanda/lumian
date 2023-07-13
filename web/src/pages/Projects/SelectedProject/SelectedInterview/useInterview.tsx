@@ -45,15 +45,18 @@ export default function useInterview() {
   const [activeCitationIndex, setActiveCitationIndex] = useState<number>(0);
   const [userQueryText, setUserQueryText] = useState<string>("");
   const currentRangeLength = useRef<number>(0);
-  const { mutateAsync: onAskQuery, isLoading: isAsking } = useAskQueryMutation(
-    parseInt(interviewId || "0"),
-    userQueryText,
-    "project"
-  );
+  const [isAsking, setIsAsking] = useState<boolean>(false);
+  const { mutateAsync: onAskQuery, isLoading: isUserQueryLoading } =
+    useAskQueryMutation(parseInt(interviewId || "0"), "project");
   const askQuery = async () => {
     if (!userQueryText) return;
-    await onAskQuery();
+    setIsAsking(true);
+    const _userQueryText = userQueryText;
     setUserQueryText("");
+    await onAskQuery(_userQueryText).catch(() => {
+      setIsAsking(false);
+      setUserQueryText(_userQueryText);
+    });
   };
 
   function scrollToNextHighlightedText(index: number) {
@@ -137,6 +140,13 @@ export default function useInterview() {
   useEffect(() => {
     scrollToNextHighlightedText(0);
   }, [conversation]);
+
+  useEffect(() => {
+    if (!isUserQueryLoading) {
+      setIsAsking(false);
+    }
+  }, [isUserQueryLoading]);
+
   return {
     summary: summaryData?.output,
     concise: conciseData?.output,
