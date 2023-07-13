@@ -21,3 +21,7 @@ class RecallAIException(BaseException):
 
 class GoogleAPIException(BaseException):
     pass
+
+
+class MicrosoftAPIException(BaseException):
+    pass

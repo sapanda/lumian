@@ -24,7 +24,8 @@ from rest_framework import (
 from meeting.errors import (
     RecallAITimeoutException,
     RecallAIException,
-    GoogleAPIException
+    GoogleAPIException,
+    MicrosoftAPIException
 )
 from meeting.models import MeetingCalendar, MeetingBot
 from meeting.external_clients.calendar import (
@@ -98,18 +99,20 @@ class OAuthResponseView(APIView):
             calendar_api = CalendarAPIFactory.get_api(calendar_app)
 
             # Calendar creation
-            access_token, refresh_token = calendar_api.get_access_token(code)
+            token, refresh_token = None, None
             try:
+                token, refresh_token = calendar_api.get_access_token(code)
                 calendar_id = create_calendar(refresh_token, calendar_app)
                 calendar_email = retrieve_calendar(calendar_id)
             except Exception as e:
-                calendar_api.revoke_access_token(access_token)
+                if token:
+                    calendar_api.revoke_access_token(token)
                 raise e
 
             # Create database object
             defaults = {
                 'calendar_id': calendar_id,
-                'access_token': access_token,
+                'access_token': token,
                 'refresh_token': refresh_token,
                 'calendar_email': calendar_email,
 
@@ -132,14 +135,14 @@ class OAuthResponseView(APIView):
         except ValueError as e:
             message = str(e)
             status_code = HTTP_422_UNPROCESSABLE_ENTITY
-        except GoogleAPIException as e:
+        except (GoogleAPIException, MicrosoftAPIException) as e:
             message = str(e)
             status_code = HTTP_417_EXPECTATION_FAILED
         except Exception as e:
             message = str(e)
             status_code = HTTP_400_BAD_REQUEST
 
-        return Response(message, status_code)
+        return Response({'message': message}, status_code)
 
 
 class EventDetailsView(APIView):
@@ -301,8 +304,8 @@ class DeleteCalendarView(APIView):
                 user=user,
                 calendar_app=calendar_app
             )
-
-            calendar_api.revoke_access_token(calendar.access_token)
+            if calendar.access_token:
+                calendar_api.revoke_access_token(calendar.access_token)
             delete_calendar(calendar.calendar_id)
             calendar.delete()
 

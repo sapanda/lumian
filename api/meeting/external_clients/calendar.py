@@ -1,6 +1,10 @@
 import requests
 import app.settings as settings
-from meeting.errors import GoogleAPIException
+from meeting.errors import (
+    GoogleAPIException,
+    MicrosoftAPIException
+)
+from rest_framework import status
 from google_auth_oauthlib.flow import Flow
 from msal import ConfidentialClientApplication
 import logging
@@ -47,15 +51,18 @@ class GoogleAPI:
         self.creds = None
 
     def get_oauth_url(self):
-        logger.debug("-- Google Calendar OAuth URL --")
         auth_url, _ = self.flow.authorization_url(access_type='offline')
         return auth_url
 
     def get_access_token(self, code):
-        logger.debug(" -- Google Calendar Access Token --")
-        self.flow.fetch_token(code=code)
-        creds = self.flow.credentials
-        return creds.token, creds.refresh_token
+        try:
+            self.flow.fetch_token(code=code)
+            creds = self.flow.credentials
+            return creds.token, creds.refresh_token
+        except Exception as e:
+            raise GoogleAPIException(
+                str(e),
+                status.HTTP_417_EXPECTATION_FAILED)
 
     def revoke_access_token(self, access_token):
         revoke = requests.post(
@@ -64,7 +71,10 @@ class GoogleAPI:
             headers={'content-type': 'application/x-www-form-urlencoded'})
         status_code = getattr(revoke, 'status_code')
         if not status_code == 200:
-            raise GoogleAPIException('Calendar not integrated')
+            raise GoogleAPIException(
+                'Calendar not integrated',
+                status.HTTP_417_EXPECTATION_FAILED
+                )
 
 
 class MicrosoftAPI:
@@ -76,19 +86,22 @@ class MicrosoftAPI:
         )
 
     def get_oauth_url(self):
-        logger.debug("-- Microsoft Outlook OAuth URL --")
         auth_url = self.app.get_authorization_request_url(
             scopes=MICROSOFT_SCOPES,
             redirect_uri=MICROSOFT_REDIRECT_URI)
         return auth_url
 
     def get_access_token(self, code):
-        logger.debug(" -- Microsoft Outlook Access Token --")
-        result = self.app.acquire_token_by_authorization_code(
-            code,
-            scopes=MICROSOFT_SCOPES,
-            redirect_uri=MICROSOFT_REDIRECT_URI)
-        return result.get('access_token'), result.get('refresh_token')
+        try:
+            result = self.app.acquire_token_by_authorization_code(
+                code,
+                scopes=MICROSOFT_SCOPES,
+                redirect_uri=MICROSOFT_REDIRECT_URI)
+            return result.get('access_token'), result.get('refresh_token')
+        except Exception as e:
+            raise MicrosoftAPIException(
+                str(e),
+                status.HTTP_417_EXPECTATION_FAILED)
 
     def revoke_access_token(self, access_token):
         pass
