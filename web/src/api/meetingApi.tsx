@@ -28,23 +28,40 @@ interface MeetingTranscriptPayloadType {
 
 interface MeetingDataType {
   project_id: string | number | null | undefined;
-  bot_name: string | undefined;
   meeting_url: string | undefined;
-  start_time: string | undefined;
-  end_time: string | undefined;
-  title: string | undefined;
+  start_time?: string | undefined;
+  end_time?: string | undefined;
+  title?: string | undefined;
 }
 
-const connectApp = async () => {
-  const res = await axiosInstance.get(`${meetingEndPoints.oauthUrl}`);
+const connectApp = async (appName: "google" | "microsoft") => {
+  const res = await axiosInstance.get(`${meetingEndPoints.oauthUrl}`, {
+    params: {
+      app: appName,
+    },
+  });
+  if (!res.data.data) return;
+
   const redirectUrl = res.data.data;
   window.location.href = redirectUrl;
 };
 
-const sendAccessToken = async (code: string | null | undefined) => {
+const disconnectApp = async (appName: "google" | "microsoft") => {
+  axiosInstance.delete(meetingEndPoints.removeCalendar, {
+    params: {
+      app: appName,
+    },
+  });
+};
+
+const sendAccessToken = async (
+  code: string | null | undefined,
+  app: "google" | "microsoft"
+) => {
   if (!code) return;
   return await axiosInstance.post(meetingEndPoints.accessToken, {
     code: code,
+    app,
   });
 };
 
@@ -237,9 +254,13 @@ const askQuery = async (
   return data;
 };
 
-const getCalendarStatus = async () => {
-  const res = await axiosInstance.get(meetingEndPoints.calendarStatus);
-  return res.data.data;
+const getCalendarStatus = async (appName: "google" | "microsoft") => {
+  const res = await axiosInstance.get(meetingEndPoints.calendarStatus, {
+    params: {
+      app: appName,
+    },
+  });
+  return res.data;
 };
 
 const getMeetingsList = async () => {
@@ -248,14 +269,7 @@ const getMeetingsList = async () => {
 };
 
 const addBotToMeeting = async (meetingDetails: MeetingDataType) => {
-  if (
-    !meetingDetails.meeting_url ||
-    !meetingDetails.start_time ||
-    !meetingDetails.end_time ||
-    !meetingDetails.bot_name ||
-    !meetingDetails.title
-  )
-    return;
+  if (!meetingDetails.meeting_url || !meetingDetails.project_id) return;
   const res = await axiosInstance.post(
     meetingEndPoints.addBotToMeeting,
     meetingDetails
@@ -365,9 +379,10 @@ const useAskQueryMutation = (
   });
 };
 
-const useCalendarStatusQuery = () => {
-  const queryKey: QueryKey = ["calendarStatus"];
-  return useQuery(queryKey, () => getCalendarStatus(), {
+const useCalendarStatusQuery = (appName: "google" | "microsoft") => {
+  const queryKey: QueryKey = ["calendarStatus", appName];
+
+  return useQuery(queryKey, () => getCalendarStatus(appName), {
     staleTime: 1000 * 60 * 30, // 30 minutes
     retry: false,
     refetchOnWindowFocus: false,
@@ -378,7 +393,13 @@ const useSendAccessTokenMutation = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   return useMutation(
-    (code: string | null | undefined) => sendAccessToken(code),
+    ({
+      code,
+      app,
+    }: {
+      code: string | null | undefined;
+      app: "google" | "microsoft";
+    }) => sendAccessToken(code, app),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["calendarStatus"]);
@@ -388,11 +409,12 @@ const useSendAccessTokenMutation = () => {
   );
 };
 
-const useMeetingListQuery = () => {
+const useMeetingListQuery = (modalOpen: boolean) => {
   const queryKey: QueryKey = ["meetingList"];
   return useQuery(queryKey, () => getMeetingsList(), {
     staleTime: 1000 * 60 * 30, // 30 minutes
     retry: false,
+    enabled: modalOpen,
   });
 };
 
@@ -403,6 +425,20 @@ const useAddBotToMeetingMutation = () => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["meetingList"]);
+      },
+    }
+  );
+};
+
+const useDisconnectAppMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation(
+    (appName: "google" | "microsoft") => disconnectApp(appName),
+    {
+      onSuccess: () => {
+        setTimeout(() => {
+          queryClient.invalidateQueries(["calendarStatus"]);
+        }, 1000);
       },
     }
   );
@@ -424,4 +460,5 @@ export {
   useSendAccessTokenMutation,
   useMeetingListQuery,
   useAddBotToMeetingMutation,
+  useDisconnectAppMutation,
 };

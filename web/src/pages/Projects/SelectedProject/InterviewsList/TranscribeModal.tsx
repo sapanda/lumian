@@ -31,10 +31,13 @@ export default function TranscribeModal(props: TranscribeModalProps) {
   const { modalOpen, setModalOpen, projectId } = props;
   const [meetingUrl, setMeetingUrl] = useState<string>("");
   const navigate = useNavigate();
-  const { status } = useCalendarStatusQuery();
-  const { data: meetingsLists, refetch } = useMeetingListQuery();
+  const { status: googleStatus } = useCalendarStatusQuery("google");
+  const { status: microsoftStatus } = useCalendarStatusQuery("microsoft");
+  const { data: meetingsLists, refetch } = useMeetingListQuery(modalOpen);
   const { mutateAsync: addBotToMeeting } = useAddBotToMeetingMutation();
 
+  const noAppConnected =
+    googleStatus !== "success" && microsoftStatus !== "success";
   useEffect(() => {
     if (modalOpen) refetch();
   }, [modalOpen, refetch]);
@@ -42,7 +45,7 @@ export default function TranscribeModal(props: TranscribeModalProps) {
     <ModalL open={modalOpen} handleClose={() => setModalOpen(false)}>
       <div className="flex flex-col justify-center gap-5 max-w-[500px]">
         <h2 className="text-20-700">Transcribe Meeting</h2>
-        {status === "success" ? (
+        {!noAppConnected ? (
           <div className="flex flex-col gap-5">
             <p className="text-12-400">
               Have the Lumian Notetaker join a meeting that is currently in
@@ -52,23 +55,44 @@ export default function TranscribeModal(props: TranscribeModalProps) {
             <div className="flex flex-col gap-5">
               <h2 className="text-gray-700 text-12-700">Current Meetings</h2>
               {meetingsLists?.length > 0 ? (
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-2">
                   {meetingsLists.map((meeting: Meeting) => {
                     return (
                       <div
                         className="flex items-center w-full gap-4"
                         key={meeting.meeting_url}
                       >
-                        <div className="flex w-full max-w-fit">
+                        <div className="flex w-full gap-2 max-w-fit">
                           <span className="text-gray-600 text-12-400">
                             {new Date(meeting?.start_time).toLocaleDateString()}{" "}
                             - {new Date(meeting?.end_time).toLocaleDateString()}
                           </span>
-                        </div>
-                        <div className="flex items-center justify-between w-full gap-2">
                           <span className="text-12-400">{meeting?.title}</span>
+                        </div>
+                        <div className="flex items-center justify-end flex-1 w-full gap-2">
+                          {meeting.bot_added && (
+                            <h2 className="text-gray-700 text-[10px] font-[400] italic">{`${meeting.bot_status}`}</h2>
+                          )}
                           {meeting.bot_added ? (
-                            <h2 className="text-gray-700 text-12-700">{`Bot is ${meeting.bot_status}`}</h2>
+                            // <Button
+                            //   variant="contained"
+                            //   color="error"
+                            //   onClick={() => {
+                            //     // addBotToMeeting({
+                            //     //   ...meeting,
+                            //     //   project_id: projectId,
+                            //     // }).then(() => {
+                            //     //   setModalOpen(false);
+                            //     // });
+                            //   }}
+                            //   sx={{
+                            //     minWidth: "105px",
+                            //     maxWidth: "105px",
+                            //   }}
+                            // >
+                            //   Cancel
+                            // </Button>
+                            <></>
                           ) : (
                             <Button
                               variant="contained"
@@ -77,8 +101,13 @@ export default function TranscribeModal(props: TranscribeModalProps) {
                                 addBotToMeeting({
                                   ...meeting,
                                   project_id: projectId,
-                                  bot_name: "Lumian Notetaker",
+                                }).then(() => {
+                                  setModalOpen(false);
                                 });
+                              }}
+                              sx={{
+                                minWidth: "105px",
+                                maxWidth: "105px",
                               }}
                             >
                               Transcribe
@@ -149,6 +178,15 @@ export default function TranscribeModal(props: TranscribeModalProps) {
               variant="contained"
               color="primary"
               disabled={meetingUrl === ""}
+              onClick={() => {
+                addBotToMeeting({
+                  meeting_url: meetingUrl,
+                  project_id: projectId,
+                }).then(() => {
+                  setModalOpen(false);
+                  setMeetingUrl("");
+                });
+              }}
             >
               Transcribe
             </Button>

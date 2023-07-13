@@ -11,6 +11,7 @@ interface UpdateMePayload {
   email?: string;
   name?: string;
   password?: string;
+  botName?: string;
 }
 
 const getMe = async () => {
@@ -19,7 +20,7 @@ const getMe = async () => {
 };
 
 const updateMe = async (payload: UpdateMePayload) => {
-  const res = await axiosInstance.put(`${userEndPoints.me}`, payload);
+  const res = await axiosInstance.patch(`${userEndPoints.me}`, payload);
   return res.data.data;
 };
 

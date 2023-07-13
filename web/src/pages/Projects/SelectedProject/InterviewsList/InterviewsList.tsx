@@ -14,10 +14,7 @@ import { GetStarted, InterviewsTab } from ".";
 import useInterviewsList from "./useInterviewsList";
 import { PrivateAppbar } from "../../../../layout";
 import { Button, Typography } from "@mui/material";
-import {
-  startTranscribe,
-  useCreateInterviewWithTranscriptMutation,
-} from "../../../../api/meetingApi";
+import { useCreateInterviewWithTranscriptMutation } from "../../../../api/meetingApi";
 import { updateProject } from "../../../../api/projectApi";
 import { PROJECTS } from "../../../../router/routes.constant";
 import { useNavigate } from "react-router-dom";
@@ -90,15 +87,20 @@ export default function InterviewsList() {
         >
           <div className="flex items-center justify-end w-full gap-5 px-10">
             <Typography variant="body1">{date ?? ""}</Typography>
-            <Button
-              variant="contained"
-              onClick={() => setTranscribeModalOpen(true)}
-            >
-              Transcribe
-            </Button>
-            <Button variant="contained" onClick={() => setModalOpen(true)}>
-              Upload
-            </Button>
+            {rows?.length > 0 && (
+              <>
+                <Button
+                  variant="contained"
+                  onClick={() => setTranscribeModalOpen(true)}
+                >
+                  Transcribe
+                </Button>
+
+                <Button variant="contained" onClick={() => setModalOpen(true)}>
+                  Upload
+                </Button>
+              </>
+            )}
             <Button
               variant="outlined"
               onClick={() =>
@@ -116,7 +118,7 @@ export default function InterviewsList() {
       {rows?.length === 0 && (
         <GetStarted
           onUploadClick={() => setModalOpen(true)}
-          startTranscibe={() => startTranscribe(parseInt(projectId || "0"))}
+          startTranscibe={() => setTranscribeModalOpen(true)}
         />
       )}
       {rows?.length > 0 && (

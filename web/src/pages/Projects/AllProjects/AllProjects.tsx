@@ -4,11 +4,10 @@ import { PrivateContainer } from "../../../components/Containers";
 import { TableL } from "../../../components/molecules";
 import GetStarted from "./GetStarted";
 import { PrivateAppbar } from "../../../layout";
-import { PROJECTS } from "../../../router/routes.constant";
+import { INTEGRATIONS, PROJECTS } from "../../../router/routes.constant";
 import { useNavigate } from "react-router-dom";
 import useProjects from "../useProjects";
 import {
-  connectApp,
   useCalendarStatusQuery,
   useSendAccessTokenMutation,
 } from "../../../api/meetingApi";
@@ -39,7 +38,6 @@ interface rowType {
 export default function AllProjects() {
   const navigate = useNavigate();
   const { allProjects } = useProjects();
-  const { status } = useCalendarStatusQuery();
 
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get("code");
@@ -54,10 +52,21 @@ export default function AllProjects() {
       PROJECTS.SELECTED_PROJECT.default.replace(":projectId", `${projectId}`)
     );
   }
+  const { status: googleStatus } = useCalendarStatusQuery("google");
+  const { status: microsoftStatus } = useCalendarStatusQuery("microsoft");
+
+  const noAppConnected =
+    googleStatus !== "success" || microsoftStatus !== "success";
   useEffect(() => {
     if (code && !apiCalledFlag.current) {
       apiCalledFlag.current = true;
-      sendAccessToken(code);
+      const app = localStorage.getItem("app") as "google" | "microsoft";
+
+      if (app === "google" || app === "microsoft")
+        sendAccessToken({
+          code,
+          app,
+        });
     }
   }, [code, sendAccessToken]);
 
@@ -66,19 +75,22 @@ export default function AllProjects() {
       appBar={
         <PrivateAppbar title="Projects" icon={projects_icon}>
           <div className="flex items-center justify-end w-full gap-5 px-10">
-            {status !== "loading" &&
-              status !== "success" &&
-              allProjects?.length > 0 && (
-                <Button variant="contained" onClick={() => connectApp()}>
-                  Connect App
-                </Button>
-              )}
-            <Button
-              variant="contained"
-              onClick={() => navigate(PROJECTS.CREATE_PROJECT)}
-            >
-              New Project
-            </Button>
+            {noAppConnected && allProjects?.length > 0 && (
+              <Button
+                variant="contained"
+                onClick={() => navigate(INTEGRATIONS)}
+              >
+                Connect App
+              </Button>
+            )}
+            {allProjects?.length > 0 && (
+              <Button
+                variant="contained"
+                onClick={() => navigate(PROJECTS.CREATE_PROJECT)}
+              >
+                New Project
+              </Button>
+            )}
           </div>
         </PrivateAppbar>
       }

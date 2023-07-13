@@ -13,3 +13,15 @@ class BaseException(APIException):
 
 class RecallAITimeoutException(BaseException):
     pass
+
+
+class RecallAIException(BaseException):
+    pass
+
+
+class GoogleAPIException(BaseException):
+    pass
+
+
+class MicrosoftAPIException(BaseException):
+    pass
