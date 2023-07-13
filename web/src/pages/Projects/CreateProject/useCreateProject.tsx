@@ -44,9 +44,6 @@ export default function useCreateProject() {
     if (!state.projectName) {
       errors.projectName = "Project Name is required";
     }
-    if (!state.goal) {
-      errors.goal = "Goal is required";
-    }
 
     setErrors(errors);
     return errors.projectName || errors.goal || errors.questions;
