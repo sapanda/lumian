@@ -1,13 +1,15 @@
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.db import IntegrityError, transaction
 from rest_framework.status import (
+    HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_202_ACCEPTED,
     HTTP_400_BAD_REQUEST,
     HTTP_406_NOT_ACCEPTABLE,
     HTTP_408_REQUEST_TIMEOUT,
     HTTP_409_CONFLICT,
-    HTTP_404_NOT_FOUND
+    HTTP_404_NOT_FOUND,
+    HTTP_412_PRECONDITION_FAILED
 )
 from rest_framework import (
     authentication,
@@ -19,6 +21,7 @@ from rest_framework.response import Response
 
 from meeting.external_clients.recallai import (
     add_bot_to_meeting,
+    remove_bot_from_meeting,
     get_meeting_transcript,
     list_calendar_events
 )
@@ -30,7 +33,10 @@ from meeting.serializers import (
 )
 from meeting.utils import generate_transcript_text
 from meeting.models import MeetingBot, MeetingCalendar
-from meeting.errors import RecallAITimeoutException
+from meeting.errors import (
+    RecallAITimeoutException,
+    RecallAIException
+)
 from project.models import Project
 
 from transcript.models import Transcript
@@ -95,6 +101,9 @@ class AddBotView(APIView):
         except RecallAITimeoutException as e:
             response_message = {"error": str(e)}
             response_status = HTTP_408_REQUEST_TIMEOUT
+        except RecallAIException as e:
+            response_message = {"error": str(e)}
+            response_status = HTTP_412_PRECONDITION_FAILED
         except IntegrityError as e:
             response_message = {"error": str(e)}
             response_status = HTTP_409_CONFLICT
@@ -104,6 +113,38 @@ class AddBotView(APIView):
 
         return Response({'message': response_message},
                         status=response_status)
+
+
+class RemoveBotView(APIView):
+
+    serializer_class = GetBotStatusSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+
+        try:
+            serializer = self.serializer_class(data=request.data)
+            if (not serializer.is_valid()):
+                return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
+            bot_id = serializer.validated_data['bot_id']
+
+            remove_bot_from_meeting(bot_id)
+            return Response(
+                'Transcription stopped successfully',
+                HTTP_200_OK
+            )
+
+        except RecallAITimeoutException as e:
+            response_data = str(e)
+            response_status = HTTP_408_REQUEST_TIMEOUT
+        except RecallAIException as e:
+            response_data = str(e)
+            response_status = HTTP_412_PRECONDITION_FAILED
+        except Exception as e:
+            response_data = str(e)
+            response_status = HTTP_400_BAD_REQUEST
+        return Response(response_data, response_status)
 
 
 # View for callback URL for every bot status change
