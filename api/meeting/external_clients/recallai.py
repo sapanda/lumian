@@ -1,4 +1,5 @@
 import requests
+import time
 from retry import retry
 from urllib.parse import urlencode
 import datetime
@@ -157,12 +158,10 @@ def create_calendar(refresh_token, calendar_app):
         "Authorization": "Token " + token
     }
 
-    logger.debug(f'Create calendar payload -{payload}')
     try:
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
         res = response.json()
-        logger.info(f'create calendar response {res}')
         return res['id']
     except (Timeout, ConnectionError) as e:
         error_msg = f"Connection errro: {e}"
@@ -190,21 +189,32 @@ def retrieve_calendar(calendar_id):
     }
 
     try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        res = response.json()
-        if not res['oauth_email']:
-            raise RequestException()
+        while True:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            res = response.json()
+            if not res['oauth_email']:
+                if 'status_changes' in res:
+                    for status in res['status_changes']:
+                        if status['status'] == 'disconnected':
+                            raise RequestException()
+            else:
+                break
+            time.sleep(5)
         return res['oauth_email']
         # TODO : check status and fetch reason in case of error
+    except (Timeout, ConnectionError) as e:
+        error_msg = f"Connection errro: {e}"
+        status_code = e.response.status_code
+        raise RecallAITimeoutException(error_msg, status_code)
     except HTTPError as e:
         error_msg = f"HTTP error occurred: {e}"
         status_code = e.response.status_code
-        raise RecallAITimeoutException(error_msg, status_code)
+        raise RecallAIException(error_msg, status_code)
     except RequestException as e:
         error_msg = f"An error occurred: {e}"
         status_code = None
-        raise RecallAITimeoutException(error_msg, status_code)
+        raise RecallAIException(error_msg, status_code)
 
 
 @retry(RecallAITimeoutException, tries=3, delay=5, backoff=2)

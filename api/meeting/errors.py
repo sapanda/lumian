@@ -17,3 +17,7 @@ class RecallAITimeoutException(BaseException):
 
 class RecallAIException(BaseException):
     pass
+
+
+class GoogleAPIException(BaseException):
+    pass

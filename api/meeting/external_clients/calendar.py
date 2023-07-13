@@ -1,4 +1,6 @@
+import requests
 import app.settings as settings
+from meeting.errors import GoogleAPIException
 from google_auth_oauthlib.flow import Flow
 from msal import ConfidentialClientApplication
 import logging
@@ -11,6 +13,7 @@ GOOGLE_SCOPES = [
     ]
 TOKEN_URI = "https://oauth2.googleapis.com/token"
 AUTH_URI = "https://accounts.google.com/o/oauth2/auth"
+TOKEN_REVOKE_URI = 'https://oauth2.googleapis.com/revoke'
 REDIRECT_URI = settings.GOOGLE_REDIRECT_URL
 CLIENT_ID = settings.GOOGLE_CLIENT_ID
 CLIENT_SECRET = settings.GOOGLE_CLIENT_SECRET
@@ -54,6 +57,15 @@ class GoogleAPI:
         creds = self.flow.credentials
         return creds.token, creds.refresh_token
 
+    def revoke_access_token(self, access_token):
+        revoke = requests.post(
+            TOKEN_REVOKE_URI,
+            params={'token': access_token},
+            headers={'content-type': 'application/x-www-form-urlencoded'})
+        status_code = getattr(revoke, 'status_code')
+        if not status_code == 200:
+            raise GoogleAPIException('Calendar not integrated')
+
 
 class MicrosoftAPI:
     def __init__(self):
@@ -77,6 +89,9 @@ class MicrosoftAPI:
             scopes=MICROSOFT_SCOPES,
             redirect_uri=MICROSOFT_REDIRECT_URI)
         return result.get('access_token'), result.get('refresh_token')
+
+    def revoke_access_token(self, access_token):
+        pass
 
 
 class CalendarAPIFactory:

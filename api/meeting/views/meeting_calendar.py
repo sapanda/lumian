@@ -8,13 +8,14 @@ from rest_framework.status import (
     HTTP_404_NOT_FOUND,
     HTTP_408_REQUEST_TIMEOUT,
     HTTP_412_PRECONDITION_FAILED,
+    HTTP_417_EXPECTATION_FAILED,
     HTTP_422_UNPROCESSABLE_ENTITY
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import (
     ValidationError,
-    NotFound
+    NotFound,
 )
 from rest_framework import (
     authentication,
@@ -22,7 +23,8 @@ from rest_framework import (
 )
 from meeting.errors import (
     RecallAITimeoutException,
-    RecallAIException
+    RecallAIException,
+    GoogleAPIException
 )
 from meeting.models import MeetingCalendar, MeetingBot
 from meeting.external_clients.calendar import (
@@ -96,15 +98,24 @@ class OAuthResponseView(APIView):
             calendar_api = CalendarAPIFactory.get_api(calendar_app)
 
             # Calendar creation
-            _, refresh_token = calendar_api.get_access_token(code)
-            calendar_id = create_calendar(refresh_token, calendar_app)
-            calendar_email = retrieve_calendar(calendar_id)
+            access_token, refresh_token = calendar_api.get_access_token(code)
+            try:
+                calendar_id = create_calendar(refresh_token, calendar_app)
+                calendar_email = retrieve_calendar(calendar_id)
+            except Exception as e:
+                calendar_api.revoke_access_token(access_token)
+                raise e
 
             # Create database object
-            defaults = {'calendar_id': calendar_id}
+            defaults = {
+                'calendar_id': calendar_id,
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+                'calendar_email': calendar_email,
+
+                }
             MeetingCalendar.objects.update_or_create(
                 user=user,
-                calendar_email=calendar_email,
                 calendar_app=calendar_app,
                 defaults=defaults
             )
@@ -119,7 +130,11 @@ class OAuthResponseView(APIView):
             message = str(e)
             status_code = HTTP_412_PRECONDITION_FAILED
         except ValueError as e:
-            return Response(str(e), HTTP_422_UNPROCESSABLE_ENTITY)
+            message = str(e)
+            status_code = HTTP_422_UNPROCESSABLE_ENTITY
+        except GoogleAPIException as e:
+            message = str(e)
+            status_code = HTTP_417_EXPECTATION_FAILED
         except Exception as e:
             message = str(e)
             status_code = HTTP_400_BAD_REQUEST
@@ -204,7 +219,7 @@ class EventDetailsView(APIView):
             return Response({'data': events})
 
         except (MeetingCalendar.DoesNotExist, NotFound):
-            message = "Calendar integration doesn't exist for this user"
+            message = "Calendar not integrated"
             status_code = HTTP_404_NOT_FOUND
         except ValidationError as e:
             message = str(e)
@@ -279,14 +294,18 @@ class DeleteCalendarView(APIView):
             serializer = self.serializer_class(data=request.query_params)
             if (not serializer.is_valid()):
                 return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
+            calendar_app = serializer.validated_data['app']
             user = request.user
+            calendar_api = CalendarAPIFactory.get_api(calendar_app)
             calendar = MeetingCalendar.objects.get(
                 user=user,
-                calendar_app=serializer.validated_data['app']
+                calendar_app=calendar_app
             )
-            # TODO : revoke access token
+
+            calendar_api.revoke_access_token(calendar.access_token)
             delete_calendar(calendar.calendar_id)
             calendar.delete()
+
             return Response(
                 'Calendar deleted successfully',
                 HTTP_200_OK
@@ -301,6 +320,9 @@ class DeleteCalendarView(APIView):
         except RecallAIException as e:
             response_data = str(e)
             response_status = HTTP_412_PRECONDITION_FAILED
+        except GoogleAPIException as e:
+            response_data = str(e)
+            response_status = HTTP_417_EXPECTATION_FAILED
         except Exception as e:
             response_data = str(e)
             response_status = HTTP_400_BAD_REQUEST
