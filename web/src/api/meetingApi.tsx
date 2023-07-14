@@ -366,17 +366,19 @@ const useGetMeetingQuery = (
 
 const useAskQueryMutation = (
   interviewId: number | undefined,
-  query: string,
   queryLevel: "project" | "transcript"
 ) => {
   const queryClient = useQueryClient();
-  return useMutation(() => askQuery(interviewId, query, queryLevel), {
-    onSuccess: (data) => {
-      if (data.output) {
-        queryClient.invalidateQueries(["meetingQuery", interviewId]);
-      }
-    },
-  });
+  return useMutation(
+    (query: string) => askQuery(interviewId, query, queryLevel),
+    {
+      onSuccess: (data) => {
+        if (data.output) {
+          queryClient.invalidateQueries(["meetingQuery", interviewId]);
+        }
+      },
+    }
+  );
 };
 
 const useCalendarStatusQuery = (appName: "google" | "microsoft") => {
