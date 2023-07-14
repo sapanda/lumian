@@ -71,6 +71,11 @@ class TranscriptAPITests(APITestCase):
         self.client.force_authenticate(user=self.user)
         self.project = create_project(user=self.user)
 
+    def set_superuser(self, is_superuser: bool):
+        """Set the user to be a superuser."""
+        self.user.is_superuser = is_superuser
+        self.user.save()
+
     def test_create_transcript_success(self, patched_signal):
         """Test creating a transcript is successful."""
         payload = default_transcript_payload(self.project)
@@ -102,6 +107,24 @@ class TranscriptAPITests(APITestCase):
                          'This field may not be blank.')
         self.assertEqual(patched_signal.call_count, 0)
 
+    def test_create_transcript_alt_user(self, patched_signal):
+        """Test creating a transcript with a different user fails
+        for both regular and super users."""
+        new_user = create_user(email='user2@example.com', password='test123')
+        new_project = create_project(user=new_user)
+        payload = {
+            'project': new_project.id,
+            'title': 'Test Title',
+            'interviewee_names': ['Interviewee'],
+            'interviewer_names': ['Interviewer 1', 'Interviewer 2'],
+            'transcript': 'Test Transcript',
+        }
+        res = self.client.post(TRANSCRIPT_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        self.set_superuser(True)
+        res = self.client.post(TRANSCRIPT_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_retrieve_transcripts(self, patched_signal):
         """Test retrieving a list of transcripts."""
         create_transcript(project=self.project)
@@ -114,33 +137,79 @@ class TranscriptAPITests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data['data']['transcripts'], serializer.data)
 
+    def test_retrieve_transcript_alt_user(self, patched_signal):
+        """Test retrieving a single transcript should fail
+        with wrong user unless superuser."""
+        other_user = create_user(email='other@example.com', password='test123')
+        other_project = create_project(user=other_user)
+        tct = create_transcript(project=other_project)
+
+        url = detail_url(tct.id)
+
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.set_superuser(True)
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
     def test_transcript_list_limited_to_user(self, patched_signal):
-        """Test list of transcripts is limited to authenticated user."""
+        """Test list of transcripts is limited to authenticated user
+        unless requestor is a superuser."""
         other_user = create_user(email='other@example.com', password='test123')
         other_project = create_project(user=other_user)
         create_transcript(project=other_project)
         create_transcript(project=self.project)
 
         res = self.client.get(TRANSCRIPT_URL)
-
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data['data']), 3)
+        self.assertEqual(len(res.data['data']['transcripts']), 1)
         self.assertEqual(res.data['data']['transcripts'][0]['project'],
                          self.project.id)
 
+        self.set_superuser(True)
+        res = self.client.get(TRANSCRIPT_URL)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data['data']['transcripts']), 2)
+
     def test_transcript_filter(self, patched_signal):
         """Test filtering the transcript list to requested project."""
-        new_project = create_project(user=self.user)
+        my_new_project = create_project(user=self.user)
         create_transcript(project=self.project)
-        create_transcript(project=new_project)
+        create_transcript(project=my_new_project)
 
         payload = {'project': self.project.id}
         res = self.client.get(TRANSCRIPT_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data['data']), 3)
+        self.assertEqual(len(res.data['data']['transcripts']), 1)
         self.assertEqual(res.data['data']['transcripts'][0]['project'],
                          self.project.id)
+
+    def test_transcript_filter_alt_user(self, patched_signal):
+        """Test filtering the transcript list to requested project
+        for a superuser."""
+        other_user = create_user(email='other@example.com', password='test123')
+        other_project = create_project(user=other_user)
+        create_transcript(project=other_project)
+        create_transcript(project=self.project)
+
+        self.set_superuser(True)
+
+        payload = {'project': self.project.id}
+        res = self.client.get(TRANSCRIPT_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data['data']), 3)
+        self.assertEqual(len(res.data['data']['transcripts']), 1)
+        self.assertEqual(res.data['data']['transcripts'][0]['project'],
+                         self.project.id)
+
+        res = self.client.get(TRANSCRIPT_URL)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data['data']), 3)
+        self.assertEqual(len(res.data['data']['transcripts']), 2)
 
     def test_partial_update(self, patched_signal):
         """Test partial update of a transcript."""
@@ -157,44 +226,50 @@ class TranscriptAPITests(APITestCase):
         self.assertEqual(tpt.interviewee_names, payload['interviewee_names'])
         self.assertEqual(tpt.interviewer_names, old_interviewer_names)
 
+    def test_partial_update_alt_user(self, patched_signal):
+        """Test partial update of a transcript in another user's project fails
+        for both regular and super users."""
+        other_user = create_user(email='other@example.com', password='test123')
+        other_project = create_project(user=other_user)
+        tpt = create_transcript(project=other_project)
+        payload = {'title': 'New Title', 'interviewee_names': ['New Guy']}
+
+        url = detail_url(tpt.id)
+        res = self.client.patch(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.set_superuser(True)
+        url = detail_url(tpt.id)
+        res = self.client.patch(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
     @patch('transcript.signals._delete_transcript_on_synthesis_service')
     def test_delete_transcript(self, patched_signal, patched_delete):
         """Test deleting a transcript successful."""
         tpt = create_transcript(project=self.project)
-
         url = detail_url(tpt.id)
         res = self.client.delete(url)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertFalse(Transcript.objects.filter(id=tpt.id).exists())
 
-    def test_create_transcript_other_users_failure(self, patched_signal):
-        """
-        Test failure when creating transcript using wrong project ID.
-        """
-        new_user = create_user(email='user2@example.com', password='test123')
-        new_project = create_project(user=new_user)
-        payload = {
-            'project': new_project.id,
-            'title': 'Test Title',
-            'interviewee_names': ['Interviewee'],
-            'interviewer_names': ['Interviewer 1', 'Interviewer 2'],
-            'transcript': 'Test Transcript',
-        }
-        res = self.client.post(TRANSCRIPT_URL, payload)
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_delete_transcript_other_users_failure(self, patched_signal):
-        """Test trying to delete another users transcript gives error."""
+    @patch('transcript.signals._delete_transcript_on_synthesis_service')
+    def test_delete_transcript_alt_user(self, patched_signal, patched_delete):
+        """Test trying to delete another users transcript gives error
+        for both regular and super users."""
         new_user = create_user(email='user2@example.com', password='test123')
         new_project = create_project(user=new_user)
         tpt = create_transcript(project=new_project)
 
         url = detail_url(tpt.id)
-        res = self.client.delete(url)
 
-        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
         self.assertTrue(Transcript.objects.filter(id=tpt.id).exists())
+
+        self.set_superuser(True)
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_summary_in_progress(self, patched_signal):
         """Test getting a summary of a transcript that is in progress."""
@@ -231,6 +306,27 @@ class TranscriptAPITests(APITestCase):
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_summary_alt_user(self, patched_signal):
+        """Test getting a summary of a transcript fails for the wrong user
+        if requestor is regular user or but succeeds for superuser."""
+        other_user = create_user(email='other@example.com', password='test123')
+        other_project = create_project(user=other_user)
+        tpt = create_transcript(project=other_project)
+        summary = Synthesis.objects.get(
+            transcript=tpt,
+            output_type=SynthesisType.SUMMARY
+        )
+        summary.status = SynthesisStatus.COMPLETED
+        summary.save()
+
+        url = summary_url(tpt.id)
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.set_superuser(True)
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
 
     def test_concise_in_progress(self, patched_signal):
         """Test getting a concise transcript that is in progress."""
@@ -269,6 +365,27 @@ class TranscriptAPITests(APITestCase):
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_concise_alt_user(self, patched_signal):
+        """Test getting a concise of a transcript fails for the wrong user
+        if requestor is regular user or but succeeds for superuser."""
+        other_user = create_user(email='other@example.com', password='test123')
+        other_project = create_project(user=other_user)
+        tpt = create_transcript(project=other_project)
+        concise = Synthesis.objects.get(
+            transcript=tpt,
+            output_type=SynthesisType.CONCISE
+        )
+        concise.status = SynthesisStatus.COMPLETED
+        concise.save()
+
+        url = concise_url(tpt.id)
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.set_superuser(True)
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
 
     @patch('transcript.synthesis_client.run_query')
     def test_query_success(self, patched_query, patched_signal):
@@ -314,6 +431,46 @@ class TranscriptAPITests(APITestCase):
         url = f"{url}?query_level=transcript"
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch('transcript.synthesis_client.run_query')
+    def test_query_alt_user(self, patched_query, patched_signal):
+        """Test that query fails when user is not the owner of the project
+        regardless of whether the user is a superuser."""
+        other_user = create_user(email='other@example.com', password='test123')
+        other_project = create_project(user=other_user)
+        tpt = create_transcript(project=other_project)
+        embeds = Embeds.objects.get(transcript=tpt)
+        embeds.status = SynthesisStatus.COMPLETED
+        embeds.save()
+
+        query = "empty?"
+        query_output = {'output': 'empty', 'prompt': 'empty', 'cost': 0.3, }
+        patched_query.return_value = query_output
+
+        url = query_url(tpt.id)
+        res = self.client.post(url, {'query': query})
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.set_superuser(True)
+        res = self.client.post(url, {'query': query})
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    @patch('transcript.synthesis_client.run_query')
+    def test_query_list_alt_user(
+            self, patched_query, patched_signal):
+        """Test that query list fails when user is not the owner
+        of the project, unless the user is a superuser."""
+        other_user = create_user(email='other@example.com', password='test123')
+        other_project = create_project(user=other_user)
+        tpt = create_transcript(project=other_project)
+        url = query_url(tpt.id)
+        url = f"{url}?query_level=transcript"
+
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        self.set_superuser(True)
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_202_ACCEPTED)
 
 
 @skip("OpenAI Costs: Run only when testing AI Synthesis changes")
