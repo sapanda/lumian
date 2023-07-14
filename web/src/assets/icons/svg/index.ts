@@ -11,6 +11,7 @@ import navigate_next__icon from "./navigate_next__icon.svg";
 import outlook_calendar__icon from "./outlook_calendar__icon.svg";
 import profile_icon from "./profile_icon.svg";
 import projects_icon from "./projects_icon.svg";
+import refresh__icon from "./refresh__icon.svg";
 import settings_icon from "./settings_icon.svg";
 
 export {
@@ -27,5 +28,6 @@ export {
   navigate_next__icon,
   profile_icon,
   projects_icon,
+  refresh__icon,
   settings_icon,
 };
