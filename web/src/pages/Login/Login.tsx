@@ -50,11 +50,27 @@ export default function Login() {
           <div className="flex flex-col justify-center min-h-[70px]">
             <p className="text-12-400">
               By using MetaNext you agree to the{" "}
-              <span className="text-blue-500 cursor-pointer">
+              <span
+                className="text-blue-500 cursor-pointer"
+                onClick={() =>
+                  window.open(
+                    "https://metanext.notion.site/Terms-of-Service-c5c6b953067d4b138ee9d8b23b919734",
+                    "_blank"
+                  )
+                }
+              >
                 Terms of Service
               </span>{" "}
               and{" "}
-              <span className="text-blue-500 cursor-pointer">
+              <span
+                className="text-blue-500 cursor-pointer"
+                onClick={() =>
+                  window.open(
+                    "https://metanext.notion.site/Privacy-Policy-8efe42dc1ec14e4ba5dc5155455d3927",
+                    "_blank"
+                  )
+                }
+              >
                 Privacy Policy
               </span>
             </p>
