@@ -409,7 +409,6 @@ class QueryView(APIView):
                 status.HTTP_404_NOT_FOUND)
         except Embeds.DoesNotExist:
             response = Response(
-                f'Embeds does not exist for transcript {pk}',
                 status=status.HTTP_202_ACCEPTED)
         except ValidationError:
             response = Response(

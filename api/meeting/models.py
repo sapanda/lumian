@@ -48,6 +48,8 @@ class MeetingCalendar(models.Model):
         choices=CalendarChoices.choices)
     calendar_id = models.CharField(max_length=512)
     calendar_email = models.EmailField(max_length=512)
+    access_token = models.TextField(default=None, blank=True, null=True)
+    refresh_token = models.TextField(default=None, blank=True, null=True)
 
     class Meta:
         constraints = [
