@@ -4,6 +4,7 @@ import { PrivateContainer } from "../../components/Containers";
 import useAccountSettings from "./useAccountSettings";
 import { LabelInputCombo } from "../../components/molecules";
 import { PrivateAppbar } from "../../layout";
+import { useNavigate } from "react-router-dom";
 
 export default function AccountSettings() {
   const { errors, handleChange, handleSave, state } = useAccountSettings({
@@ -13,6 +14,7 @@ export default function AccountSettings() {
     newPassword: "",
     bot_name: "",
   });
+  const navigate = useNavigate();
   return (
     <PrivateContainer
       appBar={<PrivateAppbar icon={settings_icon} title="Account Settings" />}
@@ -83,6 +85,7 @@ export default function AccountSettings() {
               sx={{
                 width: "100px",
               }}
+              onClick={() => navigate(-1)}
             >
               Cancel
             </Button>
