@@ -6,6 +6,7 @@ import useInterview from "../useInterview";
 import {
   copied_toast__icon,
   copy__icon,
+  refresh__icon,
 } from "../../../../../assets/icons/svg";
 
 interface summaryProps {
@@ -37,6 +38,8 @@ export default function Summary() {
     transcriptRef,
     scrollToNextHighlightedText,
     activeCitationIndex,
+    refreshSummary,
+    refreshQuestions,
   } = useInterview();
 
   function onCopyClick(copyType: "summary" | "question") {
@@ -82,20 +85,34 @@ export default function Summary() {
             <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
               Summary
             </Typography>
-            <img
-              src={copy__icon}
-              alt="copy"
-              className="ml-2 cursor-pointer"
-              onClick={() => onCopyClick("summary")}
-            />
-            <img
-              src={copied_toast__icon}
-              alt="copy"
-              className="transition-opacity duration-500 ease-in-out"
-              style={{
-                opacity: copiedState.showSummaryCopied ? 1 : 0,
-              }}
-            />
+
+            {summary && (
+              <>
+                <img
+                  src={refresh__icon}
+                  alt="refresh"
+                  className="ml-2 cursor-pointer"
+                  onClick={() => refreshSummary()}
+                />
+
+                <img
+                  src={copy__icon}
+                  alt="copy"
+                  className="ml-2 cursor-pointer"
+                  onClick={() => onCopyClick("summary")}
+                />
+                {copiedState.showSummaryCopied && (
+                  <img
+                    src={copied_toast__icon}
+                    alt="copy"
+                    className="transition-opacity duration-500 ease-in-out"
+                    style={{
+                      opacity: copiedState.showSummaryCopied ? 1 : 0,
+                    }}
+                  />
+                )}
+              </>
+            )}
           </div>
 
           {!summary ? (
@@ -155,20 +172,33 @@ export default function Summary() {
             <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
               Questions
             </Typography>
-            <img
-              src={copy__icon}
-              alt="copy"
-              className="mx-2 cursor-pointer"
-              onClick={() => onCopyClick("question")}
-            />
-            <img
-              src={copied_toast__icon}
-              alt="copy"
-              className="transition-opacity duration-500 ease-in-out"
-              style={{
-                opacity: copiedState.showQuestionCopied ? 1 : 0,
-              }}
-            />
+            {questions?.status === 201 && (
+              <>
+                <img
+                  src={refresh__icon}
+                  alt="refresh"
+                  className="mx-2 cursor-pointer"
+                  onClick={() => refreshQuestions()}
+                />
+
+                <img
+                  src={copy__icon}
+                  alt="copy"
+                  className="mx-2 cursor-pointer"
+                  onClick={() => onCopyClick("question")}
+                />
+                {copiedState.showQuestionCopied && (
+                  <img
+                    src={copied_toast__icon}
+                    alt="copy"
+                    className="transition-opacity duration-500 ease-in-out"
+                    style={{
+                      opacity: copiedState.showQuestionCopied ? 1 : 0,
+                    }}
+                  />
+                )}
+              </>
+            )}
           </div>
 
           {questions?.status !== 201 || !questions?.data ? (
