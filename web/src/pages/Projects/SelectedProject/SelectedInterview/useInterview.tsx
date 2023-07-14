@@ -19,13 +19,11 @@ export default function useInterview() {
   );
   const { data: interviewData, refetch: refreshInterviewData } =
     useGetMeetingTranscriptQuery(parseInt(interviewId || "0"));
-  const { data: summaryData } = useGetMeetingSummaryQuery(
-    parseInt(interviewId || "0")
-  );
-  const { data: conciseData } = useGetMeetingConciseQuery(
-    parseInt(interviewId || "0")
-  );
-  const { data: questions } = useGetMeetingQuery(
+  const { data: summaryData, refetch: refreshSummary } =
+    useGetMeetingSummaryQuery(parseInt(interviewId || "0"));
+  const { data: conciseData, refetch: refreshConcise } =
+    useGetMeetingConciseQuery(parseInt(interviewId || "0"));
+  const { data: questions, refetch: refreshQuestions } = useGetMeetingQuery(
     parseInt(interviewId || "0"),
     "project"
   );
@@ -172,6 +170,9 @@ export default function useInterview() {
     setUserQueryText,
     refreshInterviewData,
     refreshInterviewList,
+    refreshSummary,
+    refreshQuestions,
+    refreshConcise,
     isAsking,
   };
 }

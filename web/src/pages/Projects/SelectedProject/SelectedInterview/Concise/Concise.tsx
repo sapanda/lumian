@@ -1,7 +1,13 @@
-import { CircularProgress, Paper } from "@mui/material";
+import { CircularProgress, Paper, Typography } from "@mui/material";
 import theme from "../../../../../theme/theme";
 import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import useInterview from "../useInterview";
+import {
+  copied_toast__icon,
+  copy__icon,
+  refresh__icon,
+} from "../../../../../assets/icons/svg";
+import { useState } from "react";
 
 interface conciseProps {
   text: string;
@@ -19,7 +25,20 @@ export default function Concise() {
     transcriptRef,
     scrollToNextHighlightedText,
     activeCitationIndex,
+    refreshConcise,
   } = useInterview();
+  const [copied, setCopied] = useState<boolean>(false);
+
+  function onCopyClick() {
+    const element = document.getElementById("concise");
+    const innerText = element?.innerText;
+    innerText && navigator.clipboard.writeText(innerText);
+
+    setCopied(true);
+    setTimeout(() => {
+      setCopied(false);
+    }, 1000);
+  }
   return (
     <div className="flex gap-5 px-8 py-4">
       <Paper
@@ -34,6 +53,39 @@ export default function Concise() {
           maxHeight: "75vh",
         }}
       >
+        <div className="flex">
+          <Typography variant="h5" sx={{ color: theme.palette.common.black }}>
+            Concise
+          </Typography>
+
+          {concise && (
+            <>
+              <img
+                src={refresh__icon}
+                alt="refresh"
+                className="ml-2 cursor-pointer"
+                onClick={() => refreshConcise()}
+              />
+
+              <img
+                src={copy__icon}
+                alt="copy"
+                className="ml-2 cursor-pointer"
+                onClick={() => onCopyClick()}
+              />
+              {copied && (
+                <img
+                  src={copied_toast__icon}
+                  alt="copy"
+                  className="transition-opacity duration-500 ease-in-out"
+                  style={{
+                    opacity: copied ? 1 : 0,
+                  }}
+                />
+              )}
+            </>
+          )}
+        </div>
         {!concise ? (
           <div className="flex items-center gap-5">
             <CircularProgress />
@@ -42,7 +94,10 @@ export default function Concise() {
             </span>
           </div>
         ) : (
-          <div className="overflow-y-auto">
+          <div
+            className="overflow-y-auto max-h-[68vh] min-h-[68vh]"
+            id="concise"
+          >
             {concise?.map((item: conciseProps, index: number) => {
               const regex = /^[a-zA-Z0-9]/;
               let selectedBgColor = "";
