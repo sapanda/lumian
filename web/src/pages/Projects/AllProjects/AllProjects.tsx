@@ -70,6 +70,12 @@ export default function AllProjects() {
     }
   }, [code, sendAccessToken]);
 
+  useEffect(() => {
+    if (allProjects?.length === 0) {
+      navigate(PROJECTS.CREATE_PROJECT);
+    }
+  }, [allProjects, navigate]);
+
   return (
     <PrivateContainer
       appBar={

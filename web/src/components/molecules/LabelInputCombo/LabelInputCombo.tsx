@@ -12,6 +12,7 @@ interface LabelInputPairProps {
   type?: "text" | "password" | "email" | "number" | "tel" | "url";
   size?: "small" | "default";
   multiline?: boolean;
+  isOptional?: boolean;
 }
 
 const LabelInputCombo = (props: LabelInputPairProps) => {
@@ -26,6 +27,7 @@ const LabelInputCombo = (props: LabelInputPairProps) => {
     type,
     size = "default",
     multiline = false,
+    isOptional = false,
   } = props;
 
   let finalPlaceholderText = "";
@@ -40,7 +42,8 @@ const LabelInputCombo = (props: LabelInputPairProps) => {
           fontSize: "12px",
         }}
       >
-        {label}
+        {label}{" "}
+        <span className="text-12-400">{isOptional && "(optional)"}</span>
       </InputLabel>
       {!!inputDescription && (
         <DescriptionText>{inputDescription}</DescriptionText>
