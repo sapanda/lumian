@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Stack, Typography } from "@mui/material";
 import { PrivateContainer } from "../../../components/Containers";
 import { projects_icon } from "../../../assets/icons/svg";
 import { LabelInputCombo } from "../../../components/molecules";
 import useCreateProject from "./useCreateProject";
 import { PrivateAppbar } from "../../../layout";
-import { PROJECTS } from "../../../router/routes.constant";
 import { useNavigate } from "react-router-dom";
 import ModalL from "../../../components/molecules/ModalL/ModalL";
 
@@ -14,6 +13,15 @@ export default function CreateProject() {
     useCreateProject();
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const navigate = useNavigate();
+  const [isVisited, setIsVisited] = useState<boolean>(false);
+
+  useEffect(() => {
+    const visited = localStorage.getItem("visited");
+    if (visited) {
+      setIsVisited(true);
+    }
+  }, []);
+
   return (
     <PrivateContainer
       appBar={<PrivateAppbar title="Projects" icon={projects_icon} />}
@@ -43,6 +51,7 @@ export default function CreateProject() {
             name="goal"
             error={errors.goal}
             size="small"
+            isOptional
           />
 
           <LabelInputCombo
@@ -58,6 +67,7 @@ export default function CreateProject() {
             error={errors.questions}
             size="small"
             multiline
+            isOptional
           />
 
           <Stack sx={{ flexDirection: "row", gap: "12px" }}>
@@ -70,15 +80,17 @@ export default function CreateProject() {
             >
               Save
             </Button>
-            <Button
-              variant="text"
-              sx={{
-                width: "100px",
-              }}
-              onClick={() => navigate(PROJECTS.default)}
-            >
-              Cancel
-            </Button>
+            {isVisited && (
+              <Button
+                variant="text"
+                sx={{
+                  width: "100px",
+                }}
+                onClick={() => navigate(-1)}
+              >
+                Cancel
+              </Button>
+            )}
             {projectId && (
               <div className="flex justify-end w-full">
                 <Button

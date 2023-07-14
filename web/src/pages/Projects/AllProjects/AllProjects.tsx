@@ -56,7 +56,7 @@ export default function AllProjects() {
   const { status: microsoftStatus } = useCalendarStatusQuery("microsoft");
 
   const noAppConnected =
-    googleStatus !== "success" || microsoftStatus !== "success";
+    googleStatus !== "success" && microsoftStatus !== "success";
   useEffect(() => {
     if (code && !apiCalledFlag.current) {
       apiCalledFlag.current = true;
@@ -69,6 +69,12 @@ export default function AllProjects() {
         });
     }
   }, [code, sendAccessToken]);
+
+  useEffect(() => {
+    if (allProjects?.length === 0) {
+      navigate(PROJECTS.CREATE_PROJECT);
+    }
+  }, [allProjects, navigate]);
 
   return (
     <PrivateContainer
