@@ -143,10 +143,17 @@ const useUpdateProjectMutation = () => {
       projectId: number;
     }) => updateProject(payload, projectId),
     {
-      onSuccess: () => {
+      onSuccess: (_, variables) => {
+        const { projectId } = variables;
         queryClient.invalidateQueries(["projects"]);
+
         setTimeout(() => {
-          navigate(PROJECTS.default);
+          navigate(
+            PROJECTS.SELECTED_PROJECT.default.replace(
+              ":projectId",
+              `${projectId}`
+            )
+          );
         }, 500);
       },
     }
