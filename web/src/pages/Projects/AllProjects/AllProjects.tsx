@@ -81,14 +81,6 @@ export default function AllProjects() {
       appBar={
         <PrivateAppbar title="Projects" icon={projects_icon}>
           <div className="flex items-center justify-end w-full gap-5 px-10">
-            {noAppConnected && allProjects?.length > 0 && (
-              <Button
-                variant="contained"
-                onClick={() => navigate(INTEGRATIONS)}
-              >
-                Connect App
-              </Button>
-            )}
             {allProjects?.length > 0 && (
               <Button
                 variant="contained"
