@@ -1,0 +1,20 @@
+{
+  "project": {
+    "title": "Sample Project: 401(k) Research",
+    "goal": "Explore why older working Americans do not maximize their employer 401(k) match",
+    "questions": [
+      "Describe the interviewee's profile.",
+      "Why does the interviewee not max out their 401(k)?",
+      "Does the interviewee understand how to manage their finances?",
+      "How much debt does the interviewee have outstanding?",
+      "What assets does the interviewee own?",
+      "What worries the interviewee about retirement?"
+    ]
+  },
+  "transcript": {
+    "title": "Sample Transcript: Jason Martinez",
+    "interviewee_names": ["Jason"],
+    "interviewer_names": ["Shawn", "Randy"],
+    "duration": 32
+  }
+}

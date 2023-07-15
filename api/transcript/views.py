@@ -146,6 +146,7 @@ class BaseSynthesizerView(APIView):
 
 class InitiateSynthesizerView(BaseSynthesizerView):
     """Initiate the synthesis process for a transcript."""
+
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
@@ -176,6 +177,7 @@ class InitiateSynthesizerView(BaseSynthesizerView):
 
 class BaseSynthesisSynthesizerView(BaseSynthesizerView):
     """Base class for synthesis generation views"""
+
     def post_of_type(self, request, pk, synthesis_type, generate_func):
         try:
             tct = Transcript.objects.get(pk=pk)
@@ -206,6 +208,7 @@ class BaseSynthesisSynthesizerView(BaseSynthesizerView):
 
 class GenerateSummaryView(BaseSynthesisSynthesizerView):
     """Generate a summary of the transcript"""
+
     def post(self, request, pk):
         return self.post_of_type(
             request, pk, SynthesisType.SUMMARY, tasks.generate_summary)
@@ -213,6 +216,7 @@ class GenerateSummaryView(BaseSynthesisSynthesizerView):
 
 class GenerateConciseView(BaseSynthesisSynthesizerView):
     """Generate a concise version of the transcript"""
+
     def post(self, request, pk):
         return self.post_of_type(
             request, pk, SynthesisType.CONCISE, tasks.generate_concise)
@@ -300,12 +304,14 @@ class BaseSynthesisView(APIView):
 
 class SummaryView(BaseSynthesisView):
     """View for getting summary of a transcript."""
+
     def get(self, request, pk):
         return self.get_of_type(request, pk, SynthesisType.SUMMARY)
 
 
 class ConciseView(BaseSynthesisView):
     """View for getting concise transcript."""
+
     def get(self, request, pk):
         return self.get_of_type(request, pk, SynthesisType.CONCISE)
 
