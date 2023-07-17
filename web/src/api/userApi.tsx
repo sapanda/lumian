@@ -6,6 +6,8 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 interface UpdateMePayload {
   email?: string;
@@ -32,12 +34,17 @@ const useGetMeQuery = () => {
 };
 
 const useUpdateMeMutation = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   return useMutation((payload: UpdateMePayload) => updateMe(payload), {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["me"],
       });
+      toast.success("Account settings updated successfully");
+      setTimeout(() => {
+        navigate(-1);
+      }, 1000);
     },
   });
 };

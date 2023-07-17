@@ -86,8 +86,16 @@ const deleteProject = async (projectId: number) => {
 };
 
 const useGetProjectsQuery = () => {
+  const navigate = useNavigate();
   return useQuery(["projects"], getProjects, {
     staleTime: 1000 * 60 * 30, // 30 minutes
+    onSuccess: (data) => {
+      if (!data.length) {
+        navigate(PROJECTS.CREATE_PROJECT);
+      } else {
+        localStorage.setItem("visited", "true");
+      }
+    },
   });
 };
 
@@ -109,10 +117,12 @@ const useCreateProjectMutation = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   return useMutation((payload: ProjectPayloadType) => createProject(payload), {
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const id = data.data.data.id;
+
       queryClient.invalidateQueries(["projects"]);
       setTimeout(() => {
-        navigate(PROJECTS.default);
+        navigate(PROJECTS.SELECTED_PROJECT.default.replace(":projectId", id));
       }, 500);
     },
   });
