@@ -19,9 +19,6 @@ class AddBotViewTest(APITestCase):
         self.url = reverse('add-bot-to-meeting')
         self.user = create_user()
 
-    def tearDown(self):
-        self.user.delete()
-
     @patch('meeting.views.meeting_bot.add_bot_to_meeting')
     def test_add_bot_success(self, mock_add_bot_to_meeting):
         mock_add_bot_to_meeting.return_value = \
@@ -38,9 +35,9 @@ class AddBotViewTest(APITestCase):
         self.project = create_project(self.user)
         self.client.force_authenticate(self.user)
         self.data = {
-                'meeting_url': 'http://example.com/meeting',
-                'project_id': self.project.id,
-            }
+            'meeting_url': 'http://example.com/meeting',
+            'project_id': self.project.id,
+        }
 
         response = self.client.post(self.url, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -50,7 +47,6 @@ class AddBotViewTest(APITestCase):
         self.assertEqual(bot.id, str(1))
         self.assertEqual(bot.status, MeetingBot.StatusChoices.READY)
         self.assertIsNone(bot.transcript)
-        self.project.delete()
 
     @patch('meeting.views.meeting_bot.add_bot_to_meeting')
     def test_add_bot_already_exists(self, mock_add_bot_to_meeting):
@@ -60,9 +56,9 @@ class AddBotViewTest(APITestCase):
         self.client.force_authenticate(self.user)
 
         self.data = {
-                'meeting_url': 'http://example.com/meeting',
-                'project_id': self.project.id,
-            }
+            'meeting_url': 'http://example.com/meeting',
+            'project_id': self.project.id,
+        }
 
         response = self.client.post(self.url, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
@@ -75,13 +71,13 @@ class AddBotViewTest(APITestCase):
             RecallAITimeoutException(
                 'Timeout',
                 status.HTTP_408_REQUEST_TIMEOUT
-                )
+            )
         self.client.force_authenticate(self.user)
 
         self.data = {
-                'meeting_url': 'http://example.com/meeting',
-                'project_id': self.project.id,
-            }
+            'meeting_url': 'http://example.com/meeting',
+            'project_id': self.project.id,
+        }
 
         response = self.client.post(self.url, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_408_REQUEST_TIMEOUT)
@@ -95,9 +91,9 @@ class AddBotViewTest(APITestCase):
         self.client.force_authenticate(self.user)
 
         self.data = {
-                'meeting_url': 'http://example.com/meeting',
-                'project_id': self.project.id,
-            }
+            'meeting_url': 'http://example.com/meeting',
+            'project_id': self.project.id,
+        }
 
         response = self.client.post(self.url, self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -134,16 +130,13 @@ class BotStatusChangeViewTestCase(APITestCase):
         self.assertEqual(response.status_code, 202)
         self.bot.refresh_from_db()
         self.assertEqual(
-                            self.bot.status,
-                            MeetingBot.StatusChoices.JOINING_CALL
-                        )
+            self.bot.status,
+            MeetingBot.StatusChoices.JOINING_CALL
+        )
         self.assertEqual(self.bot.message, "Bot is ready to join call")
         self.assertEqual(self.bot.transcript, None)
         mock_get_meeting_transcript.assert_not_called()
         mock_generate_transcript_text.assert_not_called()
-        self.bot.delete()
-        self.project.delete()
-        self.user.delete()
 
     @patch('transcript.signals._run_generate_synthesis')
     @patch('transcript.signals._delete_transcript_on_synthesis_service')
@@ -178,9 +171,6 @@ class BotStatusChangeViewTestCase(APITestCase):
         self.assertEqual(self.bot.message, "Bot is done")
         self.assertNotEqual(self.bot.transcript, None)
         self.assertEqual(self.bot.transcript.project, self.project)
-        self.bot.delete()
-        self.project.delete()
-        self.user.delete()
 
 
 class GetBotStatusViewTest(APITestCase):
@@ -190,11 +180,6 @@ class GetBotStatusViewTest(APITestCase):
         self.user = create_user()
         self.project = create_project(self.user)
         self.bot = create_bot(self.project)
-
-    def tearDown(self):
-        self.bot.delete()
-        self.project.delete()
-        self.user.delete()
 
     def test_valid_get_request(self):
         bot_id = self.bot.id
