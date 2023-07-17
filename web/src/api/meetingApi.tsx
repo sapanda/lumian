@@ -8,6 +8,7 @@ import { axiosInstance } from "./api";
 import { interviewEndPoints, meetingEndPoints } from "./apiEndpoints";
 import { useNavigate } from "react-router-dom";
 import { PROJECTS } from "../router/routes.constant";
+import { AxiosError, AxiosResponse } from "axios";
 
 export const QUERY_LEVEL = {
   PROJECT_LEVEL: "project",
@@ -172,7 +173,7 @@ const getMeetingTranscript = async (meetingId: number | undefined) => {
       meetingId.toString()
     )
   );
-  return res.data.data;
+  return res;
 };
 
 const updateMeetingTranscript = async (
@@ -316,9 +317,20 @@ const useDeleteInterviewMutation = (
 
 const useGetMeetingTranscriptQuery = (meetingId: number | undefined) => {
   const queryKey: QueryKey = ["meetingTranscript", meetingId];
+  const navigate = useNavigate();
   return useQuery(queryKey, () => getMeetingTranscript(meetingId), {
     staleTime: 1000 * 60 * 30, // 30 minutes
     enabled: !!meetingId,
+    select: (res: AxiosResponse | undefined) => {
+      if (!res) return;
+      return res.data.data;
+    },
+    retry: false,
+    onError: (err: AxiosError) => {
+      if (err.response?.status === 404) {
+        navigate("/404");
+      }
+    },
   });
 };
 

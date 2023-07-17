@@ -3,6 +3,7 @@ import { axiosInstance } from "./api";
 import { projectEndpoints } from "./apiEndpoints";
 import { useNavigate } from "react-router-dom";
 import { PROJECTS } from "../router/routes.constant";
+import { AxiosError } from "axios";
 
 interface ProjectType {
   id: number;
@@ -53,16 +54,15 @@ const getProjects = async () => {
 
 const getProject = async (projectId: number | undefined) => {
   const res = await axiosInstance.get(
-    `${projectEndpoints.projectList}${projectId}/`
+    `${projectEndpoints.projectList}${projectId}/`,
+    {
+      headers: {
+        showToastDisabled: false,
+      },
+    }
   );
 
-  const transformedData = {
-    id: res.data.data.id,
-    name: res.data.data.title,
-    goal: res.data.data.goal,
-    questions: res.data.data.questions,
-  };
-  return transformedData;
+  return res;
 };
 
 const createProject = async (payload: ProjectPayloadType) => {
@@ -87,8 +87,9 @@ const deleteProject = async (projectId: number) => {
 
 const useGetProjectsQuery = () => {
   const navigate = useNavigate();
-  return useQuery(["projects"], getProjects, {
+  const res = useQuery(["projects"], getProjects, {
     staleTime: 1000 * 60 * 30, // 30 minutes
+    retry: false,
     onSuccess: (data) => {
       if (!data.length) {
         navigate(PROJECTS.CREATE_PROJECT);
@@ -97,6 +98,8 @@ const useGetProjectsQuery = () => {
       }
     },
   });
+
+  return res;
 };
 
 const useGetProjectMutation = () => {
@@ -107,10 +110,28 @@ const useGetProjectMutation = () => {
   });
 };
 const useGetProjectQuery = (project_id: number | undefined) => {
-  return useQuery(["project", project_id], () => getProject(project_id), {
+  const res = useQuery(["project", project_id], () => getProject(project_id), {
     enabled: !!project_id,
     staleTime: 1000 * 60 * 30, // 30 minutes
+    retry: false,
+    select: (res) => {
+      const transformedData = {
+        id: res.data.data.id,
+        name: res.data.data.title,
+        goal: res.data.data.goal,
+        questions: res.data.data.questions,
+      };
+      return transformedData;
+    },
+    onError: (err: AxiosError) => {
+      if (err.response?.status === 404) {
+        navigate("/404");
+      }
+    },
   });
+  const navigate = useNavigate();
+
+  return res;
 };
 
 const useCreateProjectMutation = () => {
