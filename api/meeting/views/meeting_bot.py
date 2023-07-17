@@ -1,4 +1,5 @@
 from drf_spectacular.utils import extend_schema, OpenApiParameter
+from datetime import datetime
 from django.db import IntegrityError, transaction
 from rest_framework.status import (
     HTTP_200_OK,
@@ -73,7 +74,7 @@ class AddBotView(APIView):
                     HTTP_202_ACCEPTED)
             project = Project.objects.get(id=project_id)
             if not title:
-                title = 'Meeting'
+                title = f'Meeting - [{datetime.now()}]'
 
             bot = add_bot_to_meeting(bot_name, meeting_url)
             MeetingBot.objects.create(
@@ -172,7 +173,7 @@ class BotStatusChangeView(APIView):
             tct = Transcript.objects.create(
                 project=meetingbot.project,
                 transcript=transcript_text,
-                title=f"Meeting transcript - {meetingbot.id}",
+                title=meetingbot.title,
                 interviewee_names=["Unknown"],
                 interviewer_names=["Unknown"],
                 start_time=meetingbot.start_time,

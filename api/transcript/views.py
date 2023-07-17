@@ -105,28 +105,28 @@ class TranscriptListView(TranscriptBaseView):
         if serializer.is_valid():
             self._perform_create(serializer)
             response = Response({'data': serializer.data,
-                                 'message': 'Transcript Created'},
+                                 'message': '''Transcript uploaded.
+                                 Please wait a few minutes while
+                                 we synthesize it.'''},
                                 status=status.HTTP_201_CREATED)
         else:
+            if 'project' in serializer.errors:
+                field_errors = serializer.errors['project']
+                error_codes = [error.code for error in field_errors]
+                if 'does_not_exist' in error_codes:
+                    return Response('Invalid project ID',
+                                    status.HTTP_404_NOT_FOUND)
+
             response = Response(serializer.errors,
                                 status=status.HTTP_400_BAD_REQUEST)
         return response
 
     def _perform_create(self, serializer):
         """Create a new transcript."""
-        project_id = self.request.data.get('project')
-        if not project_id:
-            raise ValidationError(
-                {"project": "This field is required."})
-        try:
-            project = Project.objects.get(id=project_id)
-        except Project.DoesNotExist:
-            raise ValidationError(
-                {"project": "Invalid project ID."})
-
+        project = Project.objects.get(id=serializer.data['project'])
         if project.user != self.request.user:
             raise PermissionDenied(
-                {"project": "Project does not belong to the requesting user."})
+                "Project does not belong to the requesting user.")
 
         # TODO: Is it possible that we create a transcript and synthesis
         #       objects already exist? Likely shouldn't since Django keys
