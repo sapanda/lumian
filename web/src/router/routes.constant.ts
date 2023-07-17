@@ -1,8 +1,6 @@
 import {
   Login,
   ForgotPassword,
-  PrivacyPolicy,
-  TermsOfServices,
   ResetPassword,
   Projects,
   AccountSettings,
@@ -50,16 +48,6 @@ export const PUBLIC_ROUTES = [
   {
     path: HOME,
     component: Login,
-    exact: true,
-  },
-  {
-    path: PRIVACY_POLICY,
-    component: PrivacyPolicy,
-    exact: true,
-  },
-  {
-    path: TERMS_OF_SERVICES,
-    component: TermsOfServices,
     exact: true,
   },
 ];
