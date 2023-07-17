@@ -25,10 +25,10 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
   (response) => {
-    const hideToast = !!response.config.headers["hideToast"];
+    const showToastDisabled = !!response.config.headers["showToastDisabled"];
     const msg = response.data.message;
 
-    if (hideToast || !msg) {
+    if (showToastDisabled || !msg) {
       return response;
     }
     toast.success(msg, {
@@ -53,9 +53,7 @@ axiosInstance.interceptors.response.use(
         theme: "colored",
         toastId: "unauthorized",
       });
-    }
-
-    if (error.response.status === 401) {
+    } else if (error.response.status === 401) {
       toast.error("Unauthorized", {
         style: {
           backgroundColor: "#ff0000",
@@ -68,6 +66,7 @@ axiosInstance.interceptors.response.use(
       localStorage.removeItem("token");
       window.location.href = "/";
     }
+
     return Promise.reject(error);
   }
 );
