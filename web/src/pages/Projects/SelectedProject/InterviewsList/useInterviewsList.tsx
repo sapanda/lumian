@@ -22,11 +22,14 @@ const columns = [
 export default function useInterviewsList() {
   const { projectId } = useParams();
   const { refetch: refreshProjectsList } = useGetProjectsQuery();
+
+  const {
+    data: project,
+    refetch: getProject,
+    isLoading: isProjectLoading,
+  } = useGetProjectQuery(parseInt(projectId || "0"));
   const { data: interviews } = useInterviewsListQuery(
-    parseInt(projectId || "0")
-  );
-  const { data: project, refetch: getProject } = useGetProjectQuery(
-    parseInt(projectId || "0")
+    parseInt(isProjectLoading ? "0" : projectId || "0")
   );
 
   return {

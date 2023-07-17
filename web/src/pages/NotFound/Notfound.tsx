@@ -12,7 +12,7 @@ export default function Notfound() {
   }, [navigate]);
   return (
     <PublicContainer>
-      <img src="/404.png" alt="404" className="w-full max-w-[700px]" />
+      <img src="/404.svg" alt="404" className="w-full max-w-[700px]" />
       <Button
         variant="contained"
         onClick={() => navigate("/")}

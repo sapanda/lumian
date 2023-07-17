@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   useAskQueryMutation,
   useGetMeetingConciseQuery,
@@ -11,29 +11,42 @@ import { useGetProjectQuery } from "../../../../api/projectApi";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function useInterview() {
+  const navigate = useNavigate();
   const { interviewId, projectId } = useParams();
 
-  const { data: projectData } = useGetProjectQuery(parseInt(projectId || "0"));
-  const { refetch: refreshInterviewList } = useInterviewsListQuery(
+  const { data: projectData, isLoading: isProjectLoading } = useGetProjectQuery(
     parseInt(projectId || "0")
   );
-  const { data: interviewData, refetch: refreshInterviewData } =
-    useGetMeetingTranscriptQuery(parseInt(interviewId || "0"));
+
+  const {
+    data: interviewData,
+    refetch: refreshInterviewData,
+    isLoading: isTranscriptLoading,
+  } = useGetMeetingTranscriptQuery(
+    parseInt(isProjectLoading ? "0" : interviewId || "0")
+  );
+
   const { data: summaryData } = useGetMeetingSummaryQuery(
-    parseInt(interviewId || "0")
+    parseInt(isProjectLoading || isTranscriptLoading ? "0" : interviewId || "0")
   );
   const { data: conciseData } = useGetMeetingConciseQuery(
-    parseInt(interviewId || "0")
+    parseInt(isProjectLoading || isTranscriptLoading ? "0" : interviewId || "0")
   );
   const { data: questions } = useGetMeetingQuery(
-    parseInt(interviewId || "0"),
+    parseInt(
+      isProjectLoading || isTranscriptLoading ? "0" : interviewId || "0"
+    ),
     "project"
   );
   const { data: query } = useGetMeetingQuery(
-    parseInt(interviewId || "0"),
+    parseInt(
+      isProjectLoading || isTranscriptLoading ? "0" : interviewId || "0"
+    ),
     "transcript"
   );
-
+  const { refetch: refreshInterviewList } = useInterviewsListQuery(
+    parseInt(isProjectLoading || isTranscriptLoading ? "0" : projectId || "0")
+  );
   const originalTranscriptRef = useRef<string>("");
   const transcriptRef = useRef<HTMLDivElement>(null);
 
@@ -128,6 +141,9 @@ export default function useInterview() {
     []
   );
 
+  useEffect(() => {
+    if (!interviewId || !projectId) navigate("/404");
+  }, [interviewId, navigate, projectId]);
   useEffect(() => {
     originalTranscriptRef.current = interviewData?.transcript;
     const _transcript = interviewData?.transcript.replaceAll(
