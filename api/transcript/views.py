@@ -123,7 +123,7 @@ class TranscriptListView(TranscriptBaseView):
 
     def _perform_create(self, serializer):
         """Create a new transcript."""
-        project = Project.objects.get(id=serializer.data['project'])
+        project = serializer.validated_data['project']
         if project.user != self.request.user:
             raise PermissionDenied(
                 "Project does not belong to the requesting user.")
