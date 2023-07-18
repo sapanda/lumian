@@ -208,26 +208,26 @@ class InitiateSynthesizerView(BaseSynthesizerView):
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
-            # result = tasks.initiate_synthesis(tct)
-            # status_code = result['status_code']
-            # if status.is_success(status_code):
-            #     if status.is_success(status_code):
-            #         client.create_task(
-            #             path=reverse('transcript:generate-summary', args=[pk]),
-            #             payload='',
-            #             timeout_minutes=SYNTHESIS_TASK_TIMEOUT
-            #         )
-            #         client.create_task(
-            #             path=reverse('transcript:generate-embeds', args=[pk]),
-            #             payload='',
-            #             timeout_minutes=SYNTHESIS_TASK_TIMEOUT
-            #         )
-            #         client.create_task(
-            #             path=reverse('transcript:generate-concise', args=[pk]),
-            #             payload='',
-            #             timeout_minutes=SYNTHESIS_TASK_TIMEOUT
-            #         )
-            # response = Response(status=status_code)
+            result = tasks.initiate_synthesis(tct)
+            status_code = result['status_code']
+            if status.is_success(status_code):
+                if status.is_success(status_code):
+                    client.create_task(
+                        path=reverse('transcript:generate-summary', args=[pk]),
+                        payload='',
+                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
+                    )
+                    client.create_task(
+                        path=reverse('transcript:generate-embeds', args=[pk]),
+                        payload='',
+                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
+                    )
+                    client.create_task(
+                        path=reverse('transcript:generate-concise', args=[pk]),
+                        payload='',
+                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
+                    )
+            response = Response(status=status_code)
             return Response()
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
