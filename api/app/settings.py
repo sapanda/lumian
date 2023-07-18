@@ -222,6 +222,10 @@ REST_FRAMEWORK = {
     ),
 }
 
+SPECTACULAR_SETTINGS = {
+    'COMPONENT_SPLIT_REQUEST': True
+}
+
 # Synthesis settings
 SYNTHESIS_URL = os.environ.get('SYNTHESIS_URL')
 SYNTHESIS_TASK_TIMEOUT = int(os.environ.get('SYNTHESIS_TASK_TIMEOUT', 10))

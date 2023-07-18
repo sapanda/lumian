@@ -210,9 +210,6 @@ class TranscriptAPITests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data['data']), 3)
         self.assertEqual(len(res.data['data']['transcripts']), 5)
-        for t in res.data['data']['transcripts']:
-            print(t)
-            print('\n')
 
     def test_partial_update(self, patched_signal):
         """Test partial update of a transcript."""

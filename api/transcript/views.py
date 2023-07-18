@@ -18,6 +18,7 @@ from rest_framework import (
 )
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.exceptions import ValidationError, PermissionDenied
 
 from . import tasks
@@ -42,6 +43,7 @@ class TranscriptBaseView(APIView):
     serializer_class = TranscriptSerializer
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
 
 
 class TranscriptListView(TranscriptBaseView):
@@ -104,10 +106,11 @@ class TranscriptListView(TranscriptBaseView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             self._perform_create(serializer)
+            message = " ".join("""Transcript uploaded.
+             Please wait a few minutes while
+             we synthesize it.""".strip().split())
             response = Response({'data': serializer.data,
-                                 'message': '''Transcript uploaded.
-                                 Please wait a few minutes while
-                                 we synthesize it.'''},
+                                 'message': message.strip()},
                                 status=status.HTTP_201_CREATED)
         else:
             if 'project' in serializer.errors:
@@ -205,26 +208,27 @@ class InitiateSynthesizerView(BaseSynthesizerView):
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
-            result = tasks.initiate_synthesis(tct)
-            status_code = result['status_code']
-            if status.is_success(status_code):
-                if status.is_success(status_code):
-                    client.create_task(
-                        path=reverse('transcript:generate-summary', args=[pk]),
-                        payload='',
-                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
-                    )
-                    client.create_task(
-                        path=reverse('transcript:generate-embeds', args=[pk]),
-                        payload='',
-                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
-                    )
-                    client.create_task(
-                        path=reverse('transcript:generate-concise', args=[pk]),
-                        payload='',
-                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
-                    )
-            response = Response(status=status_code)
+            # result = tasks.initiate_synthesis(tct)
+            # status_code = result['status_code']
+            # if status.is_success(status_code):
+            #     if status.is_success(status_code):
+            #         client.create_task(
+            #             path=reverse('transcript:generate-summary', args=[pk]),
+            #             payload='',
+            #             timeout_minutes=SYNTHESIS_TASK_TIMEOUT
+            #         )
+            #         client.create_task(
+            #             path=reverse('transcript:generate-embeds', args=[pk]),
+            #             payload='',
+            #             timeout_minutes=SYNTHESIS_TASK_TIMEOUT
+            #         )
+            #         client.create_task(
+            #             path=reverse('transcript:generate-concise', args=[pk]),
+            #             payload='',
+            #             timeout_minutes=SYNTHESIS_TASK_TIMEOUT
+            #         )
+            # response = Response(status=status_code)
+            response = Response()
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
         return response
