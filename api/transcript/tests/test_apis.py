@@ -83,19 +83,22 @@ class TranscriptAPITests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         tpt = Transcript.objects.get(id=res.data['data']['id'])
         for k, v in payload.items():
-            attr = getattr(tpt, k)
-            if not isinstance(attr, Project):
-                self.assertEqual(attr, v)
+            if k != 'file':
+                attr = getattr(tpt, k)
+                if not isinstance(attr, Project):
+                    self.assertEqual(attr, v)
         self.assertEqual(patched_signal.call_count, 1)
 
     def test_create_transcript_failure(self, patched_signal):
         """Test creating a transcript with blank input fails."""
+        file = open('transcript/tests/data/sample_transcript.txt',
+                    'r', encoding='utf-8')
         payload = {
             'project': self.project.id,
             'title': '',
             'interviewee_names': [''],
             'interviewer_names': [''],
-            'transcript': '',
+            'file': file,
         }
         res = self.client.post(TRANSCRIPT_URL, payload)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
@@ -106,22 +109,26 @@ class TranscriptAPITests(APITestCase):
         self.assertEqual(res.data['interviewer_names'][0][0],
                          'This field may not be blank.')
         self.assertEqual(patched_signal.call_count, 0)
+        file.close()
 
     def test_create_transcript_alt_user(self, patched_signal):
         """Test creating a transcript with a different user fails
         for both regular and super users."""
         new_user = create_user(email='user2@example.com', password='test123')
         new_project = create_project(user=new_user)
+        file = open('transcript/tests/data/sample_transcript.txt',
+                    'r', encoding='utf-8')
         payload = {
             'project': new_project.id,
             'title': 'Test Title',
             'interviewee_names': ['Interviewee'],
             'interviewer_names': ['Interviewer 1', 'Interviewer 2'],
-            'transcript': 'Test Transcript',
+            'file': file,
         }
         res = self.client.post(TRANSCRIPT_URL, payload)
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
         self.set_superuser(True)
+        file.seek(0)
         res = self.client.post(TRANSCRIPT_URL, payload)
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 

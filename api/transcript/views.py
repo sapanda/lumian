@@ -228,7 +228,7 @@ class InitiateSynthesizerView(BaseSynthesizerView):
             #             timeout_minutes=SYNTHESIS_TASK_TIMEOUT
             #         )
             # response = Response(status=status_code)
-            response = Response()
+            return Response()
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
         return response
