@@ -278,6 +278,13 @@ const addBotToMeeting = async (meetingDetails: MeetingDataType) => {
   return res.data.data;
 };
 
+const removeBotFromMeeting = async (bot_id: string) => {
+  if (!bot_id) return;
+  const res = await axiosInstance.post(meetingEndPoints.addBotToMeeting, {
+    bot_id,
+  });
+  return res.data.data;
+};
 // hooks
 
 const useInterviewsListQuery = (projectId: number | undefined) => {
@@ -444,6 +451,15 @@ const useAddBotToMeetingMutation = () => {
   );
 };
 
+const useRemoveBotFromMeetingMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation((bot_id: "string") => removeBotFromMeeting(bot_id), {
+    onSuccess: () => {
+      queryClient.invalidateQueries(["meetingList"]);
+    },
+  });
+};
+
 const useDisconnectAppMutation = () => {
   const queryClient = useQueryClient();
   return useMutation(
@@ -475,4 +491,5 @@ export {
   useMeetingListQuery,
   useAddBotToMeetingMutation,
   useDisconnectAppMutation,
+  useRemoveBotFromMeetingMutation,
 };
