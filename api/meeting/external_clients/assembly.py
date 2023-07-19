@@ -39,6 +39,7 @@ def upload_file_to_assembly(file: InMemoryUploadedFile):
         error_msg = f"Error occurred: {e}"
         raise ParseError(error_msg)
 
+
 @retry(AssemblyAITimeoutException, tries=3, delay=3, backoff=2)
 def start_audio_transcription(upload_url: str):
     headers = {
@@ -59,6 +60,7 @@ def start_audio_transcription(upload_url: str):
     except Exception as e:
         error_msg = f"Error occurred: {e}"
         raise ParseError(error_msg)
+
 
 @retry(AssemblyAITimeoutException, tries=3, delay=3, backoff=2)
 def get_audio_transcription(transcript_id: int):
