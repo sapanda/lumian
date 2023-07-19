@@ -3,6 +3,7 @@ Serializers for the transcript API View.
 """
 from rest_framework import serializers
 from transcript.models import Transcript, Synthesis, Query
+from meeting.external_clients.assembly import get_transcription_for_audio
 
 
 class TranscriptFileField(serializers.FileField):
@@ -18,7 +19,7 @@ class TranscriptFileField(serializers.FileField):
             if content_type == 'text/plain':
                 transcript_content = file_obj.read().decode('utf-8')
             elif content_type == 'audio/mpeg':
-                transcript_content = 'Test content from audio'
+                transcript_content = get_transcription_for_audio(file_obj)
             else:
                 raise serializers.ValidationError(
                     'Invalid file format. Only .txt/.mp3 files are allowed.')

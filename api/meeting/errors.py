@@ -25,3 +25,7 @@ class GoogleAPIException(BaseException):
 
 class MicrosoftAPIException(BaseException):
     pass
+
+
+class AssemblyAITimeoutException(BaseException):
+    pass
