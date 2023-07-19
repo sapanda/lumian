@@ -143,15 +143,20 @@ const startTranscribe = async (projectId: number | undefined) => {
 
 const createInterviewWithTranscript = async (
   projectId: number | undefined,
-  transcript: string
+  transcript: File
 ) => {
   if (!projectId) return;
-  await axiosInstance.post(interviewEndPoints.transcript, {
-    project: projectId,
-    transcript: transcript,
-    title: "Interview 1",
-    interviewer_names: ["Interviewer 1"],
-    interviewee_names: ["Interviewee 1"],
+  const formData = new FormData();
+  formData.append("file", transcript);
+  formData.append("project", projectId.toString());
+  formData.append("title", transcript.name);
+  formData.append("interviewer_names", JSON.stringify(["Interviewer 1"]));
+  formData.append("interviewee_names", JSON.stringify(["Interviewee 1"]));
+  await axiosInstance.post(interviewEndPoints.transcript, formData, {
+    headers: {
+      "Content-Type": `multipart/form-data`,
+      accept: "application/json",
+    },
   });
 };
 
@@ -289,12 +294,11 @@ const useInterviewsListQuery = (projectId: number | undefined) => {
 };
 
 const useCreateInterviewWithTranscriptMutation = (
-  projectId: number | undefined,
-  transcript: string
+  projectId: number | undefined
 ) => {
   const queryClient = useQueryClient();
   return useMutation(
-    () => createInterviewWithTranscript(projectId, transcript),
+    (transcript: File) => createInterviewWithTranscript(projectId, transcript),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["interviews", projectId]);
