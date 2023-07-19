@@ -453,7 +453,7 @@ class QueryView(APIView):
                     project = Project.objects.get(id=tct.project.id)
                     # no questions for the project
                     if len(project.questions) == 0:
-                        response = Response(status.HTTP_200_OK)
+                        response = Response(status=status.HTTP_200_OK)
                     else:
                         # check embeds are done first
                         embeds = Embeds.objects.get(transcript=pk)
