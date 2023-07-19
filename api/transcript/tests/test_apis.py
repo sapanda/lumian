@@ -171,14 +171,18 @@ class TranscriptAPITests(APITestCase):
         res = self.client.get(TRANSCRIPT_URL)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data['data']), 3)
-        self.assertEqual(len(res.data['data']['transcripts']), 2)
+        expected_transcripts = 2  # 1 + 1x Sample Transcript
+        self.assertEqual(len(res.data['data']['transcripts']),
+                         expected_transcripts)
         self.assertEqual(res.data['data']['transcripts'][0]['project'],
                          self.project.id)
 
         self.set_superuser(True)
         res = self.client.get(TRANSCRIPT_URL)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data['data']['transcripts']), 5)
+        expected_transcripts = 5  # 2 + 3x Sample Transcripts
+        self.assertEqual(len(res.data['data']['transcripts']),
+                         expected_transcripts)
 
     def test_transcript_filter(self, patched_signal):
         """Test filtering the transcript list to requested project."""
@@ -216,7 +220,9 @@ class TranscriptAPITests(APITestCase):
         res = self.client.get(TRANSCRIPT_URL)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data['data']), 3)
-        self.assertEqual(len(res.data['data']['transcripts']), 5)
+        expected_transcripts = 5  # 2 + 3x Sample Transcripts
+        self.assertEqual(len(res.data['data']['transcripts']),
+                         expected_transcripts)
 
     def test_partial_update(self, patched_signal):
         """Test partial update of a transcript."""

@@ -22,6 +22,7 @@ export default function PublicContainer(props: PublicContainerProps) {
     const authenticated = !!token; // Check if token exists
 
     setIsAuthReady(true);
+    if (location.pathname === "/404") return;
 
     if (authenticated) {
       navigate(PROJECTS.default);
