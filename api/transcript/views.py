@@ -107,8 +107,8 @@ class TranscriptListView(TranscriptBaseView):
         if serializer.is_valid():
             self._perform_create(serializer)
             message = ("Transcript uploaded."
-             "Please wait a few minutes while"
-             "we synthesize it.")
+                       "Please wait a few minutes while"
+                       "we synthesize it.")
             response = Response({'data': serializer.data,
                                  'message': message.strip()},
                                 status=status.HTTP_201_CREATED)
