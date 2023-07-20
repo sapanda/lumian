@@ -216,6 +216,7 @@ class EventDetailsView(APIView):
                     bot = MeetingBot.objects.get(meeting_url=meeting_url)
                     event['bot_added'] = True
                     event['bot_status'] = bot.status
+                    event['bot_id'] = bot.id
                 except MeetingBot.DoesNotExist:
                     event['bot_added'] = False
 

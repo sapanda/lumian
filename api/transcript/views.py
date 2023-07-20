@@ -18,6 +18,7 @@ from rest_framework import (
 )
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.exceptions import ValidationError, PermissionDenied
 
 from . import tasks
@@ -42,6 +43,7 @@ class TranscriptBaseView(APIView):
     serializer_class = TranscriptSerializer
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
 
 
 class TranscriptListView(TranscriptBaseView):
@@ -104,29 +106,30 @@ class TranscriptListView(TranscriptBaseView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             self._perform_create(serializer)
+            message = ("Transcript uploaded."
+                       "Please wait a few minutes while"
+                       "we synthesize it.")
             response = Response({'data': serializer.data,
-                                 'message': 'Transcript Created'},
+                                 'message': message.strip()},
                                 status=status.HTTP_201_CREATED)
         else:
+            if 'project' in serializer.errors:
+                field_errors = serializer.errors['project']
+                error_codes = [error.code for error in field_errors]
+                if 'does_not_exist' in error_codes:
+                    return Response('Invalid project ID',
+                                    status.HTTP_404_NOT_FOUND)
+
             response = Response(serializer.errors,
                                 status=status.HTTP_400_BAD_REQUEST)
         return response
 
     def _perform_create(self, serializer):
         """Create a new transcript."""
-        project_id = self.request.data.get('project')
-        if not project_id:
-            raise ValidationError(
-                {"project": "This field is required."})
-        try:
-            project = Project.objects.get(id=project_id)
-        except Project.DoesNotExist:
-            raise ValidationError(
-                {"project": "Invalid project ID."})
-
+        project = serializer.validated_data['project']
         if project.user != self.request.user:
             raise PermissionDenied(
-                {"project": "Project does not belong to the requesting user."})
+                "Project does not belong to the requesting user.")
 
         # TODO: Is it possible that we create a transcript and synthesis
         #       objects already exist? Likely shouldn't since Django keys
@@ -225,6 +228,7 @@ class InitiateSynthesizerView(BaseSynthesizerView):
                         timeout_minutes=SYNTHESIS_TASK_TIMEOUT
                     )
             response = Response(status=status_code)
+            return Response()
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
         return response
@@ -440,27 +444,45 @@ class QueryView(APIView):
             tct = Transcript.objects.get(pk=pk)
             project = Project.objects.get(pk=tct.project.id)
             if project.user == request.user or request.user.is_superuser:
-                embeds = Embeds.objects.get(transcript=pk)
-                embeds_status = self._check_embeds(embeds)
-                if embeds_status != status.HTTP_201_CREATED:
-                    response = Response(status=embeds_status)
-                else:
-                    query_level = request.query_params.get('query_level')
-                    if not query_level:
-                        raise ValidationError()
 
-                    queryset = Query.objects.filter(
-                        transcript=pk,
-                        query_level=query_level)
-                    data = QuerySerializer(queryset, many=True).data
-                    response = Response(data, status=status.HTTP_201_CREATED)
+                query_level = request.query_params.get('query_level')
+                if not query_level:
+                    raise ValidationError()
 
-                    if query_level == Query.QueryLevelChoices.PROJECT:
-                        project = Project.objects.get(id=tct.project.id)
-                        question_count = len(project.questions)
-                        if queryset.count() != question_count:
+                if query_level == Query.QueryLevelChoices.PROJECT:
+                    project = Project.objects.get(id=tct.project.id)
+                    # no questions for the project
+                    if len(project.questions) == 0:
+                        response = Response(status=status.HTTP_200_OK)
+                    else:
+                        # check embeds are done first
+                        embeds = Embeds.objects.get(transcript=pk)
+                        embeds_status = self._check_embeds(embeds)
+                        if embeds_status != status.HTTP_201_CREATED:
+                            response = Response(status=embeds_status)
+                        else:
+                            queryset = Query.objects.filter(
+                                transcript=pk,
+                                query_level=query_level)
+                            data = QuerySerializer(queryset, many=True).data
                             response = Response(
-                                data, status=status.HTTP_202_ACCEPTED)
+                                    data, status=status.HTTP_201_CREATED)
+                            # check all questions have been answered
+                            if queryset.count() != len(project.questions):
+                                response = Response(
+                                    data, status=status.HTTP_202_ACCEPTED)
+                else:
+                    embeds = Embeds.objects.get(transcript=pk)
+                    embeds_status = self._check_embeds(embeds)
+                    if embeds_status != status.HTTP_201_CREATED:
+                        response = Response(status=embeds_status)
+                    else:
+                        queryset = Query.objects.filter(
+                            transcript=pk,
+                            query_level=query_level)
+                        data = QuerySerializer(queryset, many=True).data
+                        response = Response(
+                            data, status=status.HTTP_201_CREATED)
             else:
                 response = Response(
                     f'User does not have access to Transcript {pk}',

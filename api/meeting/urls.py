@@ -2,6 +2,7 @@ from django.urls import path
 
 from meeting.views.meeting_bot import (
     AddBotView,
+    RemoveBotView,
     BotStatusChangeView,
     GetBotStatusView,
     ScheduleBotView
@@ -17,6 +18,8 @@ from meeting.views.meeting_calendar import (
 urlpatterns = [
      path('bot/add',
           AddBotView.as_view(), name='add-bot-to-meeting'),
+     path('bot/remove',
+          RemoveBotView.as_view(), name='remove-bot-from-meeting'),
      path('bot/schedule',
           ScheduleBotView.as_view(), name='add-bot-to-scheduled-meeting'),
      path('bot/status/update',
@@ -32,5 +35,5 @@ urlpatterns = [
      path('calendar/status',
           CalendarStatusView.as_view(), name='calendar-meeting-details'),
      path('calendar/delete',
-          DeleteCalendarView.as_view(), name='calendar-meeting-details'),
+          DeleteCalendarView.as_view(), name='calendar-meeting-delete'),
 ]
