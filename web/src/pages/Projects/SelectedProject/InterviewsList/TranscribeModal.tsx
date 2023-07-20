@@ -26,6 +26,7 @@ interface Meeting {
   end_time: string;
   bot_added: boolean;
   bot_status: string;
+  bot_id: string;
 }
 
 export default function TranscribeModal(props: TranscribeModalProps) {
@@ -98,12 +99,11 @@ export default function TranscribeModal(props: TranscribeModalProps) {
                               variant="contained"
                               color="error"
                               onClick={() => {
-                                // addBotToMeeting({
-                                //   ...meeting,
-                                //   project_id: projectId,
-                                // }).then(() => {
-                                //   setModalOpen(false);
-                                // });
+                                removeBotFromMeeting(meeting?.bot_id).then(
+                                  () => {
+                                    setModalOpen(false);
+                                  }
+                                );
                               }}
                               sx={{
                                 minWidth: "105px",
