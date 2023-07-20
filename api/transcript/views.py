@@ -444,27 +444,45 @@ class QueryView(APIView):
             tct = Transcript.objects.get(pk=pk)
             project = Project.objects.get(pk=tct.project.id)
             if project.user == request.user or request.user.is_superuser:
-                embeds = Embeds.objects.get(transcript=pk)
-                embeds_status = self._check_embeds(embeds)
-                if embeds_status != status.HTTP_201_CREATED:
-                    response = Response(status=embeds_status)
-                else:
-                    query_level = request.query_params.get('query_level')
-                    if not query_level:
-                        raise ValidationError()
 
-                    queryset = Query.objects.filter(
-                        transcript=pk,
-                        query_level=query_level)
-                    data = QuerySerializer(queryset, many=True).data
-                    response = Response(data, status=status.HTTP_201_CREATED)
+                query_level = request.query_params.get('query_level')
+                if not query_level:
+                    raise ValidationError()
 
-                    if query_level == Query.QueryLevelChoices.PROJECT:
-                        project = Project.objects.get(id=tct.project.id)
-                        question_count = len(project.questions)
-                        if queryset.count() != question_count:
+                if query_level == Query.QueryLevelChoices.PROJECT:
+                    project = Project.objects.get(id=tct.project.id)
+                    # no questions for the project
+                    if len(project.questions) == 0:
+                        response = Response(status=status.HTTP_200_OK)
+                    else:
+                        # check embeds are done first
+                        embeds = Embeds.objects.get(transcript=pk)
+                        embeds_status = self._check_embeds(embeds)
+                        if embeds_status != status.HTTP_201_CREATED:
+                            response = Response(status=embeds_status)
+                        else:
+                            queryset = Query.objects.filter(
+                                transcript=pk,
+                                query_level=query_level)
+                            data = QuerySerializer(queryset, many=True).data
                             response = Response(
-                                data, status=status.HTTP_202_ACCEPTED)
+                                    data, status=status.HTTP_201_CREATED)
+                            # check all questions have been answered
+                            if queryset.count() != len(project.questions):
+                                response = Response(
+                                    data, status=status.HTTP_202_ACCEPTED)
+                else:
+                    embeds = Embeds.objects.get(transcript=pk)
+                    embeds_status = self._check_embeds(embeds)
+                    if embeds_status != status.HTTP_201_CREATED:
+                        response = Response(status=embeds_status)
+                    else:
+                        queryset = Query.objects.filter(
+                            transcript=pk,
+                            query_level=query_level)
+                        data = QuerySerializer(queryset, many=True).data
+                        response = Response(
+                            data, status=status.HTTP_201_CREATED)
             else:
                 response = Response(
                     f'User does not have access to Transcript {pk}',
