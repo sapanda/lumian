@@ -130,12 +130,18 @@ class RemoveBotView(APIView):
                 return Response(serializer.errors, HTTP_406_NOT_ACCEPTABLE)
             bot_id = serializer.validated_data['bot_id']
 
+            meetingbot = MeetingBot.objects.get(id=bot_id)
             remove_bot_from_meeting(bot_id)
+
+            meetingbot.delete()
             return Response(
                 'Transcription stopped successfully',
                 HTTP_200_OK
             )
 
+        except MeetingBot.DoesNotExist:
+            response_data = "Invalid Bot ID"
+            response_status = HTTP_404_NOT_FOUND
         except RecallAITimeoutException as e:
             response_data = str(e)
             response_status = HTTP_408_REQUEST_TIMEOUT
