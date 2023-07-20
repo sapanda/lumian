@@ -62,7 +62,7 @@ def generate_summary(tct: Transcript) -> dict:
             interviewee=tct.interviewee_names[0]
         )
         _update_synthesis_from_result(tct, synthesis, result)
-        _update_metadata_from_result(tct, result)
+        # _update_metadata_from_result(tct, result)
     except Synthesis.DoesNotExist as e:
         logger.exception(("Synthesis doesn't exist. "
                           "Summary generation will be skipped."),
