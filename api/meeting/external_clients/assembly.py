@@ -75,14 +75,15 @@ def get_audio_transcription(transcript_id: int):
                                                 headers=headers).json()
 
             if transcription_result['status'] == 'completed':
-                return transcription_result['text']
+                transcript = transcription_result['text']
 
             elif transcription_result['status'] == 'error':
                 raise RuntimeError(
                     f"Transcription failed: {transcription_result['error']}")
-
             else:
                 time.sleep(3)
+
+            return transcript
     except (Timeout, ConnectionError) as e:
         error_msg = f"Connection error : {e}"
         status_code = e.response.status_code
