@@ -10,6 +10,7 @@ import {
   useAddBotToMeetingMutation,
   useCalendarStatusQuery,
   useMeetingListQuery,
+  useRemoveBotFromMeetingMutation,
 } from "../../../../api/meetingApi";
 
 interface TranscribeModalProps {
@@ -25,6 +26,7 @@ interface Meeting {
   end_time: string;
   bot_added: boolean;
   bot_status: string;
+  bot_id: string;
 }
 
 export default function TranscribeModal(props: TranscribeModalProps) {
@@ -35,6 +37,8 @@ export default function TranscribeModal(props: TranscribeModalProps) {
   const { status: microsoftStatus } = useCalendarStatusQuery("microsoft");
   const { data: meetingsLists, refetch } = useMeetingListQuery(modalOpen);
   const { mutateAsync: addBotToMeeting } = useAddBotToMeetingMutation();
+  const { mutateAsync: removeBotFromMeeting } =
+    useRemoveBotFromMeetingMutation();
 
   const noAppConnected =
     googleStatus !== "success" && microsoftStatus !== "success";
@@ -91,25 +95,23 @@ export default function TranscribeModal(props: TranscribeModalProps) {
                             <h2 className="text-gray-700 text-[10px] font-[400] italic">{`${meeting.bot_status}`}</h2>
                           )}
                           {meeting.bot_added ? (
-                            // <Button
-                            //   variant="contained"
-                            //   color="error"
-                            //   onClick={() => {
-                            //     // addBotToMeeting({
-                            //     //   ...meeting,
-                            //     //   project_id: projectId,
-                            //     // }).then(() => {
-                            //     //   setModalOpen(false);
-                            //     // });
-                            //   }}
-                            //   sx={{
-                            //     minWidth: "105px",
-                            //     maxWidth: "105px",
-                            //   }}
-                            // >
-                            //   Cancel
-                            // </Button>
-                            <></>
+                            <Button
+                              variant="contained"
+                              color="error"
+                              onClick={() => {
+                                removeBotFromMeeting(meeting?.bot_id).then(
+                                  () => {
+                                    setModalOpen(false);
+                                  }
+                                );
+                              }}
+                              sx={{
+                                minWidth: "105px",
+                                maxWidth: "105px",
+                              }}
+                            >
+                              Cancel
+                            </Button>
                           ) : (
                             <Button
                               variant="contained"

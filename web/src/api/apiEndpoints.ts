@@ -28,7 +28,7 @@ const meetingEndPoints = {
   calendarStatus: "api/meeting/calendar/status",
   meetingsList: "api/meeting/calendar/meetings",
   addBotToMeeting: "/api/meeting/bot/add",
-  removeBotFromMeeting: "/api/meeting/bot/delete",
+  removeBotFromMeeting: "/api/meeting/bot/remove",
   removeCalendar: "/api/meeting/calendar/delete",
 };
 
