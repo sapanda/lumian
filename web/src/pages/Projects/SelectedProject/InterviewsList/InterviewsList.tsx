@@ -161,6 +161,7 @@ export default function InterviewsList() {
             extensions={{
               "application/json": [".json"],
               "text/plain": [".txt"],
+              "audio/mpeg": [".mp3", ".mp4", ".wav", ".ogg", ".flac"],
             }}
           >
             <img src={cloud_upload__icon} alt="cloud_upload__icon" />
