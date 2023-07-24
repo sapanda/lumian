@@ -270,7 +270,7 @@ const getCalendarStatus = async (appName: "google" | "microsoft") => {
 };
 
 const getMeetingsList = async () => {
-  const res = await axiosInstance.get(meetingEndPoints.meetingsList);
+  const res = await axiosInstanceHoc(true).get(meetingEndPoints.meetingsList);
   return res.data.data;
 };
 
