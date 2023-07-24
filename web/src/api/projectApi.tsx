@@ -54,12 +54,7 @@ const getProjects = async () => {
 
 const getProject = async (projectId: number | undefined) => {
   const res = await axiosInstance.get(
-    `${projectEndpoints.projectList}${projectId}/`,
-    {
-      headers: {
-        showToastDisabled: false,
-      },
-    }
+    `${projectEndpoints.projectList}${projectId}/`
   );
 
   return res;

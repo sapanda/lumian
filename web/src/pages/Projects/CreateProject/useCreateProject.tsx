@@ -75,9 +75,9 @@ export default function useCreateProject() {
 
     if (data) {
       setState({
-        projectName: data.name,
-        goal: data.goal,
-        questions: data.questions.join("\n"),
+        projectName: data.data.data.title,
+        goal: data.data.data.goal,
+        questions: data.data.data.questions.join("\n"),
       });
     }
   }, [getProject, projectId]);
