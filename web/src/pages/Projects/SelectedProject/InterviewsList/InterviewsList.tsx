@@ -36,12 +36,9 @@ export default function InterviewsList() {
   const [transcribeModalOpen, setTranscribeModalOpen] =
     useState<boolean>(false);
   const [pickedFiles, setPickedFiles] = useState<File[]>([]);
-  const transcriptRef = useRef<string>("");
+  const transcriptRef = useRef<File>();
   const { mutateAsync: createInterview } =
-    useCreateInterviewWithTranscriptMutation(
-      parseInt(projectId || "0"),
-      transcriptRef.current
-    );
+    useCreateInterviewWithTranscriptMutation(parseInt(projectId || "0"));
   async function onEditEnd(newTitle: string) {
     const res = await updateProject(
       {
@@ -56,18 +53,19 @@ export default function InterviewsList() {
   }
   const handlePickedFiles = (files: File[]) => {
     setPickedFiles(files);
+    transcriptRef.current = files[0];
     //read the content of the file, it will be a json file
-    const reader = new FileReader();
-    reader.readAsText(files[0]);
-    reader.onloadend = () => {
-      // The file's text will be printed here
-      transcriptRef.current = reader.result as string;
-    };
+    // const reader = new FileReader();
+    // reader.readAsText(files[0]);
+    // reader.onloadend = () => {
+    //   // The file's text will be printed here
+    //   transcriptRef.current = reader.result as string;
+    // };
   };
 
   const handleUpload = () => {
     //upload the file to the server
-    createInterview();
+    createInterview(transcriptRef.current as File);
     setPickedFiles([]);
     setModalOpen(false);
   };
