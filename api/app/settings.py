@@ -90,6 +90,11 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
+        "synthesis": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
         "project": {
             "handlers": ["console"],
             "level": "DEBUG",
