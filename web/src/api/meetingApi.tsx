@@ -4,7 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { axiosInstance } from "./api";
+import { axiosInstance, axiosInstanceHoc } from "./api";
 import { interviewEndPoints, meetingEndPoints } from "./apiEndpoints";
 import { useNavigate } from "react-router-dom";
 import { PROJECTS } from "../router/routes.constant";
@@ -68,7 +68,7 @@ const sendAccessToken = async (
 
 const getInterviewsList = async (project_id: number | undefined) => {
   if (!project_id) return;
-  const res = await axiosInstance.get(
+  const res = await axiosInstanceHoc(true).get(
     interviewEndPoints.interviewList.replace(
       ":projectId",
       project_id.toString()
@@ -270,7 +270,7 @@ const getCalendarStatus = async (appName: "google" | "microsoft") => {
 };
 
 const getMeetingsList = async () => {
-  const res = await axiosInstance.get(meetingEndPoints.meetingsList);
+  const res = await axiosInstanceHoc(true).get(meetingEndPoints.meetingsList);
   return res.data.data;
 };
 
