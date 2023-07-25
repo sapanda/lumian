@@ -131,7 +131,8 @@ class Synthesis(SynthesisInterface):
                 'text': item['text'],
                 'references': list(temp)})
 
-        metadata = self._openai_transcript_metadata(final_results)
+        # metadata = self._openai_transcript_metadata(final_results)
+        metadata = self._get_empty_transcript_metadata(cost=0, message='')
         data: SynthesisResult = {
             "output": final_results,
             "prompt": temp_result["prompt"],
