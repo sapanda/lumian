@@ -18,7 +18,9 @@ export default function GetStarted(props: GetStartedProps) {
               Upload a transcript
             </Typography>
 
-            <DescriptionText>You can upload multiple files</DescriptionText>
+            <DescriptionText>
+              Upload a transcript text file in a supported format
+            </DescriptionText>
 
             <div className="mt-2">
               <Button variant="contained" onClick={onUploadClick}>
