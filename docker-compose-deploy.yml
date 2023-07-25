@@ -37,22 +37,6 @@ services:
       - ./.env
     environment:
       - DEBUG=1
-      - SYNTHESIS_URL=http://api_synthesis:8001
-    depends_on:
-      - api_synthesis
-
-  api_synthesis:
-    <<: *logging-config
-    build:
-      context: ./api-synthesis
-    ports:
-      - 8001:8001
-    volumes:
-      - ./api-synthesis:/api-synthesis
-    env_file:
-      - ./.env
-    environment:
-      - DEBUG=1
 
   proxy:
     <<: *logging-config

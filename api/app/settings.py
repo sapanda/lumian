@@ -115,6 +115,7 @@ INSTALLED_APPS = [
     'core',
     'user',
     'project',
+    'synthesis',
     'transcript',
     'meeting'
 ]
@@ -226,8 +227,37 @@ SPECTACULAR_SETTINGS = {
     'COMPONENT_SPLIT_REQUEST': True
 }
 
+# Open AI Settings
+OPENAI_COMPLETIONS_API_TYPE = os.environ.get(
+    "OPENAI_COMPLETIONS_API_TYPE", "open_ai")
+OPENAI_COMPLETIONS_API_KEY = os.environ.get(
+    "OPENAI_COMPLETIONS_API_KEY")
+OPENAI_COMPLETIONS_API_BASE = os.environ.get(
+    "OPENAI_COMPLETIONS_API_BASE", None)
+OPENAI_COMPLETIONS_API_VERSION = os.environ.get(
+    "OPENAI_COMPLETIONS_API_VERSION", None)
+OPENAI_COMPLETIONS_MODEL = os.environ.get(
+    "OPENAI_COMPLETIONS_MODEL", None)
+
+OPENAI_EMBEDDINGS_API_TYPE = os.environ.get(
+    "OPENAI_EMBEDDINGS_API_TYPE", "open_ai")
+OPENAI_EMBEDDINGS_API_KEY = os.environ.get(
+    "OPENAI_EMBEDDINGS_API_KEY")
+OPENAI_EMBEDDINGS_API_BASE = os.environ.get(
+    "OPENAI_EMBEDDINGS_API_BASE", None)
+OPENAI_EMBEDDINGS_API_VERSION = os.environ.get(
+    "OPENAI_EMBEDDINGS_API_VERSION", None)
+OPENAI_EMBEDDINGS_MODEL = os.environ.get(
+    "OPENAI_EMBEDDINGS_MODEL", None)
+
+# Pinecone Settings
+PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
+PINECONE_REGION = os.environ.get("PINECONE_REGION")
+PINECONE_INDEX = os.environ.get("PINECONE_INDEX")
+PINECONE_DIMENSIONS = int(os.environ.get("PINECONE_DIMENSIONS"))
+PINECONE_USER = os.environ.get("PINECONE_USER", None)
+
 # Synthesis settings
-SYNTHESIS_URL = os.environ.get('SYNTHESIS_URL')
 SYNTHESIS_TASK_TIMEOUT = int(os.environ.get('SYNTHESIS_TASK_TIMEOUT', 10))
 
 # Recall AI settings
