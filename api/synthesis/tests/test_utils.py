@@ -1,4 +1,5 @@
-from app.utils import (
+from django.test import TestCase
+from synthesis.utils import (
     split_text_into_multiple_lines_for_speaker,
     split_indexed_transcript_lines_into_chunks,
     split_and_extract_indices,
@@ -70,24 +71,26 @@ notes_indices_references = [
     {'text': '.', 'references': []}]
 
 
-def test_split_text_into_multiple_lines_for_speaker():
-    result = split_text_into_multiple_lines_for_speaker(
-        text, line_min_size=2)
-    assert result == multiple_line_split_text_for_speaker_results
+class SynthesisUtilsTests(TestCase):
+    """Test the text parsing functions in utils.py"""
 
+    def test_split_text_into_multiple_lines_for_speaker(self):
+        result = split_text_into_multiple_lines_for_speaker(
+            text, line_min_size=2)
+        self.assertEqual(result, multiple_line_split_text_for_speaker_results)
 
-def test_split_indexed_lines_into_chunks():
-    result = split_indexed_lines_into_chunks(
-        indexed_notes, chunk_min_tokens=28)
-    assert result == indexed_lines_into_chunks_indexed_chunks_results
+    def test_split_indexed_lines_into_chunks(self):
+        result = split_indexed_lines_into_chunks(
+            indexed_notes, chunk_min_tokens=28)
+        self.assertEqual(
+            result, indexed_lines_into_chunks_indexed_chunks_results)
 
+    def test_split_indexed_transcript_lines_into_chunks(self):
+        result = split_indexed_transcript_lines_into_chunks(
+            indexed_transcript, interviewee="Jason", chunk_min_tokens=14)
+        self.assertEqual(
+            result, indexed_transcript_into_chunks_indexed_chunks_results)
 
-def test_split_indexed_transcript_lines_into_chunks():
-    result = split_indexed_transcript_lines_into_chunks(
-        indexed_transcript, interviewee="Jason", chunk_min_tokens=14)
-    assert indexed_transcript_into_chunks_indexed_chunks_results == result
-
-
-def test_split_and_extract_indices():
-    result = split_and_extract_indices(notes_with_references)
-    assert result == notes_indices_references
+    def test_split_and_extract_indices(self):
+        result = split_and_extract_indices(notes_with_references)
+        self.assertEqual(result, notes_indices_references)

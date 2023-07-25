@@ -1,9 +1,9 @@
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.urls import reverse
 
 from .models import Transcript
-from .synthesis_client import delete_transcript_for_id
+from app import settings
 from core.gcloud_client import client
 
 
@@ -15,20 +15,9 @@ def run_generate_synthesis(sender, instance, created, **kwargs):
 # Necessary to create helper for mocking in tests
 def _run_generate_synthesis(sender, instance, created, **kwargs):
     """Generate AI Synthesis for the transcript object"""
-    if created:
+    if created and not settings.TESTING:  # HACK to prevent trigger in tests
         client.create_task(
             path=reverse('transcript:initiate-synthesis',
                          args=[instance.id]),
             payload=''
         )
-
-
-@receiver(post_delete, sender=Transcript)
-def delete_transcript_on_synthesis_service(sender, instance, **kwargs):
-    _delete_transcript_on_synthesis_service(sender, instance, **kwargs)
-
-
-# Necessary to create helper for mocking in tests
-def _delete_transcript_on_synthesis_service(sender, instance, **kwargs):
-    """Delete transcript from Synthesis Service"""
-    delete_transcript_for_id(instance.id)

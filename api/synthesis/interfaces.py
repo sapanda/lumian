@@ -1,6 +1,6 @@
 import abc
 from typing import List, Dict
-from .domains import Transcript, SynthesisResult, EmbedsResult
+from .domains import SynthesisResult, EmbedsResult
 
 
 class OpenAIClientInterface(abc.ABC):
@@ -51,29 +51,6 @@ class EmbedsClientInterface(abc.ABC):
     @abc.abstractmethod
     def delete(self, id: int):
         """Delete all embeds for the input id"""
-        pass
-
-
-class TranscriptRepositoryInterface(abc.ABC):
-    """Interface OpenAI Client"""
-    @abc.abstractmethod
-    def get(self, id: int) -> Transcript:
-        """Get a transcript from storage"""
-        pass
-
-    @abc.abstractmethod
-    def save(self, transcript: Transcript):
-        """Save transcript to storage"""
-        pass
-
-    @abc.abstractmethod
-    def delete(self, id: int):
-        """Replace transcript in storage"""
-        pass
-
-    @abc.abstractmethod
-    def replace(self, transcript: Transcript):
-        """Delete transcript of transcript"""
         pass
 
 
