@@ -56,6 +56,8 @@ def add_bot_to_meeting(bot_name: str, meeting_url: str, join_at: str = None):
     }
 
     try:
+        # TODO: parse the correct error and show to UI
+        # say invalid meeting, bot is not allowed in the meeting etc
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
         return response.json()
