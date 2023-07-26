@@ -17,7 +17,6 @@ class OpenAIPricing(Enum):
 
 
 # Models
-OPENAI_MODEL_COMPLETIONS = "text-davinci-003"
 OPENAI_MODEL_CHAT = "gpt-3.5-turbo"
 OPENAI_MODEL_EMBEDDING = "text-embedding-ada-002"
 
@@ -63,10 +62,14 @@ class OpenAIClient(OpenAIClientInterface):
         return cost
 
     def _build_completions_params(self,
+                                  model: str,
                                   temperature: int = DEFAULT_TEMPERATURE,
                                   max_tokens: int = DEFAULT_MAX_TOKENS
                                   ) -> dict:
         """Creates the parameters for the OpenAI API Completions request."""
+        if model is None:
+            model = self.completions_model
+
         params = {
             "api_key": self.completions_api_key,
             "api_type": self.completions_api_type,
@@ -76,41 +79,34 @@ class OpenAIClient(OpenAIClientInterface):
             "temperature": temperature,
         }
         if self.completions_api_type == AZURE_API_TYPE:
-            params["engine"] = self.completions_model
+            params["engine"] = model
         else:
-            params["model"] = self.completions_model
+            params["model"] = model
         return params
 
     @retry(OpenAIRateLimitException, tries=RETRY_TRIES,
            delay=RETRY_DELAY_RATELIMIT, backoff=RETRY_BACKOFF)
     @retry(OpenAITimeoutException, tries=RETRY_TRIES,
            delay=RETRY_DELAY_TIMEOUT, backoff=RETRY_BACKOFF)
-    def execute_completion(self,
-                           prompt: str,
-                           temperature: int = DEFAULT_TEMPERATURE,
-                           max_tokens: int = DEFAULT_MAX_TOKENS,
-                           ) -> dict:
+    def execute_chat_completion(self,
+                                prompt: str,
+                                model: str = None,
+                                temperature: int = DEFAULT_TEMPERATURE,
+                                max_tokens: int = DEFAULT_MAX_TOKENS,
+                                ) -> dict:
         """Execute an OpenAI completion and return the response."""
         try:
             params = self._build_completions_params(
-                temperature=temperature, max_tokens=max_tokens)
+                model=model, temperature=temperature, max_tokens=max_tokens)
 
-            if self.completions_model == OPENAI_MODEL_COMPLETIONS:
-                response = openai.Completion.create(
-                    prompt=prompt, **params)
-                result = response["choices"][0]["text"].strip(" \n")
-                tokens_used = response["usage"]["total_tokens"]
-                cost = self._calculate_cost(tokens_used,
-                                            OpenAIPricing.COMPLETIONS)
-            else:
-                messages = [{"role": "user", "content": prompt}]
-                response = openai.ChatCompletion.create(
-                    messages=messages, **params)
-                result = response["choices"][0]["message"]["content"].strip(
-                    " \n")
-                tokens_used = response["usage"]["total_tokens"]
-                cost = self._calculate_cost(tokens_used,
-                                            OpenAIPricing.CHAT)
+            messages = [{"role": "user", "content": prompt}]
+            response = openai.ChatCompletion.create(
+                messages=messages, **params)
+            result = response["choices"][0]["message"]["content"].strip(
+                " \n")
+            tokens_used = response["usage"]["total_tokens"]
+            cost = self._calculate_cost(tokens_used,
+                                        OpenAIPricing.CHAT)
 
             ret_val = {
                 "prompt": prompt,
@@ -134,13 +130,14 @@ class OpenAIClient(OpenAIClientInterface):
     @retry(OpenAITimeoutException, tries=RETRY_TRIES,
            delay=RETRY_DELAY_TIMEOUT, backoff=RETRY_BACKOFF)
     def execute_chat(self, messages: List[Dict[str, str]],
+                     model: str = None,
                      temperature: int = DEFAULT_TEMPERATURE,
                      max_tokens: int = DEFAULT_MAX_TOKENS,
                      ) -> dict:
         """Execute an OpenAI chat and return the response."""
         try:
             params = self._build_completions_params(
-                temperature=temperature, max_tokens=max_tokens)
+                model=model, temperature=temperature, max_tokens=max_tokens)
             response = openai.ChatCompletion.create(
                 messages=messages, **params)
             result = response["choices"][0]["message"]["content"].strip(" \n")

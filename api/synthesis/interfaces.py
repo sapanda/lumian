@@ -6,15 +6,17 @@ from .domains import SynthesisResult, EmbedsResult
 class OpenAIClientInterface(abc.ABC):
     """Interface for OpenAI Client"""
     @abc.abstractmethod
-    def execute_completion(self, prompt: str,
-                           temperature: int,
-                           max_tokens: int,
-                           ) -> dict:
+    def execute_chat_completion(self, prompt: str,
+                                model: str,
+                                temperature: int,
+                                max_tokens: int,
+                                ) -> dict:
         """Execute OpenAI API completions request and return the response."""
         pass
 
     @abc.abstractmethod
     def execute_chat(self, messages: List[Dict[str, str]],
+                     model: str,
                      temperature: int,
                      max_tokens: int,
                      ) -> dict:

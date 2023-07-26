@@ -18,11 +18,11 @@ from synthesis.synthesis import Synthesis
 class MockOpenAIClient(OpenAIClientInterface):
     """Mock class for OpenAI client"""
 
-    def execute_completion(self, prompt: str,
-                           model: str = '',
-                           temperature: int = 0,
-                           max_tokens: int = 100,
-                           ) -> dict:
+    def execute_chat_completion(self, prompt: str,
+                                model: str = '',
+                                temperature: int = 0,
+                                max_tokens: int = 100,
+                                ) -> dict:
         tokens_used = len(prompt.split()) * 2
         cost = tokens_used * 0.000001
         return {
@@ -33,6 +33,7 @@ class MockOpenAIClient(OpenAIClientInterface):
         }
 
     def execute_chat(self, messages: List[Dict[str, str]] = None,
+                     model: str = '',
                      temperature: int = 0,
                      max_tokens: int = 100,
                      ) -> dict:
@@ -94,22 +95,6 @@ class MockEmbedsClient(EmbedsClientInterface):
         pass
 
 
-def get_mock_synthesis():
-    """Get mock synthesis object"""
-    synthesis = Synthesis(
-        openai_client=MockOpenAIClient(),
-        embeds_client=MockEmbedsClient(),
-        chunk_min_tokens_summary=2000,
-        chunk_min_tokens_concise=2000,
-        chunk_min_tokens_query=400,
-        max_input_tokens_summary=2500,
-        max_input_tokens_concise=2500,
-        max_input_tokens_query=3400,
-        max_input_tokens_metadata=3600,
-    )
-    return synthesis
-
-
 with open('synthesis/tests/samples/transcript_dummy.txt', 'r') as f:
     SAMPLE_TRANSCRIPT = f.read()
 
@@ -119,7 +104,10 @@ class SynthesisMockTests(TestCase):
 
     def setUp(self):
         """Set up test"""
-        self.synthesis = get_mock_synthesis()
+        self.synthesis = Synthesis(
+            openai_client=MockOpenAIClient(),
+            embeds_client=MockEmbedsClient()
+        )
         self.user = create_user(
             email='test@example.com',
             password='testpass123',

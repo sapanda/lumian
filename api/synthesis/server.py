@@ -7,7 +7,6 @@ from .openai_client import OpenAIClient
 from .pinecone_client import PineconeClient
 from .synthesis import Synthesis
 from app import settings
-from core.models import AppSettings
 
 
 logger = logging.getLogger(__name__)
@@ -64,12 +63,5 @@ def get_synthesis(
     """Synthesis instance provider"""
     return Synthesis(
         openai_client=openai_client,
-        embeds_client=embeds_client,
-        chunk_min_tokens_summary=AppSettings.get().chunk_min_tokens_summary,
-        chunk_min_tokens_concise=AppSettings.get().chunk_min_tokens_concise,
-        chunk_min_tokens_query=AppSettings.get().chunk_min_tokens_query,
-        max_input_tokens_summary=AppSettings.get().max_input_tokens_summary,
-        max_input_tokens_concise=AppSettings.get().max_input_tokens_concise,
-        max_input_tokens_query=AppSettings.get().max_input_tokens_query,
-        max_input_tokens_metadata=AppSettings.get().max_input_tokens_metadata,
+        embeds_client=embeds_client
     )
