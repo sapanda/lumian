@@ -159,8 +159,8 @@ export default function InterviewsList() {
               height: "132px",
             }}
             extensions={{
-              "application/json": [".json"],
               "text/plain": [".txt"],
+              "audio/mpeg": [".mp3"],
             }}
           >
             <img src={cloud_upload__icon} alt="cloud_upload__icon" />
