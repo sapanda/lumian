@@ -4,6 +4,10 @@ Serializers for the transcript API View.
 from rest_framework import serializers
 from transcript.models import Transcript, Synthesis, Query
 from meeting.external_clients.assembly import get_transcription_for_audio
+from transcript.utils import (
+    pre_process_transcript,
+    is_valid_transcript_format
+)
 
 
 class TranscriptFileField(serializers.FileField):
@@ -18,6 +22,11 @@ class TranscriptFileField(serializers.FileField):
             content_type = file_obj.content_type
             if content_type == 'text/plain':
                 transcript_content = file_obj.read().decode('utf-8')
+                transcript_content = pre_process_transcript(transcript_content)
+                if not is_valid_transcript_format(transcript_content):
+                    raise serializers.ValidationError(
+                        "Text is not formatted correctly."
+                        "Please contact developers for more information")
             elif content_type == 'audio/mpeg':
                 transcript_content = get_transcription_for_audio(file_obj)
             else:

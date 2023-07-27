@@ -1,21 +1,8 @@
-from dataclasses import dataclass
 from typing import (
     TypedDict,
     List,
     Optional
 )
-
-
-@dataclass
-class Transcript:
-    """Data model for transcript"""
-    id: int
-    data: List[dict]
-
-    def __str__(self):
-        return '\n'.join([
-            f"[{i}] {self.data[i]['text']}" for i in range(len(self.data))
-        ])
 
 
 class CitationResultOutput(TypedDict):

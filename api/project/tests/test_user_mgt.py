@@ -3,7 +3,6 @@ Tests for project management via the API.
 """
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from unittest.mock import patch
 
 from project.models import Project
 from project.samples import load_content
@@ -40,8 +39,7 @@ class UserManagementTests(TestCase):
             tct.transcript,
             self.sample_content['transcript']['transcript'])
 
-    @patch('transcript.signals._delete_transcript_on_synthesis_service')
-    def test_delete_user_projects_success(self, patched_signal):
+    def test_delete_user_projects_success(self):
         """Test deleting a user successfully deletes all their projects."""
         user = get_user_model().objects.create_user("a@b.com", 'sample123')
         Project.objects.create(title="Test Project", user=user)

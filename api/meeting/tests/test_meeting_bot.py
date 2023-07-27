@@ -139,14 +139,12 @@ class BotStatusChangeViewTestCase(APITestCase):
         mock_generate_transcript_text.assert_not_called()
 
     @patch('transcript.signals._run_generate_synthesis')
-    @patch('transcript.signals._delete_transcript_on_synthesis_service')
     @patch('meeting.views.meeting_bot.get_meeting_transcript')
     @patch('meeting.views.meeting_bot.generate_transcript_text')
     def test_successful_creation_of_transcript(
             self,
             mock_generate_transcript_text,
             mock_get_meeting_transcript,
-            mock_delete_on_synthesis,
             mock_generate_synthesis
     ):
         self.user = create_user()
