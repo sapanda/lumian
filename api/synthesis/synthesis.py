@@ -25,6 +25,7 @@ from .utils import (
     split_indexed_transcript_lines_into_chunks,
     split_and_extract_indices
 )
+from core.models import AppSettings
 
 
 logger = logging.getLogger(__name__)
@@ -35,11 +36,9 @@ class Synthesis(SynthesisInterface):
 
     def __init__(self,
                  openai_client: OpenAIClientInterface,
-                 embeds_client: EmbedsClientInterface,
-                 ** kwargs):
+                 embeds_client: EmbedsClientInterface):
         self.openai_client = openai_client
         self.embeds_client = embeds_client
-        self.__dict__.update(kwargs)
 
     def _get_empty_transcript_metadata(
             self,
@@ -77,7 +76,8 @@ class Synthesis(SynthesisInterface):
             summary = "".join(summary)
             prompt = METADATA_PROMPT_TEMPLATE.format(schema=METADATA_SCHEMA,
                                                      summary=summary)
-            response = self.openai_client.execute_completion(prompt)
+            response = self.openai_client.execute_chat_completion(
+                prompt, model=AppSettings.get().llm_metadata)
             cost += response["cost"]
             transcript_metadata = json.loads(response["output"])
             return {
@@ -104,7 +104,7 @@ class Synthesis(SynthesisInterface):
              {"text": "over the lazy dog", "references": [(4, 9), (14)]}]
         """
         chunks = split_indexed_lines_into_chunks(
-            indexed_transcript, self.chunk_min_tokens_summary)
+            indexed_transcript, AppSettings.get().chunk_min_tokens_summary)
         results = []
         cost = 0
         for chunk in chunks:
@@ -147,7 +147,7 @@ class Synthesis(SynthesisInterface):
         """Summarize indexed notes and return reference indices
         for phrases and sentences in the final summary"""
         chunks = split_indexed_lines_into_chunks(
-            text, self.chunk_min_tokens_summary)
+            text, AppSettings.get().chunk_min_tokens_summary)
         last_prompt = ""
         results = []
         cost = 0
@@ -197,12 +197,14 @@ class Synthesis(SynthesisInterface):
     def _openai_summarize_chunk(self, text: str) -> dict:
         """Generate a summary for a chunk of the transcript."""
         prompt = SUMMARY_CHUNK_PROMPT_TEMPLATE.format(text=text.strip())
-        return self.openai_client.execute_completion(prompt)
+        return self.openai_client.execute_chat_completion(
+            prompt, model=AppSettings.get().llm_summary_chunk)
 
     def _openai_summarize_full(self, text: str) -> dict:
         """Generate a summary from a combined transcript summary."""
         prompt = SUMMARY_PROMPT_TEMPLATE.format(text=text.strip())
-        return self.openai_client.execute_completion(prompt)
+        return self.openai_client.execute_chat_completion(
+            prompt, model=AppSettings.get().llm_summary_final)
 
     def concise_transcript(
             self, indexed_transcript: str, interviewee: str
@@ -216,7 +218,10 @@ class Synthesis(SynthesisInterface):
              {"text": "John: It sure is!", "references": [(4, 9), (14)]}]
         """
         chunks = split_indexed_transcript_lines_into_chunks(
-            indexed_transcript, interviewee, self.chunk_min_tokens_concise)
+            indexed_transcript,
+            interviewee,
+            AppSettings.get().chunk_min_tokens_concise
+        )
         results = []
         prompts = []
         cost = 0
@@ -239,7 +244,8 @@ class Synthesis(SynthesisInterface):
     def _openai_concise_chunk(self, text: str) -> dict:
         """Generate a concise transcript for a chunk of the transcript."""
         prompt = CONCISE_PROMPT_TEMPLATE.format(text=text.strip())
-        return self.openai_client.execute_completion(prompt)
+        return self.openai_client.execute_chat_completion(
+            prompt, model=AppSettings.get().llm_concise)
 
     def embed_transcript(
             self,
@@ -250,7 +256,10 @@ class Synthesis(SynthesisInterface):
     ) -> EmbedsResult:
         """Generate embeds for the transcript"""
         chunks = split_indexed_transcript_lines_into_chunks(
-            indexed_transcript, interviewee, self.chunk_min_tokens_query)
+            indexed_transcript,
+            interviewee,
+            AppSettings.get().chunk_min_tokens_query
+        )
 
         content_list = []
         for chunk in chunks:
@@ -346,13 +355,13 @@ class Synthesis(SynthesisInterface):
         total_tokens += token_count(query.strip())
 
         # Build the context string, but ensure OpenAI Completion
-        # input token count doesn't exceed self.max_input_tokens_query
+        # input token count doesn't exceed max_input_tokens_query
         context = ""
         separator = "-" * 4
         for match in search_results['matches']:
             section = match['metadata']['text']
             total_tokens += token_count(section)
-            if total_tokens < self.max_input_tokens_query:
+            if total_tokens < AppSettings.get().max_input_tokens_query:
                 context = f"{context}\n{separator}\n{section.strip()}"
         context = f"{context}\n{separator}"
 
@@ -361,4 +370,5 @@ class Synthesis(SynthesisInterface):
             query=query.strip(),
             context=context)
 
-        return self.openai_client.execute_chat(messages)
+        return self.openai_client.execute_chat(
+            messages, model=AppSettings.get().llm_query)
