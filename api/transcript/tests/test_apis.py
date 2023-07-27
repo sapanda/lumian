@@ -11,7 +11,7 @@ from transcript.models import (
     Transcript, SynthesisType, SynthesisStatus, Synthesis, Embeds
 )
 from transcript.serializers import TranscriptSerializer
-from transcript.synthesis_client import generate_embeds
+from transcript.tasks import generate_embeds
 from transcript.tests.utils import (
     create_user,
     create_project,
@@ -256,8 +256,7 @@ class TranscriptAPITests(APITestCase):
         res = self.client.patch(url, payload)
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
-    @patch('transcript.signals._delete_transcript_on_synthesis_service')
-    def test_delete_transcript(self, patched_signal, patched_delete):
+    def test_delete_transcript(self, patched_signal):
         """Test deleting a transcript successful."""
         tpt = create_transcript(project=self.project)
         url = detail_url(tpt.id)
@@ -266,8 +265,7 @@ class TranscriptAPITests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertFalse(Transcript.objects.filter(id=tpt.id).exists())
 
-    @patch('transcript.signals._delete_transcript_on_synthesis_service')
-    def test_delete_transcript_alt_user(self, patched_signal, patched_delete):
+    def test_delete_transcript_alt_user(self, patched_signal):
         """Test trying to delete another users transcript gives error
         for both regular and super users."""
         new_user = create_user(email='user2@example.com', password='test123')
@@ -400,7 +398,7 @@ class TranscriptAPITests(APITestCase):
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
-    @patch('transcript.synthesis_client.run_query')
+    @patch('synthesis.usecases.run_transcript_query')
     def test_query_success(self, patched_query, patched_signal):
         """Test querying a transcript successfully."""
         tpt = create_transcript(project=self.project)
@@ -429,7 +427,7 @@ class TranscriptAPITests(APITestCase):
         res = self.client.post(url, {'query': ''})
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
-    @patch('transcript.synthesis_client.run_query')
+    @patch('synthesis.usecases.run_transcript_query')
     def test_query_list_empty(self, patched_query, patched_signal):
         """Test that the query GET request works with empty results."""
         tpt = create_transcript(project=self.project)
@@ -445,7 +443,7 @@ class TranscriptAPITests(APITestCase):
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
-    @patch('transcript.synthesis_client.run_query')
+    @patch('synthesis.usecases.run_transcript_query')
     def test_query_alt_user(self, patched_query, patched_signal):
         """Test that query fails when user is not the owner of the project
         regardless of whether the user is a superuser."""
@@ -468,7 +466,7 @@ class TranscriptAPITests(APITestCase):
         res = self.client.post(url, {'query': query})
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
-    @patch('transcript.synthesis_client.run_query')
+    @patch('synthesis.usecases.run_transcript_query')
     def test_query_list_alt_user(
             self, patched_query, patched_signal):
         """Test that query list fails when user is not the owner
@@ -515,9 +513,7 @@ class EndToEndQueryTests(APITestCase):
     @skip("Needs synthesis Service to be running")
     def test_query_execution_success(self, patched_signal):
         """Test that the query request is successfully executed."""
-        generate_embeds(
-            self.tct.id, self.tct.title, self.tct.interviewee_names[0]
-        )
+        generate_embeds(self.tct)
         query = "Where does Jason live?"
         url = query_url(self.tct.id)
         res = self.client.post(url, {'query': query})
@@ -531,9 +527,7 @@ class EndToEndQueryTests(APITestCase):
     @skip("Needs synthesis Service to be running")
     def test_query_list_valid(self, patched_signal):
         """Test that the query GET request is successfully executed."""
-        generate_embeds(
-            self.tct.id, self.tct.title, self.tct.interviewee_names[0]
-        )
+        generate_embeds(self.tct)
         url = query_url(self.tct.id)
         self.client.post(url, {'query': 'Where does Jason live?'})
         self.client.post(url, {'query': 'Describe Jason\'s family?'})

@@ -21,12 +21,6 @@ jobs:
       - name: Test API
         run: >
           docker-compose run --rm api sh -c
-          "python manage.py wait_for_db && python manage.py test"
-      - name: Test Synthesis API
-        run: >
-          docker-compose run --rm api_synthesis sh -c
-          "PYTHONPATH=. pytest tests -s"
+          "python manage.py wait_for_db && python manage.py migrate && python manage.py test"
       - name: Lint API
         run: docker-compose run --rm api sh -c "flake8"
-      - name: Lint Synthesis API
-        run: docker-compose run --rm api_synthesis sh -c "flake8"
