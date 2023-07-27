@@ -211,22 +211,21 @@ class InitiateSynthesizerView(BaseSynthesizerView):
             result = tasks.initiate_synthesis(tct)
             status_code = result['status_code']
             if status.is_success(status_code):
-                if status.is_success(status_code):
-                    client.create_task(
-                        path=reverse('transcript:generate-summary', args=[pk]),
-                        payload='',
-                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
-                    )
-                    client.create_task(
-                        path=reverse('transcript:generate-embeds', args=[pk]),
-                        payload='',
-                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
-                    )
-                    client.create_task(
-                        path=reverse('transcript:generate-concise', args=[pk]),
-                        payload='',
-                        timeout_minutes=SYNTHESIS_TASK_TIMEOUT
-                    )
+                client.create_task(
+                    path=reverse('transcript:generate-summary', args=[pk]),
+                    payload='',
+                    timeout_minutes=SYNTHESIS_TASK_TIMEOUT
+                )
+                client.create_task(
+                    path=reverse('transcript:generate-embeds', args=[pk]),
+                    payload='',
+                    timeout_minutes=SYNTHESIS_TASK_TIMEOUT
+                )
+                client.create_task(
+                    path=reverse('transcript:generate-concise', args=[pk]),
+                    payload='',
+                    timeout_minutes=SYNTHESIS_TASK_TIMEOUT
+                )
             response = Response(status=status_code)
             return Response()
         except Transcript.DoesNotExist:
@@ -237,21 +236,31 @@ class InitiateSynthesizerView(BaseSynthesizerView):
 class BaseSynthesisSynthesizerView(BaseSynthesizerView):
     """Base class for synthesis generation views"""
 
+    def _start_synthesis(self, synthesis: Synthesis):
+        if synthesis.status == SynthesisStatus.NOT_STARTED:
+            return True
+        elif synthesis.status == SynthesisStatus.FAILED:
+            return True
+        else:
+            return False
+
     def post_of_type(self, request, pk, synthesis_type, generate_func):
         try:
             tct = Transcript.objects.get(pk=pk)
             run_generation = False
 
-            with transaction.atomic():
-                synthesis = Synthesis.objects.select_for_update().get(
-                    transcript=tct,
-                    output_type=synthesis_type
-                )
-                if synthesis.status == SynthesisStatus.NOT_STARTED or \
-                   synthesis.status == SynthesisStatus.FAILED:
-                    synthesis.status = SynthesisStatus.IN_PROGRESS
-                    synthesis.save()
-                    run_generation = True
+            if request.headers.get('X-Task-Caller') == 'background-task':
+                with transaction.atomic():
+                    synthesis = Synthesis.objects.select_for_update().get(
+                        transcript=tct,
+                        output_type=synthesis_type
+                    )
+                    if self._start_synthesis(synthesis):
+                        synthesis.status = SynthesisStatus.IN_PROGRESS
+                        synthesis.save()
+                        run_generation = True
+            else:
+                run_generation = True
 
             if run_generation:
                 result = generate_func(tct)
@@ -282,18 +291,30 @@ class GenerateConciseView(BaseSynthesisSynthesizerView):
 
 
 class GenerateEmbedsView(BaseSynthesizerView):
+
+    def _start_embeds(self, embeds: Embeds):
+        if embeds.status == SynthesisStatus.NOT_STARTED:
+            return True
+        elif embeds.status == SynthesisStatus.FAILED:
+            return True
+        else:
+            return False
+
     def post(self, request, pk):
         try:
             tct = Transcript.objects.get(pk=pk)
             run_generation = False
 
-            with transaction.atomic():
-                embeds = Embeds.objects.select_for_update().get(transcript=tct)
-                if embeds.status == SynthesisStatus.NOT_STARTED or \
-                   embeds.status == SynthesisStatus.FAILED:
-                    embeds.status = SynthesisStatus.IN_PROGRESS
-                    embeds.save()
-                    run_generation = True
+            if request.headers.get('X-Task-Caller') == 'background-task':
+                with transaction.atomic():
+                    embeds = Embeds.objects.select_for_update().get(
+                        transcript=tct)
+                    if self._start_embeds(embeds):
+                        embeds.status = SynthesisStatus.IN_PROGRESS
+                        embeds.save()
+                        run_generation = True
+            else:
+                run_generation = True
 
             if run_generation:
                 result = tasks.generate_embeds(tct)
@@ -319,9 +340,15 @@ class GenerateAnswersView(BaseSynthesizerView):
                 transcript=pk,
                 query_level=Query.QueryLevelChoices.PROJECT)
             # TODO : Have a way to check if all queries were answered
-            if queries.count() > 1:
-                response = Response(status=status.HTTP_200_OK)
-            data = tasks.generate_answers(tct)
+            run_generation = True
+            if request.headers.get('X-Task-Caller') == 'background-task':
+                if queries.count() > 0:
+                    run_generation = False
+
+            # run if generation is true
+            if run_generation:
+                data = tasks.generate_answers(tct)
+
             response = Response(data, status=status.HTTP_201_CREATED)
         except Transcript.DoesNotExist:
             response = Response(status=status.HTTP_404_NOT_FOUND)
