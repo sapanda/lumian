@@ -49,31 +49,26 @@ class AppSettings(models.Model):
     llm_metadata = models.CharField(
         max_length=255,
         blank=True,
-        default='gpt-3.5-turbo-16k',
         help_text=("LLM used to generate metadata. "
                    "Leave blank to use values in environment vars."))
     llm_summary_chunk = models.CharField(
         max_length=255,
         blank=True,
-        default='gpt-3.5-turbo-16k',
         help_text=("LLM used to generate summary for a chunk. "
                    "Leave blank to use values in environment vars."))
     llm_summary_final = models.CharField(
         max_length=255,
         blank=True,
-        default='gpt-3.5-turbo-16k',
         help_text=("LLM used to generate final summary. "
                    "Leave blank to use values in environment vars."))
     llm_concise = models.CharField(
         max_length=255,
         blank=True,
-        default='gpt-3.5-turbo-16k',
         help_text=("LLM used to generate concise transcripts. "
                    "Leave blank to use values in environment vars."))
     llm_query = models.CharField(
         max_length=255,
         blank=True,
-        default='gpt-3.5-turbo-16k',
         help_text=("LLM used to respond to queries. "
                    "Leave blank to use values in environment vars."))
 

@@ -236,7 +236,7 @@ class InitiateSynthesizerView(BaseSynthesizerView):
 class BaseSynthesisSynthesizerView(BaseSynthesizerView):
     """Base class for synthesis generation views"""
 
-    def _start_synthesis(self, synthesis: Synthesis):
+    def _can_start_synthesis(self, synthesis: Synthesis):
         if synthesis.status == SynthesisStatus.NOT_STARTED:
             return True
         elif synthesis.status == SynthesisStatus.FAILED:
@@ -255,7 +255,7 @@ class BaseSynthesisSynthesizerView(BaseSynthesizerView):
                         transcript=tct,
                         output_type=synthesis_type
                     )
-                    if self._start_synthesis(synthesis):
+                    if self._can_start_synthesis(synthesis):
                         synthesis.status = SynthesisStatus.IN_PROGRESS
                         synthesis.save()
                         run_generation = True
@@ -292,7 +292,7 @@ class GenerateConciseView(BaseSynthesisSynthesizerView):
 
 class GenerateEmbedsView(BaseSynthesizerView):
 
-    def _start_embeds(self, embeds: Embeds):
+    def _can_start_embeds(self, embeds: Embeds):
         if embeds.status == SynthesisStatus.NOT_STARTED:
             return True
         elif embeds.status == SynthesisStatus.FAILED:
@@ -309,7 +309,7 @@ class GenerateEmbedsView(BaseSynthesizerView):
                 with transaction.atomic():
                     embeds = Embeds.objects.select_for_update().get(
                         transcript=tct)
-                    if self._start_embeds(embeds):
+                    if self._can_start_embeds(embeds):
                         embeds.status = SynthesisStatus.IN_PROGRESS
                         embeds.save()
                         run_generation = True
@@ -480,7 +480,6 @@ class QueryView(APIView):
                     project = Project.objects.get(id=tct.project.id)
                     # no questions for the project
                     if len(project.questions) == 0:
-                        logger.info('no questions')
                         response = Response({'data': []},
                                             status=status.HTTP_201_CREATED)
                     else:

@@ -227,8 +227,8 @@ def list_calendar_events(calendar_id, schedule=False):
         time_min = now.isoformat() + 'Z'
         time_max = (now + datetime.timedelta(minutes=30)).isoformat() + 'Z'
     else:
-        time_min = (now - datetime.timedelta(minutes=60)).isoformat() + 'Z'
-        time_max = (now + datetime.timedelta(minutes=1)).isoformat() + 'Z'
+        time_min = (now - datetime.timedelta(minutes=15)).isoformat() + 'Z'
+        time_max = (now + datetime.timedelta(minutes=25)).isoformat() + 'Z'
     params = {
                 "start_time__gte": time_min,
                 "start_time__lte": time_max,
@@ -258,9 +258,10 @@ def list_calendar_events(calendar_id, schedule=False):
             #  TODO : test if meeting_url gives correct link consistently
             if 'meeting_url' in result:
                 event['meeting_url'] = result['meeting_url']
-            if 'start' in result['raw']:
-                event['start_time'] = result['raw']['start']['dateTime']
-                event['end_time'] = result['raw']['end']['dateTime']
+            if 'start_time' in result:
+                event['start_time'] = result['start_time']
+            if 'end_time' in result:
+                event['end_time'] = result['end_time']
             if 'summary' in result['raw']:
                 event['title'] = result['raw']['summary']
             elif 'subject' in result['raw']:
