@@ -48,10 +48,14 @@ class AddBotViewTest(APITestCase):
         self.assertEqual(bot.status, MeetingBot.StatusChoices.READY)
         self.assertIsNone(bot.transcript)
 
+    @patch('meeting.views.meeting_bot.remove_bot_from_meeting')
     @patch('meeting.views.meeting_bot.add_bot_to_meeting')
-    def test_add_bot_already_exists(self, mock_add_bot_to_meeting):
+    def test_add_bot_already_exists(self,
+                                    mock_add_bot_to_meeting,
+                                    mock_remove_bot_from_meeting):
         self.project = create_project(self.user)
         mock_add_bot_to_meeting.side_effect = IntegrityError
+        mock_remove_bot_from_meeting.return_value.status_code = 200
         self.project = create_project(self.user)
         self.client.force_authenticate(self.user)
 
@@ -61,7 +65,8 @@ class AddBotViewTest(APITestCase):
         }
 
         response = self.client.post(self.url, self.data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR)
         self.assertEqual(MeetingBot.objects.count(), 0)
 
     @patch('meeting.views.meeting_bot.add_bot_to_meeting')

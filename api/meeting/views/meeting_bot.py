@@ -77,6 +77,7 @@ class AddBotView(APIView):
             if not title:
                 title = f'Meeting - [{datetime.now()}]'
 
+            bot = None
             try:
                 bot = add_bot_to_meeting(bot_name, meeting_url)
                 MeetingBot.objects.create(
@@ -95,7 +96,8 @@ class AddBotView(APIView):
                 response_status = HTTP_201_CREATED
             except IntegrityError as e:
                 # remove bot first
-                remove_bot_from_meeting(bot['id'])
+                if bot:
+                    remove_bot_from_meeting(bot['id'])
                 logger.error(f"-- Exception -- {str(e)}")
                 response_data = ''
                 response_message = (
