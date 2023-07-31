@@ -16,10 +16,14 @@ class TranscriptFileField(serializers.FileField):
         Handle the file upload and read its content.
         """
         file_obj = super().to_internal_value(data)
+        supported_audio_formats = ['mpeg', 'wav', 'ogg', 'flac', 'mp4']
+        audio_content_types = ['audio/' + format
+                               for format in supported_audio_formats]
 
         # Read the content of the file and convert it to a string
         if file_obj:
             content_type = file_obj.content_type
+            # for text files
             if content_type == 'text/plain':
                 transcript_content = file_obj.read().decode('utf-8')
                 transcript_content = pre_process_transcript(transcript_content)
@@ -27,8 +31,10 @@ class TranscriptFileField(serializers.FileField):
                     raise serializers.ValidationError(
                         "Text is not formatted correctly."
                         "Please contact developers for more information")
-            elif content_type == 'audio/mpeg':
+            # for audio files
+            elif content_type in audio_content_types:
                 transcript_content = get_transcription_for_audio(file_obj)
+            # for other file formats
             else:
                 raise serializers.ValidationError(
                     'Invalid file format. Only .txt/.mp3 files are allowed.')
