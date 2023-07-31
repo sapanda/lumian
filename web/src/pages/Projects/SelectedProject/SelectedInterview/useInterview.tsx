@@ -146,10 +146,9 @@ export default function useInterview() {
   }, [interviewId, navigate, projectId]);
   useEffect(() => {
     originalTranscriptRef.current = interviewData?.transcript;
-    const _transcript = interviewData?.transcript.replaceAll(
-      '"\n\n',
-      '"<br/> <br/>'
-    );
+    const _transcript = interviewData?.transcript
+      .replaceAll('"\n\n', '"<br/> <br/>')
+      .replaceAll("\n", "<br/>");
     setConversation(_transcript);
   }, [interviewData?.transcript]);
 
