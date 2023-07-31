@@ -79,6 +79,8 @@ class AddBotView(APIView):
 
             bot = None
             try:
+                # TODO: handle cases where meeting url is invalid
+                # or cases where meeting is not started yet (long wait time)
                 bot = add_bot_to_meeting(bot_name, meeting_url)
                 MeetingBot.objects.create(
                     id=bot['id'],

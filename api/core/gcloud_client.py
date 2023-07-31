@@ -63,6 +63,7 @@ class GCloudClient(GCloudClientInterface):
                 "url": f"{self.service_url}/{path}",
                 "headers": {
                     "Content-Type": "application/json",
+                    "X-Task-Caller": "background-task"
                 },
                 "body": payload.encode(),
             },
@@ -110,6 +111,7 @@ class GCloudEmulatorClient(GCloudClientInterface):
                 "url": f"{self.service_url}/{path}",
                 "headers": {
                     "Content-Type": "application/json",
+                    "X-Task-Caller": "background-task"
                 },
                 "body": payload.encode(),
             }
