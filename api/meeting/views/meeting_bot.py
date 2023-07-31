@@ -10,7 +10,8 @@ from rest_framework.status import (
     HTTP_408_REQUEST_TIMEOUT,
     HTTP_409_CONFLICT,
     HTTP_404_NOT_FOUND,
-    HTTP_412_PRECONDITION_FAILED
+    HTTP_412_PRECONDITION_FAILED,
+    HTTP_500_INTERNAL_SERVER_ERROR
 )
 from rest_framework import (
     authentication,
@@ -76,24 +77,37 @@ class AddBotView(APIView):
             if not title:
                 title = f'Meeting - [{datetime.now()}]'
 
-            # TODO: handle cases where meeting url is invalid
-            # or cases where meeting is not started yet (long wait time)
-            bot = add_bot_to_meeting(bot_name, meeting_url)
-            MeetingBot.objects.create(
-                id=bot['id'],
-                status=MeetingBot.StatusChoices.READY,
-                message="Bot is created and ready to join the call",
-                meeting_url=meeting_url,
-                start_time=start_time,
-                end_time=end_time,
-                title=title,
-                transcript=None,
-                project=project
-            )
+            bot = None
+            try:
+                # TODO: handle cases where meeting url is invalid
+                # or cases where meeting is not started yet (long wait time)
+                bot = add_bot_to_meeting(bot_name, meeting_url)
+                MeetingBot.objects.create(
+                    id=bot['id'],
+                    status=MeetingBot.StatusChoices.READY,
+                    message="Bot is created and ready to join the call",
+                    meeting_url=meeting_url,
+                    start_time=start_time,
+                    end_time=end_time,
+                    title=title,
+                    transcript=None,
+                    project=project
+                )
+                response_data = bot['id']
+                response_message = f"Transcriber added to {title}"
+                response_status = HTTP_201_CREATED
+            except IntegrityError as e:
+                # remove bot first
+                if bot:
+                    remove_bot_from_meeting(bot['id'])
+                logger.error(f"-- Exception -- {str(e)}")
+                response_data = ''
+                response_message = (
+                    "Failed to add transcriber to the meeting."
+                    "Please try again later or contact support."
+                )
+                response_status = HTTP_500_INTERNAL_SERVER_ERROR
 
-            response_data = bot['id']
-            response_message = f"Transcriber added to {title}"
-            response_status = HTTP_201_CREATED
             return Response({'data': response_data,
                              'message': response_message},
                             status=response_status)
@@ -214,6 +228,8 @@ class BotStatusChangeView(APIView):
             # change status of the bot on each callback
             self._update_bot(bot_id, status_code, status_message, transcript)
 
+        except MeetingBot.DoesNotExist:
+            pass
         except Exception as e:
             logger.error(f"-- Exception -- {str(e)}")
 
